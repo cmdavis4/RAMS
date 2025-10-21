@@ -29,4 +29,11 @@ misc/*
 
 bin.rams/rams*
 
+*.stderr
+*.stdout
+*.out
+
 include.mk
+# pixi environments
+.pixi/*
+!.pixi/config.toml

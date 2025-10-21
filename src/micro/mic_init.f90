@@ -553,32 +553,110 @@ return
 END SUBROUTINE init_salt
 
 !##############################################################################
-Subroutine init_tracer (n1,n2,n3,tracerp,dn0,ifm,nsc)
+Subroutine init_tracer (mzp,mxp,myp,i0,j0,tracerp,dn0,ifm,nsc)
 
 use micphys
 use rconstants
 use mem_grid
 use mem_tracer
-use node_mod
 
 implicit none
 
-integer :: n1,n2,n3,i,j,k,ifm,nsc,ii,jj
-real, dimension(n1,n2,n3) :: tracerp,dn0
+integer :: mzp,mxp,myp,i,j,k,ifm,nsc,ii,jj,i0,j0
+! Variables we'll use to actually calculate the tracer species
+integer :: radial_distance_ix, quadrant_ix, height_ix, n_tracers_per_radius, n_tracers_per_height
+! Tracer species
+integer :: this_tracer_species
+real :: tracer_center_x, tracer_center_y, this_point_x, this_point_y, this_point_z, this_point_radial_distance, initial_tracer_concentration
+real, dimension(4) :: radial_distance_bin_edges
+real, dimension(4) :: height_threshold_bin_edges
+real, dimension(mzp,mxp,myp) :: tracerp,dn0
 
-! Initialize Tracers
 if(print_msg) print*,'Start Initializing Tracers, Grid:',ifm,' Tracer:',nsc
 
-do j = 1,n3
- do i = 1,n2
-  do k = 1,n1
-   ! Set all initial tracer to 0
-   tracerp(k,i,j) = 0
-  enddo
+! Define center for calculating radial distance
+tracer_center_x = 110000  ! m
+tracer_center_y = 109500  ! m
+! These^ are assuming the coordinates have been remapped to start at 0, so put them
+! into the RAMS coordinate system of -max x / 2 to max x /2
+tracer_center_x = tracer_center_x + xmn(1, 1)
+tracer_center_y = tracer_center_y + ymn(1, 1)
+
+! Define thresholds for radial and vertical distances
+radial_distance_bin_edges = [10000.0, 15000.0, 25000.0, 50000.0]
+height_threshold_bin_edges = [1000.0, 2000.0, 5000.0, 9000.0]
+
+! Calculate the number of tracer species per radial distance bin and per height bin
+n_tracers_per_radius = 4  ! Because 4 quadrants
+n_tracers_per_height = n_tracers_per_radius * (size(radial_distance_bin_edges) + 1)
+
+! Set the initial tracer concentration
+initial_tracer_concentration = 100000  ! #/kg
+
+
+do j = 1,myp
+ do i = 1,mxp
+  do k = 1,mzp
+   ! Get the radial distance from the center
+   ! Get the coordinates at this gridpoint
+   this_point_x = (xmn(i+i0,1)+xmn(i+i0+1,1))*0.5
+   this_point_y = (ymn(j+j0,1)+ymn(j+j0+1,1))*0.5
+   this_point_z = (zmn(k,1)+zmn(k+1,1))*0.5
+   
+   !  Get the radial index
+   this_point_radial_distance = sqrt((this_point_x-tracer_center_x)**2 + (this_point_y-tracer_center_y)**2)
+   ! Find insertion index for radial distance
+   do radial_distance_ix = 1, size(radial_distance_bin_edges)
+      if (this_point_radial_distance < radial_distance_bin_edges(radial_distance_ix)) then
+         exit
+      endif
+   enddo
+   ! Need to handle the right edge
+   if (this_point_radial_distance > radial_distance_bin_edges(size(radial_distance_bin_edges))) then
+      radial_distance_ix = size(radial_distance_bin_edges) + 1
+   endif
+   
+   ! Get the quadrant index
+   ! These increase CW from the top-right quadrant, from 1 to 4
+   ! Hideously, the simplest way to do this is probably if-thens
+   if (this_point_x >= tracer_center_x) then
+      if ( this_point_y > tracer_center_y ) then
+         quadrant_ix = 1
+      else
+         quadrant_ix = 2
+      end if
+   else
+      if (this_point_y > tracer_center_y) then
+         quadrant_ix = 4
+      else
+         quadrant_ix = 3
+      endif
+   endif
+   
+   ! Get the vertical index
+   ! Find insertion index for height
+   do height_ix = 1, size(height_threshold_bin_edges)
+      if (this_point_z < height_threshold_bin_edges(height_ix)) then
+         exit
+      endif
+   enddo
+   ! Need to handle the right edge
+   if (this_point_z > height_threshold_bin_edges(size(height_threshold_bin_edges))) then
+      height_ix = size(height_threshold_bin_edges) + 1
+   endif
+
+   ! Calculate the tracer species
+   this_tracer_species = ((1*quadrant_ix) +(n_tracers_per_radius*(radial_distance_ix-1)) +(n_tracers_per_height*(height_ix-1)))
+   
+   ! Add the tracer if we're on the correct species
+   if (nsc == this_tracer_species) then
+      ! Now actually set the tracer concentration
+      tracerp(k, i, j) = initial_tracer_concentration
+   endif
+
+   enddo
  enddo
 enddo
-
-if(nsc.eq.itracer .and. print_msg) print*,' '
 
 return
 END SUBROUTINE init_tracer
