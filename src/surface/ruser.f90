@@ -557,6 +557,8 @@ if(ibubble==2 .or. ibubble==4) then
   print*,'is the same at the CENTRAL LAT and LON'
  endif
  !Set up X location of bubble center relative to grid center
+!  This is the actual distance from the center of the bubble to the grid center,
+!  as in the actual full grid, not the subgrid on this MPI node
  bubctrx = deltax * ( (IBDXIA+IBDXIZ)/2.0 - NNXP(1)/2.0 )
  !Set up Y location of bubble center relative to grid center
  bubctry = deltax * ( (IBDYJA+IBDYJZ)/2.0 - NNYP(1)/2.0 )
@@ -578,6 +580,7 @@ if(ibubble==2 .or. ibubble==4) then
  do j=1,m3
   do i=1,m2
    do k=1,m1
+    ! I think this is just getting the position for this pair of gridpoints
     acetmp1=(XMN(i+i0,1)+XMN(i+i0+1,1))*0.5
     acetmp2=(YMN(j+j0,1)+YMN(j+j0+1,1))*0.5
     acetmp3=(ZMN(k,1)+ZMN(k+1,1))*0.5

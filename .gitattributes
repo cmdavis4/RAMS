@@ -27,4 +27,5 @@ dp-p*			binary
 *.h5			binary
 *.hdf5			binary
 *.grb			binary
-*.grb2			binary
+*.grb2			binary# SCM syntax highlighting & preventing 3-way merges
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true

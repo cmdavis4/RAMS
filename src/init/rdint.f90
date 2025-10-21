@@ -199,7 +199,7 @@ if(trim(runtype) == 'INITIAL' .or. &
       if(initial==1 .or. initial==2 .or. (initial==3.and.itrachist==1)) then
        if(itracer > 0) then
         do nsc=1,itracer
-           CALL init_tracer (mzp,mxp,myp,tracer_g(nsc,ifm)%tracerp(1,1,1) &
+           CALL init_tracer (mzp,mxp,myp,i0,j0,tracer_g(nsc,ifm)%tracerp(1,1,1) &
              ,basic_g(ifm)%dn0(1,1,1),ifm,nsc)
         enddo
        endif

@@ -43,7 +43,14 @@ misc/*
 
 include.mk*
 !include.mk.example
+*.stderr
+*.stdout
+*.out
+
 include.mk
+# pixi environments
+.pixi/*
+!.pixi/config.toml
 
 CLAUDE.md
 .claude
