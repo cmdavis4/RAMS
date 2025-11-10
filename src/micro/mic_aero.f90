@@ -1,10 +1,80 @@
 !##############################################################################
+Subroutine tracer_sources ()
+
+  use micphys
+  use rconstants
+  use mem_grid!, only:ngrid
+  use mem_tracer
+  use mem_micro
+  use node_mod!, only:mxp,myp,ia,ja,mi0,mj0
+  use mem_leaf
+  use mem_basic
+  
+  implicit none
+  
+  integer :: i, j, ipatch, nsc, fs_base_ls_index, tracer_class, rrt_ix, fs_tracer_ix
+  real :: tracer_emission_rate
+  real, parameter, dimension(6) :: rain_rate_thresholds = (/ &
+    0.00027777, &  ! 1 mm/hr
+    0.00138885, &  ! 5 mm/hr
+    0.00277771, &  ! 10 mm/hr
+    0.00555542, &  ! 20 mm/hr
+    0.01111083, &  ! 40 mm/hr
+    0.02222167 &  ! 80 mm/hr
+/)
+  integer, parameter :: emitter_min_leaf_class = 21 ! Define the first leaf class that emits tracer
+  real, parameter :: fs_tracer_increment_interval = 300.  ! Seconds
+  real, parameter :: fs_tracer_emission_start_time = 0.  ! Seconds
+  ! We'll have a total emitted tracer for each rain-sourced tracer as well, so the total number will be
+  ! double the number of base tracers
+  integer, parameter :: n_rain_sourced_tracers = size(rain_rate_thresholds) * 2
+
+  ! Set the tracer emission rate
+  tracer_emission_rate = 100000 * ((deltax/1000.)**2)  ! So that it's equal per unit area
+
+  ! Tracer numbering scheme is that tracers numbered 1 : size(rain_rate_thresholds) correspond to the rain-sourced
+  ! tracers, and tracers numberedd size(rain_rate_thresholds)+1 : itracer correspond to the fixed-source tracers
+
+  if(itracer > 0) then
+      do j = ja,jz
+        do i = ia,iz
+          do rrt_ix = 1,size(rain_rate_thresholds)
+            !############################ Rain-sourced #####################################
+            if (micro_g(ngrid)%pcprr(i,j)>=rain_rate_thresholds(rrt_ix) .and. rrt_ix <= itracer) then
+              ! Add the tracer emission rate to the concentration of this tracer
+              tracer_g(rrt_ix,ngrid)%tracerp(2,i,j) = tracer_g(rrt_ix,ngrid)%tracerp(2,i,j) + tracer_emission_rate
+              ! Also add it to the running total emitted for this tracer
+              tracer_g(rrt_ix,ngrid)%acctracer(i,j) = tracer_g(rrt_ix,ngrid)%acctracer(i,j) + tracer_emission_rate
+            end if
+          end do
+
+          !############################ Fixed-source #####################################
+          if (time >= fs_tracer_emission_start_time .and. time < timmax) then
+            ! Get the tracer index we're emitting from the time
+            fs_tracer_ix = size(rain_rate_thresholds) + 1 + int((time-fs_tracer_emission_start_time) / fs_tracer_increment_interval)
+            if (fs_tracer_ix <= itracer) then
+              ! Add the tracer emission rate to the concentration of this tracer
+              tracer_g(fs_tracer_ix,ngrid)%tracerp(2,i,j) = tracer_g(fs_tracer_ix,ngrid)%tracerp(2,i,j) + tracer_emission_rate
+              ! Also add it to the running total emitted for this tracer
+              tracer_g(fs_tracer_ix,ngrid)%acctracer(i,j) = tracer_g(fs_tracer_ix,ngrid)%acctracer(i,j) + tracer_emission_rate
+            end if
+          end if
+        enddo
+    enddo
+  endif
+  return
+END SUBROUTINE tracer_sources
+  
+  
+
+!##############################################################################
 Subroutine aerosols ()
 
 use mem_basic
 use mem_micro
 use mem_grid
 use mem_leaf
+use mem_tracer
 use node_mod
 use micphys
 
