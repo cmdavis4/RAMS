@@ -38,9 +38,21 @@ type (hdf5_select_type) :: mem_select,file_select
 integer, dimension(HDF5_MAX_DIMS) :: file_chunks
 real, dimension(:,:,:,:), allocatable :: temp_var1, temp_var2
 
+! Timing variables
+real :: wtime_beg,wtime_end,ctime_beg,ctime_end
+real, external :: walltime
+real, save :: wtime_ref = -999.0
+
 type (head_table), allocatable,save :: aw_table(:)
 
 if (ioutput == 0) return
+
+! Initialize walltime reference on first call
+if (wtime_ref < -998.0) wtime_ref = walltime(0.0)
+
+! Record start cpu and wall times
+CALL timing (1,ctime_beg)
+wtime_beg = walltime(wtime_ref)
 
 if (nmachs .gt. 1) then
   iphdf5 = 1
@@ -446,6 +458,12 @@ if(frqst_keep > 0. .and. vtype == 'INST') then
    time_save = time
    first_call = .false.
 endif
+
+! Report walltime for the analysis write
+CALL timing (2,ctime_end)
+wtime_end = walltime(wtime_ref)
+CALL report_time_allnodes (trim(subaname),ctime_end-ctime_beg &
+                          ,wtime_end-wtime_beg)
 
 return
 END SUBROUTINE anal_write
