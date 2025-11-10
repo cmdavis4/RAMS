@@ -40,3 +40,5 @@ misc/*
 *.tar.gz
 *.tar
 *.tgz
+
+include.mk
