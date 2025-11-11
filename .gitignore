@@ -42,3 +42,4 @@ misc/*
 *.tgz
 
 include.mk
+CLAUDE.md
