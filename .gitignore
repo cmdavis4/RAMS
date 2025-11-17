@@ -43,3 +43,4 @@ misc/*
 
 include.mk
 CLAUDE.md
+.claude
