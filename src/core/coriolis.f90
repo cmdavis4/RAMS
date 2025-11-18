@@ -76,6 +76,8 @@ use mem_grid
 use rconstants
 use mem_scratch
 use ref_sounding
+use mem_basic
+use micphys
 
 implicit none
 
@@ -85,6 +87,13 @@ real, dimension(m2,m3) ::    top,rtg,fcor
 
 integer :: i,j,k
 real :: c1
+real, dimension(:,:,:), allocatable :: cor_term
+
+! Allocate and initialize array to accumulate Coriolis tendency
+if(imbudget>=1) then
+  allocate(cor_term(m1,m2,m3))
+  cor_term = 0.0
+endif
 
 do j=ja,jz
    do i=ia,iz
@@ -100,13 +109,30 @@ if(ihtran.eq.0) c1=0.
 do j=ja,jz
    do i=ia,iz
       do k=2,m1-1
-         ut(k,i,j)=ut(k,i,j)-vt3da(k,i,j)*(-fcor(i,j)  &
+         ! Calculate Coriolis term
+         real :: coriolis_contribution
+         coriolis_contribution = -vt3da(k,i,j)*(-fcor(i,j)  &
                   +c1*(vt3da(k,i,j)*xm(i+i0)-up(k,i,j)*yt(j+j0)))
+
+         ! Add to tendency
+         ut(k,i,j)=ut(k,i,j) + coriolis_contribution
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution
+         endif
       enddo
    enddo
 enddo
 
-if (initial == 2 .or. (initial == 3 .and. initorig == 2)) return
+if (initial == 2 .or. (initial == 3 .and. initorig == 2)) then
+  ! Store Coriolis term before early return
+  if(imbudget>=1) then
+    basic_g(ngrid)%up_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
+    deallocate(cor_term)
+  endif
+  return
+endif
 
 if (itopo == 1) then
 
@@ -117,7 +143,12 @@ if (itopo == 1) then
          enddo
          CALL htint (nzp,v01dn(1,ngrid),zt,nz,vctr5,vctr2)
          do k = 2,m1-1
-            ut(k,i,j) = ut(k,i,j) - fcor(i,j) * vctr5(k)
+            real :: coriolis_contribution2
+            coriolis_contribution2 = - fcor(i,j) * vctr5(k)
+            ut(k,i,j) = ut(k,i,j) + coriolis_contribution2
+            if(imbudget>=1) then
+              cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
+            endif
          enddo
       enddo
    enddo
@@ -127,11 +158,22 @@ else
    do j = ja,jz
       do i = ia,iz
          do k = 2,m1-1
-            ut(k,i,j) = ut(k,i,j) - fcor(i,j) * v01dn(k,ngrid)
+            real :: coriolis_contribution2
+            coriolis_contribution2 = - fcor(i,j) * v01dn(k,ngrid)
+            ut(k,i,j) = ut(k,i,j) + coriolis_contribution2
+            if(imbudget>=1) then
+              cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
+            endif
          enddo
       enddo
    enddo
 
+endif
+
+! Store accumulated Coriolis term for budget diagnostics
+if(imbudget>=1) then
+  basic_g(ngrid)%up_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
+  deallocate(cor_term)
 endif
 
 return
@@ -144,6 +186,8 @@ use mem_grid
 use rconstants
 use mem_scratch
 use ref_sounding
+use mem_basic
+use micphys
 
 implicit none
 
@@ -153,8 +197,15 @@ real, dimension(m2,m3) ::    top,rtg,fcor
 
 integer :: i,j,k
 real :: c1
+real, dimension(:,:,:), allocatable :: cor_term
 
 !       This routine calculates coriolis tendencies to v
+
+! Allocate and initialize array to accumulate Coriolis tendency
+if(imbudget>=1) then
+  allocate(cor_term(m1,m2,m3))
+  cor_term = 0.0
+endif
 
 do j = ja,jz
    do i = ia,iz
@@ -170,13 +221,30 @@ if (ihtran .eq. 0) c1 = 0.
 do j = ja,jz
    do i = ia,iz
       do k = 2,m1-1
-         vt(k,i,j) = vt(k,i,j) - vt3da(k,i,j) * (fcor(i,j)  &
+         ! Calculate Coriolis term
+         real :: coriolis_contribution
+         coriolis_contribution = - vt3da(k,i,j) * (fcor(i,j)  &
             - c1 * (vp(k,i,j) * xt(i+i0) - vt3da(k,i,j) * ym(j+j0)))
+
+         ! Add to tendency
+         vt(k,i,j) = vt(k,i,j) + coriolis_contribution
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution
+         endif
       enddo
    enddo
 enddo
 
-if (initial == 2 .or. (initial == 3 .and. initorig == 2)) return
+if (initial == 2 .or. (initial == 3 .and. initorig == 2)) then
+  ! Store Coriolis term before early return
+  if(imbudget>=1) then
+    basic_g(ngrid)%vp_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
+    deallocate(cor_term)
+  endif
+  return
+endif
 
 if (itopo == 1) then
 
@@ -187,7 +255,12 @@ if (itopo == 1) then
          enddo
          CALL htint (nzp,u01dn(1,ngrid),zt,nz,vctr5,vctr2)
          do k = 2,m1-1
-            vt(k,i,j) = vt(k,i,j) + fcor(i,j) * vctr5(k)
+            real :: coriolis_contribution2
+            coriolis_contribution2 = fcor(i,j) * vctr5(k)
+            vt(k,i,j) = vt(k,i,j) + coriolis_contribution2
+            if(imbudget>=1) then
+              cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
+            endif
          enddo
       enddo
    enddo
@@ -197,11 +270,22 @@ else
    do j = ja,jz
       do i = ia,iz
          do k = 2,m1-1
-            vt(k,i,j) = vt(k,i,j) + fcor(i,j) * u01dn(k,ngrid)
+            real :: coriolis_contribution2
+            coriolis_contribution2 = fcor(i,j) * u01dn(k,ngrid)
+            vt(k,i,j) = vt(k,i,j) + coriolis_contribution2
+            if(imbudget>=1) then
+              cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
+            endif
          enddo
       enddo
    enddo
 
+endif
+
+! Store accumulated Coriolis term for budget diagnostics
+if(imbudget>=1) then
+  basic_g(ngrid)%vp_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
+  deallocate(cor_term)
 endif
 
 return

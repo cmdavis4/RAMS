@@ -10,7 +10,9 @@ implicit none
                           up,uc,vp,vc,wp,wc,pp,pc  &
                          ,rv,theta,thp,rtp &
                          ,pi0,th0,rvt0,dn0,dn0u,dn0v &
-                         ,wp_buoy_theta,wp_buoy_cond,wp_advdif
+                         ,wp_buoy_theta,wp_buoy_cond,wp_advdif &
+                         ,up_pgforce,vp_pgforce &
+                         ,up_coriolis,vp_coriolis
 
       ! These were used for testing perturbations of updated
       ! domain-mean base state quantities. Could be useful in testing.
@@ -67,6 +69,10 @@ implicit none
         allocate (basic%wp_buoy_theta(n1,n2,n3))
         allocate (basic%wp_buoy_cond(n1,n2,n3))
         allocate (basic%wp_advdif(n1,n2,n3))
+        allocate (basic%up_pgforce(n1,n2,n3))
+        allocate (basic%vp_pgforce(n1,n2,n3))
+        allocate (basic%up_coriolis(n1,n2,n3))
+        allocate (basic%vp_coriolis(n1,n2,n3))
       endif
 
 return
@@ -106,6 +112,10 @@ implicit none
    if (allocated(basic%wp_buoy_theta)) deallocate (basic%wp_buoy_theta)
    if (allocated(basic%wp_buoy_cond))  deallocate (basic%wp_buoy_cond)
    if (allocated(basic%wp_advdif))     deallocate (basic%wp_advdif)
+   if (allocated(basic%up_pgforce))    deallocate (basic%up_pgforce)
+   if (allocated(basic%vp_pgforce))    deallocate (basic%vp_pgforce)
+   if (allocated(basic%up_coriolis))   deallocate (basic%up_coriolis)
+   if (allocated(basic%vp_coriolis))   deallocate (basic%vp_coriolis)
 
 return
 END SUBROUTINE dealloc_basic
@@ -223,6 +233,18 @@ implicit none
       CALL vtables2 (basic%wp_advdif(1,1,1),basicm%wp_advdif(1,1,1)  &
                  ,ng, npts, imean,  &
                  'WP_ADVDIF :3:anal:mpti')
+   if (allocated(basic%vp_pgforce))  &
+      CALL vtables2 (basic%vp_pgforce(1,1,1),basicm%vp_pgforce(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'VP_PGFORCE :3:anal:mpti')
+   if (allocated(basic%up_coriolis))  &
+      CALL vtables2 (basic%up_coriolis(1,1,1),basicm%up_coriolis(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'UP_CORIOLIS :3:anal:mpti')
+   if (allocated(basic%vp_coriolis))  &
+      CALL vtables2 (basic%vp_coriolis(1,1,1),basicm%vp_coriolis(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'VP_CORIOLIS :3:anal:mpti')
 
    ! 2D CORIOLIS INFO FOR VTABLES
    npts=n2*n3

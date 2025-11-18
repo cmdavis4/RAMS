@@ -149,6 +149,8 @@ Subroutine prdctu (m1,m2,m3,ia,iz,ja,jz  &
 
 use mem_grid
 use node_mod, only:nmachs
+use mem_basic
+use micphys
 
 implicit none
 
@@ -205,6 +207,11 @@ enddo
 if (nstbot .eq. 1 .and. itopo .eq. 1)  &
      CALL botset (m1,m2,m3,up,'U')
 
+! Store dpdx in basic_g for output (budget diagnostics)
+if(imbudget>=1) then
+  basic_g(ngrid)%up_pgforce(1:m1,1:m2,1:m3) = dpdx(1:m1,1:m2,1:m3)
+endif
+
 deallocate(dpdx)
 deallocate(dpdx_top)
 
@@ -217,9 +224,11 @@ END SUBROUTINE prdctu
 !##############################################################################
 Subroutine prdctv (m1,m2,m3,ia,iz,ja,jz  &
    ,vp,vt,pp,th0,f23v,rtgv,rtgt,dyv,topv)
-   
+
 use mem_grid
 use node_mod, only:nmachs
+use mem_basic
+use micphys
 
 implicit none
 
@@ -278,6 +287,11 @@ if (jdim .eq. 1) then
 
    if (nstbot .eq. 1 .and. itopo .eq. 1)  &
         CALL botset (m1,m2,m3,vp,'V')
+
+   ! Store dpdy in basic_g for output (budget diagnostics)
+   if(imbudget>=1) then
+     basic_g(ngrid)%vp_pgforce(1:m1,1:m2,1:m3) = dpdy(1:m1,1:m2,1:m3)
+   endif
 
    deallocate(dpdy)
    deallocate(dpdy_top)
