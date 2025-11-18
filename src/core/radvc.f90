@@ -146,6 +146,8 @@ Subroutine vel_advectc (m1,m2,m3,ia,iz,ja,jz,izu,jzv  &
    ,fmapt,fmapu,fmapv,fmapui,fmapvi)
 
 use mem_grid
+use mem_basic
+use micphys
 
 implicit none
 
@@ -155,6 +157,15 @@ real, dimension(m2,m3) :: dxt,dxu,dxv,dyt,dyu,dyv,rtgt,rtgu,rtgv,f13t,f23t  &
    ,fmapt,fmapu,fmapv,fmapui,fmapvi
 integer :: j,i,k,jm,im
 real :: c1z,c1x,c1y
+real, dimension(:,:,:), allocatable :: u_adv_term, v_adv_term
+
+! Allocate and initialize arrays to accumulate advection tendencies
+if(imbudget>=1) then
+  allocate(u_adv_term(m1,m2,m3))
+  allocate(v_adv_term(m1,m2,m3))
+  u_adv_term = 0.0
+  v_adv_term = 0.0
+endif
 
 ! Compute momentum fluxes flxu, flxv, flxw
 
@@ -203,32 +214,62 @@ do j = ja,jz
       c1y = c1z * fmapu(i,j) * dyu(i,j)
 
       do k = 2,m1-1
-         ut(k,i,j) = ut(k,i,j) + c1x / dn0u(k,i,j) * (  &
+         ! Calculate X-direction advection contribution
+         real :: u_adv_x
+         u_adv_x = c1x / dn0u(k,i,j) * (  &
               (flxu(k,i,j) + flxu(k,i-1,j))  &
                * (uc(k,i,j) + uc(k,i-1,j))  &
             - (flxu(k,i,j) + flxu(k,i+1,j))  &
                * (uc(k,i,j) + uc(k,i+1,j))  &
             + (flxu(k,i+1,j) - flxu(k,i-1,j)) * 2.* uc(k,i,j) )
+
+         ! Add to tendency
+         ut(k,i,j) = ut(k,i,j) + u_adv_x
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_x
+         endif
       enddo
 
       do k = 2,m1-1
-         ut(k,i,j) = ut(k,i,j) + c1y / dn0u(k,i,j) * (  &
+         ! Calculate Y-direction advection contribution
+         real :: u_adv_y
+         u_adv_y = c1y / dn0u(k,i,j) * (  &
               (flxv(k,i,j-jdim) + flxv(k,i+1,j-jdim))  &
                * (uc(k,i,j) + uc(k,i,j-jdim))  &
             - (flxv(k,i,j) + flxv(k,i+1,j))  &
                * (uc(k,i,j) + uc(k,i,j+jdim))&
             + (flxv(k,i,j) + flxv(k,i+1,j) - flxv(k,i,j-jdim)  &
             - flxv(k,i+1,j-jdim)) * 2.* uc(k,i,j) )
+
+         ! Add to tendency
+         ut(k,i,j) = ut(k,i,j) + u_adv_y
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_y
+         endif
       enddo
 
       do k = 2,m1-1
-         ut(k,i,j) = ut(k,i,j) + c1z * dzt(k) / dn0u(k,i,j) * (  &
+         ! Calculate Z-direction advection contribution
+         real :: u_adv_z
+         u_adv_z = c1z * dzt(k) / dn0u(k,i,j) * (  &
               (flxw(k-1,i,j) + flxw(k-1,i+1,j))  &
                * (uc(k,i,j) + uc(k-1,i,j))  &
             - (flxw(k,i,j) + flxw(k,i+1,j))  &
                * (uc(k,i,j) + uc(k+1,i,j))   &
             + (flxw(k,i,j) + flxw(k,i+1,j) - flxw(k-1,i,j)  &
             - flxw(k-1,i+1,j)) * 2.* uc(k,i,j) )
+
+         ! Add to tendency
+         ut(k,i,j) = ut(k,i,j) + u_adv_z
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_z
+         endif
       enddo
    enddo
 enddo
@@ -242,33 +283,63 @@ do j = ja,jzv
       c1y = c1z * fmapv(i,j) * dyv(i,j)
 
       do k = 2,m1-1
-         vt(k,i,j) = vt(k,i,j) + c1x / dn0v(k,i,j) * (  &
+         ! Calculate X-direction advection contribution
+         real :: v_adv_x
+         v_adv_x = c1x / dn0v(k,i,j) * (  &
               (flxu(k,i-1,j) + flxu(k,i-1,j+jdim))  &
                * (vc(k,i,j) + vc(k,i-1,j))  &
             - (flxu(k,i,j) + flxu(k,i,j+jdim))  &
                * (vc(k,i,j) + vc(k,i+1,j))  &
             + (flxu(k,i,j) + flxu(k,i,j+jdim) - flxu(k,i-1,j)  &
             - flxu(k,i-1,j+jdim)) * 2.* vc(k,i,j) )
+
+         ! Add to tendency
+         vt(k,i,j) = vt(k,i,j) + v_adv_x
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_x
+         endif
       enddo
 
       do k = 2,m1-1
-         vt(k,i,j) = vt(k,i,j) + c1y / dn0v(k,i,j) * (  &
+         ! Calculate Y-direction advection contribution
+         real :: v_adv_y
+         v_adv_y = c1y / dn0v(k,i,j) * (  &
               (flxv(k,i,j) + flxv(k,i,j-jdim))  &
                * (vc(k,i,j) + vc(k,i,j-jdim))  &
             - (flxv(k,i,j) + flxv(k,i,j+jdim))  &
                * (vc(k,i,j) + vc(k,i,j+jdim))  &
             + (flxv(k,i,j+jdim) - flxv(k,i,j-jdim))  &
             * 2.* vc(k,i,j) )
+
+         ! Add to tendency
+         vt(k,i,j) = vt(k,i,j) + v_adv_y
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_y
+         endif
       enddo
 
       do k = 2,m1-1
-         vt(k,i,j) = vt(k,i,j) + c1z * dzt(k) / dn0v(k,i,j) * (  &
+         ! Calculate Z-direction advection contribution
+         real :: v_adv_z
+         v_adv_z = c1z * dzt(k) / dn0v(k,i,j) * (  &
               (flxw(k-1,i,j) + flxw(k-1,i,j+jdim))  &
                * (vc(k,i,j) + vc(k-1,i,j))  &
             - (flxw(k,i,j) + flxw(k,i,j+jdim))  &
                * (vc(k,i,j) + vc(k+1,i,j))  &
             + (flxw(k,i,j) + flxw(k,i,j+jdim) - flxw(k-1,i,j)  &
             - flxw(k-1,i,j+jdim)) * 2.* vc(k,i,j) )
+
+         ! Add to tendency
+         vt(k,i,j) = vt(k,i,j) + v_adv_z
+
+         ! Store for budget diagnostics
+         if(imbudget>=1) then
+           v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_z
+         endif
       enddo
    enddo
 enddo
@@ -313,6 +384,14 @@ do j = ja,jz
       enddo
    enddo
 enddo
+
+! Store accumulated advection tendencies for budget diagnostics
+if(imbudget>=1) then
+  basic_g(ngrid)%up_advection(1:m1,1:m2,1:m3) = u_adv_term(1:m1,1:m2,1:m3)
+  basic_g(ngrid)%vp_advection(1:m1,1:m2,1:m3) = v_adv_term(1:m1,1:m2,1:m3)
+  deallocate(u_adv_term)
+  deallocate(v_adv_term)
+endif
 
 return
 END SUBROUTINE vel_advectc
