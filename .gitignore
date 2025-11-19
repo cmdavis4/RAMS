@@ -41,6 +41,9 @@ misc/*
 *.tar
 *.tgz
 
+include.mk*
+!include.mk.example
 include.mk
+
 CLAUDE.md
 .claude
