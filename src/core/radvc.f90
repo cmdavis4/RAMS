@@ -147,7 +147,7 @@ Subroutine vel_advectc (m1,m2,m3,ia,iz,ja,jz,izu,jzv  &
 
 use mem_grid
 use mem_basic
-use micphys
+use io_params, only: iuvwtend
 
 implicit none
 
@@ -160,7 +160,7 @@ real :: c1z,c1x,c1y
 real, dimension(:,:,:), allocatable :: u_adv_term, v_adv_term
 
 ! Allocate and initialize arrays to accumulate advection tendencies
-if(imbudget>=1) then
+if(iuvwtend>=1) then
   allocate(u_adv_term(m1,m2,m3))
   allocate(v_adv_term(m1,m2,m3))
   u_adv_term = 0.0
@@ -227,7 +227,7 @@ do j = ja,jz
          ut(k,i,j) = ut(k,i,j) + u_adv_x
 
          ! Store for budget diagnostics
-         if(imbudget>=1) then
+         if(iuvwtend>=1) then
            u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_x
          endif
       enddo
@@ -247,7 +247,7 @@ do j = ja,jz
          ut(k,i,j) = ut(k,i,j) + u_adv_y
 
          ! Store for budget diagnostics
-         if(imbudget>=1) then
+         if(iuvwtend>=1) then
            u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_y
          endif
       enddo
@@ -267,7 +267,7 @@ do j = ja,jz
          ut(k,i,j) = ut(k,i,j) + u_adv_z
 
          ! Store for budget diagnostics
-         if(imbudget>=1) then
+         if(iuvwtend>=1) then
            u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_z
          endif
       enddo
@@ -297,7 +297,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + v_adv_x
 
          ! Store for budget diagnostics
-         if(imbudget>=1) then
+         if(iuvwtend>=1) then
            v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_x
          endif
       enddo
@@ -317,7 +317,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + v_adv_y
 
          ! Store for budget diagnostics
-         if(imbudget>=1) then
+         if(iuvwtend>=1) then
            v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_y
          endif
       enddo
@@ -337,7 +337,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + v_adv_z
 
          ! Store for budget diagnostics
-         if(imbudget>=1) then
+         if(iuvwtend>=1) then
            v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_z
          endif
       enddo
@@ -386,7 +386,7 @@ do j = ja,jz
 enddo
 
 ! Store accumulated advection tendencies for budget diagnostics
-if(imbudget>=1) then
+if(iuvwtend>=1) then
   basic_g(ngrid)%up_advection(1:m1,1:m2,1:m3) = u_adv_term(1:m1,1:m2,1:m3)
   basic_g(ngrid)%vp_advection(1:m1,1:m2,1:m3) = v_adv_term(1:m1,1:m2,1:m3)
   deallocate(u_adv_term)

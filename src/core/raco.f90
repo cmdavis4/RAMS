@@ -150,7 +150,7 @@ Subroutine prdctu (m1,m2,m3,ia,iz,ja,jz  &
 use mem_grid
 use node_mod, only:nmachs
 use mem_basic
-use micphys
+use io_params, only: iuvwtend
 
 implicit none
 
@@ -208,7 +208,7 @@ if (nstbot .eq. 1 .and. itopo .eq. 1)  &
      CALL botset (m1,m2,m3,up,'U')
 
 ! Store dpdx in basic_g for output (budget diagnostics)
-if(imbudget>=1) then
+if(iuvwtend>=1) then
   basic_g(ngrid)%up_pgforce(1:m1,1:m2,1:m3) = dpdx(1:m1,1:m2,1:m3)
 endif
 
@@ -228,7 +228,7 @@ Subroutine prdctv (m1,m2,m3,ia,iz,ja,jz  &
 use mem_grid
 use node_mod, only:nmachs
 use mem_basic
-use micphys
+use io_params, only: iuvwtend
 
 implicit none
 
@@ -289,7 +289,7 @@ if (jdim .eq. 1) then
         CALL botset (m1,m2,m3,vp,'V')
 
    ! Store dpdy in basic_g for output (budget diagnostics)
-   if(imbudget>=1) then
+   if(iuvwtend>=1) then
      basic_g(ngrid)%vp_pgforce(1:m1,1:m2,1:m3) = dpdy(1:m1,1:m2,1:m3)
    endif
 
@@ -674,7 +674,7 @@ use mem_tend
 use mem_basic
 use mem_grid
 use node_mod
-use micphys
+use io_params, only: iuvwtend
 
 implicit none
 
@@ -689,7 +689,7 @@ END SUBROUTINE buoyancy
 Subroutine boyanc (m1,m2,m3,ia,iz,ja,jz,wt,theta,rtc,rv,th0,dtlt)
 
 use rconstants
-use micphys
+use io_params, only: iuvwtend
 use mem_basic
 use mem_grid, only:ngrid
 
@@ -702,7 +702,7 @@ real :: dtlt
 
 allocate(vtemp(m1,m2,m3))
 
-if(imbudget>=1) then
+if(iuvwtend>=1) then
  allocate(wpbuoytheta(m1,m2,m3))
  allocate(wpbuoycond(m1,m2,m3))
  allocate(wpadvdif(m1,m2,m3))
@@ -718,7 +718,7 @@ if (level .ge. 1) then
             vtemp(k,i,j) = gg * ((theta(k,i,j) * (1. + .61 * rv(k,i,j))  &
                - th0(k,i,j)) / th0(k,i,j) - (rtc(k,i,j) - rv(k,i,j)) )
             !calculate partial W buoyancy budgets
-            if(imbudget>=1) then
+            if(iuvwtend>=1) then
               wpbuoytheta(k,i,j) = gg * ((theta(k,i,j)*(1.+.61*rv(k,i,j)) &
                 - th0(k,i,j)) / th0(k,i,j))
               wpbuoycond(k,i,j)  = gg * (-1.0*(rtc(k,i,j) - rv(k,i,j)))
@@ -732,7 +732,7 @@ else
          do k = 2,m1-1
             vtemp(k,i,j) = gg * (theta(k,i,j) / th0(k,i,j) - 1.)
             !calculate partial W buoyancy budgets
-            if(imbudget>=1) wpbuoytheta(k,i,j) = vtemp(k,i,j)
+            if(iuvwtend>=1) wpbuoytheta(k,i,j) = vtemp(k,i,j)
          enddo
       enddo
    enddo
@@ -744,7 +744,7 @@ do j = ja,jz
          !Calculate W buoyancy budgets (m/s)
          !Calculate W due to advection and diffusion (current wt)
          !Multiply by 2*dt for leapfrog timestep t-dt to t+dt
-         if(imbudget>=1) then         
+         if(iuvwtend>=1) then         
            wpadvdif(k,i,j)    = 2.0 * dtlt * wt(k,i,j)
            wpbuoytheta(k,i,j) = 2.0 * dtlt * (wpbuoytheta(k,i,j) &
                                             + wpbuoytheta(k+1,i,j))
@@ -759,7 +759,7 @@ enddo
 deallocate(vtemp)
 
 !Copy local W buoyancy budgets (m/s) to global budget variables
-if(imbudget>=1) then
+if(iuvwtend>=1) then
  basic_g(ngrid)%wp_buoy_theta = wpbuoytheta
  basic_g(ngrid)%wp_buoy_cond  = wpbuoycond
  basic_g(ngrid)%wp_advdif     = wpadvdif

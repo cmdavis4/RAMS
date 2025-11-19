@@ -67,7 +67,7 @@ DATA INDAT/  &
      ,'BRTP','ICONV','ICONGR','ICICENT','ICJCENT','CXRAD','CYRAD'        &
      ,'ICVERT','ICKMAX','CZRAD','ICKCENT','CDIVMAX','CTAU','CTMAX'       &
      ,'IRCE','RCE_SZEN','RCE_SOLC','RCE_UBMN','RCE_BUBL','LEVEL','ISCM'  &
-     ,'ICHECKMIC','ITRACER','ITRACHIST','IMBUDGET','IRIME','IPLAWS'      &
+     ,'ICHECKMIC','ITRACER','ITRACHIST','IMBUDGET','IUVWTEND','IRIME','IPLAWS'      &
      ,'ISEDIM','ICLOUD','IDRIZ','IRAIN','IPRIS','ISNOW','IAGGR'          &
      ,'IGRAUP','IHAIL','CPARM','DPARM','RPARM','PPARM','SPARM','APARM'   &
      ,'GPARM','HPARM','GNU','HUCMFILE','NDTCOLL','IAEROSOL','ISALT'      &
@@ -328,6 +328,7 @@ IF(GROUP.EQ.'$MODEL_OPTIONS') THEN
  IF(VR.EQ.'ISCMY')        CALL varseti (VR,ISCMY,NV,1,II,0,90000)
  IF(VR.EQ.'ICHECKMIC')    CALL varseti (VR,ICHECKMIC,NV,1,II,0,2)
  IF(VR.EQ.'IMBUDGET')     CALL varseti (VR,IMBUDGET,NV,1,II,0,3)
+ IF(VR.EQ.'IUVWTEND')     CALL varseti (VR,IUVWTEND,NV,1,II,0,1)
  IF(VR.EQ.'IRIME')        CALL varseti (VR,IRIME,NV,1,II,0,1)
  IF(VR.EQ.'IPLAWS')       CALL varseti (VR,IPLAWS,NV,1,II,0,2)
  IF(VR.EQ.'ISEDIM')       CALL varseti (VR,ISEDIM,NV,1,II,0,1)
@@ -515,6 +516,7 @@ WRITE(6,'(100(3(A19,I5)/))')         &
  ,'ISCMY=',ISCMY                     &
  ,'ICHECKMIC=',ICHECKMIC             &
  ,'IMBUDGET=',IMBUDGET               &
+ ,'IUVWTEND=',IUVWTEND               &
  ,'IRIME=',IRIME                     &
  ,'IPLAWS=',IPLAWS                   &
  ,'ISEDIM=',ISEDIM                   &

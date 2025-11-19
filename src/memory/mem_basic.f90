@@ -33,6 +33,7 @@ Contains
 Subroutine alloc_basic (basic,n1,n2,n3)
 
 use micphys
+use io_params, only: iuvwtend
 
 implicit none
 
@@ -70,6 +71,9 @@ implicit none
         allocate (basic%wp_buoy_theta(n1,n2,n3))
         allocate (basic%wp_buoy_cond(n1,n2,n3))
         allocate (basic%wp_advdif(n1,n2,n3))
+      endif
+
+      if(iuvwtend>=1) then
         allocate (basic%up_pgforce(n1,n2,n3))
         allocate (basic%vp_pgforce(n1,n2,n3))
         allocate (basic%up_coriolis(n1,n2,n3))
@@ -129,6 +133,7 @@ END SUBROUTINE dealloc_basic
 Subroutine filltab_basic (basic,basicm,imean,n1,n2,n3,ng)
 
 use var_tables
+use io_params, only: iuvwtend
 
 implicit none
 
