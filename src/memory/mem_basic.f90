@@ -13,7 +13,8 @@ implicit none
                          ,wp_buoy_theta,wp_buoy_cond,wp_advdif &
                          ,up_pgforce,vp_pgforce &
                          ,up_coriolis,vp_coriolis &
-                         ,up_advection,vp_advection
+                         ,up_advection,vp_advection &
+                         ,up_diffusion,vp_diffusion
 
       ! These were used for testing perturbations of updated
       ! domain-mean base state quantities. Could be useful in testing.
@@ -80,6 +81,8 @@ implicit none
         allocate (basic%vp_coriolis(n1,n2,n3))
         allocate (basic%up_advection(n1,n2,n3))
         allocate (basic%vp_advection(n1,n2,n3))
+        allocate (basic%up_diffusion(n1,n2,n3))
+        allocate (basic%vp_diffusion(n1,n2,n3))
       endif
 
 return
@@ -125,6 +128,8 @@ implicit none
    if (allocated(basic%vp_coriolis))   deallocate (basic%vp_coriolis)
    if (allocated(basic%up_advection))  deallocate (basic%up_advection)
    if (allocated(basic%vp_advection))  deallocate (basic%vp_advection)
+   if (allocated(basic%up_diffusion))  deallocate (basic%up_diffusion)
+   if (allocated(basic%vp_diffusion))  deallocate (basic%vp_diffusion)
 
 return
 END SUBROUTINE dealloc_basic
@@ -243,6 +248,10 @@ implicit none
       CALL vtables2 (basic%wp_advdif(1,1,1),basicm%wp_advdif(1,1,1)  &
                  ,ng, npts, imean,  &
                  'WP_ADVDIF :3:anal:mpti')
+   if (allocated(basic%up_pgforce))  &
+      CALL vtables2 (basic%up_pgforce(1,1,1),basicm%up_pgforce(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'UP_PGFORCE :3:anal:mpti')
    if (allocated(basic%vp_pgforce))  &
       CALL vtables2 (basic%vp_pgforce(1,1,1),basicm%vp_pgforce(1,1,1)  &
                  ,ng, npts, imean,  &
@@ -263,6 +272,14 @@ implicit none
       CALL vtables2 (basic%vp_advection(1,1,1),basicm%vp_advection(1,1,1)  &
                  ,ng, npts, imean,  &
                  'VP_ADVECTION :3:anal:mpti')
+   if (allocated(basic%up_diffusion))  &
+      CALL vtables2 (basic%up_diffusion(1,1,1),basicm%up_diffusion(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'UP_DIFFUSION :3:anal:mpti')
+   if (allocated(basic%vp_diffusion))  &
+      CALL vtables2 (basic%vp_diffusion(1,1,1),basicm%vp_diffusion(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'VP_DIFFUSION :3:anal:mpti')
 
    ! 2D CORIOLIS INFO FOR VTABLES
    npts=n2*n3

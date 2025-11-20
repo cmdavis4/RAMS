@@ -44,21 +44,27 @@ integer :: ioutput,iclobber,nlite_vars,iuvwtend
 - Character variables: `character(len=N) :: variable_name`
 - Arrays: Add dimension specifications as needed
 
-### 2. Initialize the Variable with Default Value
+### 2. Increment the Namelist Counter
 
-**File**: [src/io/opspec.f90](src/io/opspec.f90)
+**File**: [src/io/rname.f90](src/io/rname.f90)
 
-**Action**: Add initialization in the appropriate section (usually where similar variables are initialized):
+**Action**: Increment the counter for the appropriate namelist group (line ~28):
+
 ```fortran
-   imbudget = 0
-   iuvwtend = 0
-   iccnlev = 0
+! Before (147 variables in INDAT)
+integer, parameter ::nvgrid=37,nvstrt=77,nvindat=147,nvsound=10
+
+! After (148 variables in INDAT)
+integer, parameter ::nvgrid=37,nvstrt=77,nvindat=148,nvsound=10
 ```
 
-**General Pattern**:
-- Find where related variables are initialized
-- Add your variable initialization with an appropriate default value
-- Common defaults: `0` for flags, `0.0` for reals, `''` for strings
+**Namelist Counters**:
+- `nvgrid` - Number of variables in `$MODEL_GRIDS` namelist
+- `nvstrt` - Number of variables in `$MODEL_FILE_INFO` / `$MODEL_OPTIONS` namelists
+- `nvindat` - Number of variables in physics/dynamics namelists (INDAT)
+- `nvsound` - Number of variables in `$MODEL_SOUND` namelist
+
+**⚠️ CRITICAL**: You must increment the appropriate counter or the namelist reading will fail!
 
 ### 3. Add Variable to DATA Array
 
@@ -118,6 +124,11 @@ IF(VR.EQ.'VARNAME')  CALL varsetc (VR,variable_name,NV,1,CC)
 - `II`/`FF`/`CC` - Input value (integer/float/character)
 - `min_value`, `max_value` - Valid range (for varseti/varsetf only)
 
+**Important Notes**:
+- The `varseti`/`varsetf` calls handle both reading from RAMSIN and setting default values
+- If the variable is not specified in RAMSIN, the variable retains its default value from module initialization (typically 0, 0.0, or '')
+- **You do NOT need to explicitly initialize the variable in opspec.f90 or elsewhere** - the namelist reading system handles this
+
 ### 5. Add Variable to Print Statement
 
 **File**: [src/io/rname.f90](src/io/rname.f90)
@@ -140,7 +151,7 @@ This prints the variable value to the output log when RAMS starts, allowing veri
 
 ### 6. Use the Variable in Code
 
-Once declared, initialized, and registered, the variable can be used anywhere in the code by:
+Once declared and registered, the variable can be used anywhere in the code by:
 
 1. Adding a `use` statement to access the module:
 ```fortran
@@ -154,6 +165,32 @@ if(iuvwtend>=1) then
 endif
 ```
 
+**⚠️ IMPORTANT - Variable Declaration Location**:
+
+When using variables inside loops or conditional blocks, declare them at the **top of the subroutine**, not inside the loop:
+
+**WRONG** (non-standard Fortran):
+```fortran
+do k = 2,m1-1
+   real :: temp_value  ! ILLEGAL - can't declare inside loop
+   temp_value = calculate_something()
+   array(k) = temp_value
+enddo
+```
+
+**CORRECT**:
+```fortran
+! Declare at top of subroutine
+integer :: k
+real :: temp_value
+
+! Use in loop
+do k = 2,m1-1
+   temp_value = calculate_something()
+   array(k) = temp_value
+enddo
+```
+
 ## Complete Example: IUVWTEND
 
 ### Files Modified for IUVWTEND
@@ -161,15 +198,13 @@ endif
 1. **[src/io/io_params.f90](src/io/io_params.f90:13)**
    - Declared: `integer :: ioutput,iclobber,nlite_vars,iuvwtend`
 
-2. **[src/io/opspec.f90](src/io/opspec.f90:260)**
-   - Initialized: `iuvwtend = 0`
-
-3. **[src/io/rname.f90](src/io/rname.f90)**
+2. **[src/io/rname.f90](src/io/rname.f90)**
+   - Incremented counter (line 28): `nvindat=148` (was 147)
    - Added to DATA array (line 70): `'IUVWTEND'`
    - Added varseti call (line 331): `IF(VR.EQ.'IUVWTEND') CALL varseti (VR,IUVWTEND,NV,1,II,0,1)`
    - Added to print (line 519): `,'IUVWTEND=',IUVWTEND`
 
-4. **Usage in multiple files**:
+3. **Usage in multiple files**:
    - [src/memory/mem_basic.f90](src/memory/mem_basic.f90) - Controls allocation of tendency arrays
    - [src/core/radvc.f90](src/core/radvc.f90) - Controls advection tendency output
    - [src/core/raco.f90](src/core/raco.f90) - Controls pressure gradient tendency output
@@ -177,7 +212,7 @@ endif
 
 ### Using IUVWTEND in RAMSIN
 
-Add to your RAMSIN file in the appropriate namelist (e.g., `$MODEL_FILE_INFO` or `$MODEL_OPTIONS`):
+Add to your RAMSIN file in the appropriate namelist:
 ```fortran
 $MODEL_FILE_INFO
  ...
@@ -222,6 +257,47 @@ CALL varsetf (VR,variable_name,NV,1,FF,0.,1.E20)
 CALL varsetc (VR,variable_name,NV,1,CC)
 ```
 
+## Common Mistakes and How to Avoid Them
+
+### ❌ Mistake 1: Forgetting to Increment Namelist Counter
+
+**Problem**: Adding a variable to DATA array without incrementing the counter causes array bounds errors.
+
+**Solution**: Always increment the appropriate counter (nvgrid, nvstrt, nvindat, or nvsound) when adding a variable.
+
+### ❌ Mistake 2: Declaring Variables Inside Loops
+
+**Problem**: Modern Fortran compilers may accept this, but it's non-standard and causes portability issues.
+
+**Solution**: Always declare variables at the top of the subroutine, before any executable statements.
+
+### ❌ Mistake 3: Initializing Variables in opspec.f90
+
+**Problem**: Variables read from RAMSIN don't need explicit initialization - the varseti/varsetf calls handle defaults.
+
+**Solution**: Only initialize variables in opspec.f90 if they are **computed** or **derived** values, not user inputs. For user inputs from RAMSIN, the namelist system handles defaults.
+
+**Exception**: Variables that depend on other settings (like turning off microphysics variables when `level < 3`) should be initialized in opspec.f90.
+
+### ❌ Mistake 4: Wrong Module for Variable
+
+**Problem**: Placing a variable in the wrong module makes code confusing and may cause circular dependencies.
+
+**Solution**:
+- I/O control → `io_params`
+- Microphysics → `micphys`
+- Grid config → `mem_grid`
+- Radiation → `mem_radiate`
+
+### ❌ Mistake 5: Missing Use Statement
+
+**Problem**: Forgetting to add `use module_name` causes "undefined variable" compilation errors.
+
+**Solution**: In every subroutine that uses the variable, add:
+```fortran
+use module_name, only: variable_name
+```
+
 ## Troubleshooting
 
 ### Variable Not Being Read
@@ -229,11 +305,13 @@ CALL varsetc (VR,variable_name,NV,1,CC)
 - Verify variable name is spelled consistently (UPPERCASE in DATA array)
 - Check that IF(VR.EQ.'...') statement exists
 - Ensure variable is in correct namelist group in RAMSIN
+- **Check that namelist counter was incremented**
 
 ### Compilation Errors
 - Verify variable is declared in source module
 - Check that `use` statements reference correct module
 - Ensure variable type matches setter function (varseti/varsetf/varsetc)
+- **Check that variable declarations are at top of subroutine, not inside loops**
 
 ### Value Out of Range
 - Check min/max values in varseti/varsetf call
@@ -244,15 +322,35 @@ CALL varsetc (VR,variable_name,NV,1,CC)
 - Maximum length is 16 characters
 - Shorten the variable name or modify the limit in rname.f90
 
+### Array Bounds Errors in Namelist Reading
+- **Check that you incremented the namelist counter** (nvgrid, nvstrt, nvindat, or nvsound)
+- The counter must match the actual number of variables in the DATA array
+
 ## Best Practices
 
 1. **Choose descriptive names** - Use clear, meaningful variable names that indicate purpose
 2. **Follow naming conventions** - Use existing variable names as templates (e.g., I* for integer flags)
 3. **Group related variables** - Place new variables near similar ones in all files
 4. **Document in comments** - Add comments explaining the variable's purpose
-5. **Set appropriate defaults** - Initialize to safe, reasonable default values
-6. **Validate ranges** - Use min/max values to prevent invalid inputs
-7. **Test thoroughly** - Verify variable is read correctly and used as intended
+5. **Set appropriate defaults** - Variables typically default to 0, 0.0, or '' from module initialization
+6. **Validate ranges** - Use min/max values in varseti/varsetf to prevent invalid inputs
+7. **Increment counters** - Always update the namelist counter when adding variables
+8. **Declare at top** - Put all variable declarations at the top of subroutines
+9. **Test thoroughly** - Verify variable is read correctly and used as intended
+
+## Summary: Required Steps
+
+For quick reference, here are the essential steps:
+
+1. ✅ Declare variable in appropriate module (e.g., io_params.f90)
+2. ✅ **Increment namelist counter** in rname.f90 (nvindat, nvstrt, etc.)
+3. ✅ Add variable name to DATA array in rname.f90
+4. ✅ Add varseti/varsetf/varsetc call in rname.f90
+5. ✅ Add to print statement in rname.f90
+6. ✅ Use variable in code with proper `use` statements
+7. ✅ Declare any temporary variables at top of subroutines
+
+**Note**: Do NOT initialize in opspec.f90 unless the variable is computed/derived (not a direct user input).
 
 ## References
 
