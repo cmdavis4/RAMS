@@ -689,6 +689,7 @@ END SUBROUTINE buoyancy
 Subroutine boyanc (m1,m2,m3,ia,iz,ja,jz,wt,theta,rtc,rv,th0,dtlt)
 
 use rconstants
+use micphys
 use io_params, only: iuvwtend
 use mem_basic
 use mem_grid, only:ngrid

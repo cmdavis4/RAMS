@@ -257,7 +257,6 @@ if (level .le. 2) then
    ihail = 0
    idriz = 0
    imbudget = 0
-   iuvwtend = 0
    iccnlev = 0
    iifn = 0
 

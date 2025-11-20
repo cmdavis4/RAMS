@@ -158,6 +158,7 @@ real, dimension(m2,m3) :: dxt,dxu,dxv,dyt,dyu,dyv,rtgt,rtgu,rtgv,f13t,f23t  &
 integer :: j,i,k,jm,im
 real :: c1z,c1x,c1y
 real, dimension(:,:,:), allocatable :: u_adv_term, v_adv_term
+real :: u_adv_x, u_adv_y, u_adv_z, v_adv_x, v_adv_y, v_adv_z
 
 ! Allocate and initialize arrays to accumulate advection tendencies
 if(iuvwtend>=1) then
@@ -215,7 +216,6 @@ do j = ja,jz
 
       do k = 2,m1-1
          ! Calculate X-direction advection contribution
-         real :: u_adv_x
          u_adv_x = c1x / dn0u(k,i,j) * (  &
               (flxu(k,i,j) + flxu(k,i-1,j))  &
                * (uc(k,i,j) + uc(k,i-1,j))  &
@@ -234,7 +234,6 @@ do j = ja,jz
 
       do k = 2,m1-1
          ! Calculate Y-direction advection contribution
-         real :: u_adv_y
          u_adv_y = c1y / dn0u(k,i,j) * (  &
               (flxv(k,i,j-jdim) + flxv(k,i+1,j-jdim))  &
                * (uc(k,i,j) + uc(k,i,j-jdim))  &
@@ -254,7 +253,6 @@ do j = ja,jz
 
       do k = 2,m1-1
          ! Calculate Z-direction advection contribution
-         real :: u_adv_z
          u_adv_z = c1z * dzt(k) / dn0u(k,i,j) * (  &
               (flxw(k-1,i,j) + flxw(k-1,i+1,j))  &
                * (uc(k,i,j) + uc(k-1,i,j))  &
@@ -284,7 +282,6 @@ do j = ja,jzv
 
       do k = 2,m1-1
          ! Calculate X-direction advection contribution
-         real :: v_adv_x
          v_adv_x = c1x / dn0v(k,i,j) * (  &
               (flxu(k,i-1,j) + flxu(k,i-1,j+jdim))  &
                * (vc(k,i,j) + vc(k,i-1,j))  &
@@ -304,7 +301,6 @@ do j = ja,jzv
 
       do k = 2,m1-1
          ! Calculate Y-direction advection contribution
-         real :: v_adv_y
          v_adv_y = c1y / dn0v(k,i,j) * (  &
               (flxv(k,i,j) + flxv(k,i,j-jdim))  &
                * (vc(k,i,j) + vc(k,i,j-jdim))  &
@@ -324,7 +320,6 @@ do j = ja,jzv
 
       do k = 2,m1-1
          ! Calculate Z-direction advection contribution
-         real :: v_adv_z
          v_adv_z = c1z * dzt(k) / dn0v(k,i,j) * (  &
               (flxw(k-1,i,j) + flxw(k-1,i,j+jdim))  &
                * (vc(k,i,j) + vc(k-1,i,j))  &
