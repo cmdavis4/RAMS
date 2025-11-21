@@ -157,15 +157,18 @@ real, dimension(m2,m3) :: dxt,dxu,dxv,dyt,dyu,dyv,rtgt,rtgu,rtgv,f13t,f23t  &
    ,fmapt,fmapu,fmapv,fmapui,fmapvi
 integer :: j,i,k,jm,im
 real :: c1z,c1x,c1y
-real, dimension(:,:,:), allocatable :: u_adv_term, v_adv_term
+real, dimension(:,:,:), allocatable :: u_adv_term, v_adv_term, w_adv_term
 real :: u_adv_x, u_adv_y, u_adv_z, v_adv_x, v_adv_y, v_adv_z
+real :: w_adv_x, w_adv_y, w_adv_z
 
 ! Allocate and initialize arrays to accumulate advection tendencies
 if(iuvwtend>=1) then
   allocate(u_adv_term(m1,m2,m3))
   allocate(v_adv_term(m1,m2,m3))
+  allocate(w_adv_term(m1,m2,m3))
   u_adv_term = 0.0
   v_adv_term = 0.0
+  w_adv_term = 0.0
 endif
 
 ! Compute momentum fluxes flxu, flxv, flxw
@@ -347,35 +350,38 @@ do j = ja,jz
       c1y = c1z * fmapt(i,j) * dyt(i,j)
 
       do k = 2,m1-2
-         wt(k,i,j) = wt(k,i,j)  &
-            + c1x / (dn0(k,i,j) + dn0(k+1,i,j)) * (  &
+         w_adv_x = c1x / (dn0(k,i,j) + dn0(k+1,i,j)) * (  &
               (flxu(k,i-1,j) + flxu(k+1,i-1,j))  &
                * (wc(k,i,j) + wc(k,i-1,j))  &
             - (flxu(k,i,j) + flxu(k+1,i,j))  &
                * (wc(k,i,j) + wc(k,i+1,j))  &
             + (flxu(k,i,j) + flxu(k+1,i,j) - flxu(k,i-1,j)  &
             - flxu(k+1,i-1,j)) * 2.* wc(k,i,j) )
+         wt(k,i,j) = wt(k,i,j) + w_adv_x
+         if(iuvwtend>=1) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_x
       enddo
 
       do k = 2,m1-2
-         wt(k,i,j) = wt(k,i,j)  &
-            + c1y / (dn0(k,i,j) + dn0(k+1,i,j)) * (  &
+         w_adv_y = c1y / (dn0(k,i,j) + dn0(k+1,i,j)) * (  &
               (flxv(k,i,j-jdim) + flxv(k+1,i,j-jdim))  &
                * (wc(k,i,j) + wc(k,i,j-jdim))  &
             - (flxv(k,i,j) + flxv(k+1,i,j))  &
                * (wc(k,i,j) + wc(k,i,j+jdim))  &
             + (flxv(k,i,j) + flxv(k+1,i,j) - flxv(k,i,j-jdim)  &
             - flxv(k+1,i,j-jdim)) * 2.* wc(k,i,j) )
+         wt(k,i,j) = wt(k,i,j) + w_adv_y
+         if(iuvwtend>=1) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_y
       enddo
 
       do k = 2,m1-2
-         wt(k,i,j) = wt(k,i,j)  &
-            + c1z * dzm(k) / (dn0(k,i,j) + dn0(k+1,i,j)) * (  &
+         w_adv_z = c1z * dzm(k) / (dn0(k,i,j) + dn0(k+1,i,j)) * (  &
               (flxw(k,i,j) + flxw(k-1,i,j))  &
                * (wc(k,i,j) + wc(k-1,i,j))  &
             - (flxw(k,i,j) + flxw(k+1,i,j))  &
                * (wc(k,i,j) + wc(k+1,i,j))   &
             + (flxw(k+1,i,j) - flxw(k-1,i,j)) * 2.* wc(k,i,j) )
+         wt(k,i,j) = wt(k,i,j) + w_adv_z
+         if(iuvwtend>=1) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_z
       enddo
    enddo
 enddo
@@ -384,8 +390,10 @@ enddo
 if(iuvwtend>=1) then
   basic_g(ngrid)%up_advection(1:m1,1:m2,1:m3) = u_adv_term(1:m1,1:m2,1:m3)
   basic_g(ngrid)%vp_advection(1:m1,1:m2,1:m3) = v_adv_term(1:m1,1:m2,1:m3)
+  basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3) = w_adv_term(1:m1,1:m2,1:m3)
   deallocate(u_adv_term)
   deallocate(v_adv_term)
+  deallocate(w_adv_term)
 endif
 
 return

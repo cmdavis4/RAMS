@@ -17,7 +17,7 @@ implicit none
 integer :: m1,m2,m3,ia,iz,ja,jz,jd,iz1,jz1,izu,jzv,idiffkk,i,j,k
 
 real :: akn,ako,akp,cross,c1,c2,dtlvi
-real, dimension(:,:,:), allocatable :: u_diff_term, v_diff_term
+real, dimension(:,:,:), allocatable :: u_diff_term, v_diff_term, w_diff_term
 real, dimension(m1,m2,m3) :: up,vp,wp,ut,vt,wt,vt3da,vt3db,vt3dc,vt3dd  &
    ,vt3de,vt3df,vt3dg,vt3dj,vt3dk,vt3dl,vt3dm,vt3dn,vt3do,scr1,scr2  &
    ,dn0,dn0u,dn0v
@@ -382,6 +382,12 @@ else
    endif
 endif
 
+! Allocate temporary array for W diffusion tendency
+if(iuvwtend>=1) then
+  allocate(w_diff_term(m1,m2,m3))
+  w_diff_term = 0.0
+endif
+
 if (jd .eq. 1) then
    do j = ja,jz
       do i = ia,iz
@@ -390,6 +396,12 @@ if (jd .eq. 1) then
                + dtlvi * (vt3do(k,i,j) - wp(k,i,j))  &
                - (vt3dj(k,i,j) + vt3dk(k,i,j))  &
                / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
+            ! Store W diffusion tendency
+            if(iuvwtend>=1) then
+              w_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j) - wp(k,i,j))  &
+                                 - (vt3dj(k,i,j) + vt3dk(k,i,j))  &
+                                 / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
+            endif
          enddo
       enddo
    enddo
@@ -401,9 +413,21 @@ else
                + dtlvi * (vt3do(k,i,j) - wp(k,i,j))  &
                - vt3dj(k,i,j)  &
                / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
+             ! Store W diffusion tendency
+             if(iuvwtend>=1) then
+               w_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j) - wp(k,i,j))  &
+                                  - vt3dj(k,i,j)  &
+                                  / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
+             endif
          enddo
       enddo
    enddo
+endif
+
+! Copy W diffusion tendency to output array
+if(iuvwtend>=1) then
+  basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3) = w_diff_term(1:m1,1:m2,1:m3)
+  deallocate(w_diff_term)
 endif
 
 return

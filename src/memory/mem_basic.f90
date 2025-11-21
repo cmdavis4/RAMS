@@ -11,10 +11,10 @@ implicit none
                          ,rv,theta,thp,rtp &
                          ,pi0,th0,rvt0,dn0,dn0u,dn0v &
                          ,wp_buoy_theta,wp_buoy_cond,wp_advdif &
-                         ,up_pgforce,vp_pgforce &
+                         ,up_pgforce,vp_pgforce,wp_pgforce &
                          ,up_coriolis,vp_coriolis &
-                         ,up_advection,vp_advection &
-                         ,up_diffusion,vp_diffusion
+                         ,up_advection,vp_advection,wp_advection &
+                         ,up_diffusion,vp_diffusion,wp_diffusion
 
       ! These were used for testing perturbations of updated
       ! domain-mean base state quantities. Could be useful in testing.
@@ -77,12 +77,15 @@ implicit none
       if(iuvwtend>=1) then
         allocate (basic%up_pgforce(n1,n2,n3))
         allocate (basic%vp_pgforce(n1,n2,n3))
+        allocate (basic%wp_pgforce(n1,n2,n3))
         allocate (basic%up_coriolis(n1,n2,n3))
         allocate (basic%vp_coriolis(n1,n2,n3))
         allocate (basic%up_advection(n1,n2,n3))
         allocate (basic%vp_advection(n1,n2,n3))
+        allocate (basic%wp_advection(n1,n2,n3))
         allocate (basic%up_diffusion(n1,n2,n3))
         allocate (basic%vp_diffusion(n1,n2,n3))
+        allocate (basic%wp_diffusion(n1,n2,n3))
       endif
 
 return
@@ -124,12 +127,15 @@ implicit none
    if (allocated(basic%wp_advdif))     deallocate (basic%wp_advdif)
    if (allocated(basic%up_pgforce))    deallocate (basic%up_pgforce)
    if (allocated(basic%vp_pgforce))    deallocate (basic%vp_pgforce)
+   if (allocated(basic%wp_pgforce))    deallocate (basic%wp_pgforce)
    if (allocated(basic%up_coriolis))   deallocate (basic%up_coriolis)
    if (allocated(basic%vp_coriolis))   deallocate (basic%vp_coriolis)
    if (allocated(basic%up_advection))  deallocate (basic%up_advection)
    if (allocated(basic%vp_advection))  deallocate (basic%vp_advection)
+   if (allocated(basic%wp_advection))  deallocate (basic%wp_advection)
    if (allocated(basic%up_diffusion))  deallocate (basic%up_diffusion)
    if (allocated(basic%vp_diffusion))  deallocate (basic%vp_diffusion)
+   if (allocated(basic%wp_diffusion))  deallocate (basic%wp_diffusion)
 
 return
 END SUBROUTINE dealloc_basic
@@ -280,6 +286,18 @@ implicit none
       CALL vtables2 (basic%vp_diffusion(1,1,1),basicm%vp_diffusion(1,1,1)  &
                  ,ng, npts, imean,  &
                  'VP_DIFFUSION :3:anal:mpti')
+   if (allocated(basic%wp_pgforce))  &
+      CALL vtables2 (basic%wp_pgforce(1,1,1),basicm%wp_pgforce(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'WP_PGFORCE :3:anal:mpti')
+   if (allocated(basic%wp_advection))  &
+      CALL vtables2 (basic%wp_advection(1,1,1),basicm%wp_advection(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'WP_ADVECTION :3:anal:mpti')
+   if (allocated(basic%wp_diffusion))  &
+      CALL vtables2 (basic%wp_diffusion(1,1,1),basicm%wp_diffusion(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'WP_DIFFUSION :3:anal:mpti')
 
    ! 2D CORIOLIS INFO FOR VTABLES
    npts=n2*n3

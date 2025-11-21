@@ -771,3 +771,64 @@ endif
 
 return
 END SUBROUTINE boyanc
+
+!##############################################################################
+Subroutine save_wp_before_acoustic ()
+
+use mem_tend
+use mem_basic
+use mem_grid, only:ngrid
+use io_params, only: iuvwtend
+
+implicit none
+
+! Save wp before acoustic solver for PGF calculation
+!
+! Note: We temporarily store wp_before in the wp_pgforce array to avoid
+! allocating a separate scratch array. This will be overwritten with the
+! final PGF result in compute_wp_pgforce().
+if(iuvwtend>=1) then
+  basic_g(ngrid)%wp_pgforce = basic_g(ngrid)%wp  ! Temporarily store wp_before
+endif
+
+return
+END SUBROUTINE save_wp_before_acoustic
+
+!##############################################################################
+Subroutine compute_wp_pgforce ()
+
+use mem_basic
+use mem_grid, only:ngrid,nnzp,nnxp,nnyp
+use io_params, only: iuvwtend
+
+implicit none
+
+integer :: m1,m2,m3
+
+m1 = nnzp(ngrid)
+m2 = nnxp(ngrid)
+m3 = nnyp(ngrid)
+
+! Compute WP_PGFORCE from change in wp during acoustic solver
+!
+! The acoustic solver applies the vertical pressure gradient force implicitly,
+! directly updating wp without going through wt. To extract this contribution,
+! we compute the total change in wp during the acoustic solver and subtract
+! the explicit tendencies that were already applied.
+!
+! PGF = (wp_after - wp_before) - (advection + diffusion + buoyancy)
+!
+! Note: wp_pgforce appears on both sides of the assignment below. On the RHS,
+! it contains wp_before (stored by save_wp_before_acoustic). On the LHS, it
+! receives the final PGF result, overwriting the temporary wp_before values.
+if(iuvwtend>=1) then
+  basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3) =  &
+    (basic_g(ngrid)%wp(1:m1,1:m2,1:m3) - basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3))  &
+    - basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3)  &
+    - basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3)  &
+    - basic_g(ngrid)%wp_buoy_theta(1:m1,1:m2,1:m3)  &
+    - basic_g(ngrid)%wp_buoy_cond(1:m1,1:m2,1:m3)
+endif
+
+return
+END SUBROUTINE compute_wp_pgforce
