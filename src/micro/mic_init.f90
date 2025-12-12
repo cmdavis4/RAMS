@@ -568,22 +568,22 @@ integer :: radial_distance_ix, quadrant_ix, height_ix, n_tracers_per_radius, n_t
 ! Tracer species
 integer :: this_tracer_species
 real :: tracer_center_x, tracer_center_y, this_point_x, this_point_y, this_point_z, this_point_radial_distance, initial_tracer_concentration
-real, dimension(4) :: radial_distance_bin_edges
+real, dimension(5) :: radial_distance_bin_edges
 real, dimension(4) :: height_threshold_bin_edges
 real, dimension(mzp,mxp,myp) :: tracerp,dn0
 
 if(print_msg) print*,'Start Initializing Tracers, Grid:',ifm,' Tracer:',nsc
 
 ! Define center for calculating radial distance
-tracer_center_x = 110000  ! m
-tracer_center_y = 109500  ! m
+tracer_center_x = 125000  ! m
+tracer_center_y = 125000  ! m
 ! These^ are assuming the coordinates have been remapped to start at 0, so put them
 ! into the RAMS coordinate system of -max x / 2 to max x /2
 tracer_center_x = tracer_center_x + xmn(1, 1)
 tracer_center_y = tracer_center_y + ymn(1, 1)
 
 ! Define thresholds for radial and vertical distances
-radial_distance_bin_edges = [10000.0, 15000.0, 25000.0, 50000.0]
+radial_distance_bin_edges = [2500.0, 5000.0, 10000.0, 15000.0, 25000.0]
 height_threshold_bin_edges = [1000.0, 2000.0, 5000.0, 9000.0]
 
 ! Calculate the number of tracer species per radial distance bin and per height bin
