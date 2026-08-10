@@ -31,13 +31,13 @@ RAMS_VERSION=6.3.04
 #############################################################################
 HDF5_ROOT=/home/smsaleeb/software/hdf5-1.10.7
 # ZFP ROOT only needed if gcc compiler flag '-DENABLE_ZFP_COMPRESSION' is used
-H5Z_ZFP_ROOT=/home/pmarin/misc/h5z_zfp_git/H5Z-ZFP/install # For ZFP Compression
+H5Z_ZFP_ROOT=/home/smsaleeb/software/h5z_zfp # For ZFP Compression
 
 #############################################################################
 # Set root locations for parallel processing MPI software.
 # You can comment out MPI_ROOT for serial processing compile.
 #############################################################################
-MPI_ROOT=/nasa/hpe/mpt/2.25_rhel79/
+MPI_ROOT=/home/smsaleeb/software/mpich-3.3.2
 
 #############################################################################
 # Do not change these 2. They point from RAMS_ROOT to the source code.
@@ -99,7 +99,7 @@ F_COMP=/home/smsaleeb/software/mpich-3.3.2/bin/mpif90
 F_OPTS1=-free -O1 -fp-model precise
 F_OPTS2=-free -O2 -fp-model precise
 LOADER_OPTS= -free -O2 -fp-model precise
-LIBS=-L/usr/lib/x86_64-linux-gnu -L/nasa/szip/2.1.1/lib -lrt -lpthread -lsz -lz
+LIBS=-L/usr/lib/x86_64-linux-gnu -lrt -lpthread -lsz -lz
 
 #*****************************
 # FORTRAN INTEL IFORT COMPILER Double Precision
@@ -161,7 +161,8 @@ LIBS=-L/usr/lib/x86_64-linux-gnu -L/nasa/szip/2.1.1/lib -lrt -lpthread -lsz -lz
 # that are not really as issue for us, but you can turn warnings back on by
 # removing the "-w" if you wish to alter code to eliminate warnings.
 #############################################################################
-C_COMP=gcc
+#C_COMP=gcc
+C_COMP=/home/smsaleeb/software/mpich-3.3.2/bin/mpicc
 C_OPTS=-O3 -DUNDERSCORE -DLITTLE -std=gnu99 -DENABLE_PARALLEL_COMPRESSION -w -DENABLE_ZFP_COMPRESSION
 #C_OPTS=-O3 -DUNDERSCORE -DLITTLE -std=gnu99 -DRAMS_DOUBLE_PREC \
 #  -DENABLE_PARALLEL_COMPRESSION -w

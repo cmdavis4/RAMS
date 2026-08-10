@@ -37,9 +37,10 @@ integer :: iphdf5
 type (hdf5_select_type) :: mem_select,file_select
 integer, dimension(HDF5_MAX_DIMS) :: file_chunks
 real, dimension(:,:,:,:), allocatable :: temp_var1, temp_var2
-! Holding variable for ZFP accuracy. This will be 0 for all but lite files, where 
-! it is user set. If it is 0, that means to not run ZFP/lossy compression. 
-real :: zfp_accuracy
+! Holding variable for ZFP accuracy. This will be 0 for all but lite files, where
+! it is user set. If it is 0, that means to not run ZFP/lossy compression.
+! kind=4 to match the shdf5_orec dummy and the C side.
+real(kind=4) :: zfp_accuracy
 
 ! Timing variables
 real :: wtime_beg,wtime_end,ctime_beg,ctime_end
@@ -152,9 +153,9 @@ do ngr=1,ngrids
       !print*,'rio:',vtab_r(nv,ngr)%name,vtab_r(nv,ngr)%ilite
 
       iwrite=0
+      zfp_accuracy = 0.
       if(vtype == 'INST' .and. vtab_r(nv,ngr)%ianal == 1) then
          iwrite=1
-         zfp_accuracy = 0
          v_pointer => vtab_r(nv,ngr)%var_p
       elseif(vtype == 'LITE' .and. vtab_r(nv,ngr)%ilite == 1) then
          iwrite=1
@@ -163,12 +164,10 @@ do ngr=1,ngrids
       elseif(vtype == 'MEAN' .and. vtab_r(nv,ngr)%imean == 1 .and. &
                                    vtab_r(nv,ngr)%ianal == 1) then
          iwrite=1
-          zfp_accuracy = 0
          v_pointer => vtab_r(nv,ngr)%var_m
       elseif(vtype == 'BOTH' .and. vtab_r(nv,ngr)%ilite == 1 .and. &
                                    vtab_r(nv,ngr)%imean == 1) then
          iwrite=1
-          zfp_accuracy = 0
          v_pointer => vtab_r(nv,ngr)%var_m
       endif
 
@@ -277,12 +276,20 @@ do ngr=1,ngrids
              ,trim(vtype),nv,trim(varn),max_extra_anal
       endif
 
+      !"Extra" variables are not in vtab_r, so they have no %var_acc to read.
+      !Pick the accuracy up from the same namelist slot that matches the name,
+      !otherwise this would inherit whatever the last table variable used.
+      zfp_accuracy = 0.
+
       !See if the "extra" variables are in the list of LITE variables.
       !Only output "extra" variables to LITE files if they are in the list.
       if(vtype == 'LITE') then
        litecheck=0
        do nvl=1,nlite_vars
-        if (varn == lite_vars(nvl)) litecheck=1
+        if (varn == lite_vars(nvl)) then
+         litecheck=1
+         zfp_accuracy = lite_var_acc(nvl)
+        endif
        enddo
        if(litecheck==0)cycle
       endif

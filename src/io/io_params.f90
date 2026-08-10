@@ -7,7 +7,11 @@ implicit none
 
 character(len=32) :: lite_vars(maxlite)
 ! this must be fixed at a 32 bit float because that is what the C library expects
-real(kind=4) :: lite_var_acc(maxlite)
+! Default 0. = lossless, so a RAMSIN that omits ACC_LT_VAR behaves exactly as
+! it did before ZFP support existed. Without this initializer the array is
+! garbage for any such RAMSIN and shdf5_orec either aborts or compresses at a
+! random tolerance.
+real(kind=4) :: lite_var_acc(maxlite) = 0.
 character(len=strl1) :: hfilin,afilepref
 
 integer :: ipast_sfc

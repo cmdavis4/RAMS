@@ -32,6 +32,7 @@ implicit none
    vtab_r(nv,ng)%impti=0
    vtab_r(nv,ng)%impt1=0
    vtab_r(nv,ng)%irecycle_sfc=0
+   vtab_r(nv,ng)%var_acc=0.
 
    do nt=3,ntok
       ctab=tokens(nt)         
@@ -70,8 +71,9 @@ integer :: nv,ng,nvl,ifound
 ! Loop over each variable input in namelist "LITE_VARS" and set
 !   lite flag in var_tables
 
-do ng = 1,nvgrids   
+do ng = 1,nvgrids
    vtab_r(1:num_var(ng),ng)%ilite = 0
+   vtab_r(1:num_var(ng),ng)%var_acc = 0.
 enddo
 
 do nvl=1,nlite_vars
@@ -84,7 +86,6 @@ do nvl=1,nlite_vars
          if (vtab_r(nv,ng)%name == lite_vars(nvl) ) then
             vtab_r(nv,ng)%ilite = 1
             vtab_r(nv,ng)%var_acc = lite_var_acc(nvl)
-            print*, "Loading in vtable. Variable: ", vtab_r(nv,ng)%name, " ZFP Accuracy: ", vtab_r(nv,ng)%var_acc
             ifound=1
          endif
          
@@ -100,7 +101,8 @@ do nvl=1,nlite_vars
       print*,'!---------------------------------------------------------'
     else
       print*,'!---------------------------------------------------------'
-      print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))
+      print*,'! LITE_VARS variable added--->',trim(lite_vars(nvl))  &
+            ,'  ZFP accuracy:',lite_var_acc(nvl)
       print*,'!---------------------------------------------------------'
     endif
    endif

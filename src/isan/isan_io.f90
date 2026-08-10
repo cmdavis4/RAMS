@@ -13,7 +13,7 @@ character(len=*) :: inout
 type (hdf5_select_type) :: mem_select,file_select
 integer, dimension(HDF5_MAX_DIMS) :: file_chunks
 ! this will always be 0 for ISAN
-real(kind=4):: zfp_accuracy
+real(kind=4):: zfp_accuracy = 0.
 
 if(inout == 'IN') THEN
 
