@@ -50,15 +50,15 @@ if (level .eq. 0) return
 
 ! Zero the regeneration accumulators after an analysis write, then start
 ! accumulating again. Same condition range_check() uses for the other micro
-! budget variables (mic_misc.f90:498), so REGEN_AERO*_D[NM]DT covers the same
+! budget variables (mic_misc.f90:498), so REGEN_AERO*_D[NM] covers the same
 ! window as VAPLIQT, EVAPLIQT, NUCCLDRT and the rest.
 if(iccnlev>=2 .and. imbudget>=1) then
   if((mod(time+0.001,frqstate(ngr)).lt.dtlt .or. time.lt.0.001) .and. &
      regen_reset_time(ngr) /= time) then
-    micro%regen_aero1_dndt = 0.
-    micro%regen_aero1_dmdt = 0.
-    micro%regen_aero2_dndt = 0.
-    micro%regen_aero2_dmdt = 0.
+    micro%regen_aero1_dn = 0.
+    micro%regen_aero1_dm = 0.
+    micro%regen_aero2_dn = 0.
+    micro%regen_aero2_dm = 0.
     regen_reset_time(ngr) = time
   endif
 endif
@@ -200,7 +200,7 @@ do j = 1,m3
               ((rg * aero_rg2rm(aerocat)) ** 3.)
 
          !Restore aerosols to regenerated category.
-         !The D[NM]DT companions accumulate the same increment, giving the
+         !The D[NM] companions accumulate the same increment, giving the
          !regeneration SOURCE alone: regen_aero*_np/mp are also drawn down by
          !re-activation in mic_driv, so their time difference is a net change,
          !not a source. Accumulated over one output interval and reset at the
@@ -209,18 +209,18 @@ do j = 1,m3
            micro%regen_aero1_mp(k,i,j) = micro%regen_aero1_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero1_np(k,i,j) = micro%regen_aero1_np(k,i,j) + cnmhx_num
            if(imbudget>=1) then
-             micro%regen_aero1_dmdt(k,i,j) = micro%regen_aero1_dmdt(k,i,j) &
+             micro%regen_aero1_dm(k,i,j) = micro%regen_aero1_dm(k,i,j) &
                                            + cnmhx(k,lcat)
-             micro%regen_aero1_dndt(k,i,j) = micro%regen_aero1_dndt(k,i,j) &
+             micro%regen_aero1_dn(k,i,j) = micro%regen_aero1_dn(k,i,j) &
                                            + cnmhx_num
            endif
          else
            micro%regen_aero2_mp(k,i,j) = micro%regen_aero2_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero2_np(k,i,j) = micro%regen_aero2_np(k,i,j) + cnmhx_num  
            if(imbudget>=1) then
-             micro%regen_aero2_dmdt(k,i,j) = micro%regen_aero2_dmdt(k,i,j) &
+             micro%regen_aero2_dm(k,i,j) = micro%regen_aero2_dm(k,i,j) &
                                            + cnmhx(k,lcat)
-             micro%regen_aero2_dndt(k,i,j) = micro%regen_aero2_dndt(k,i,j) &
+             micro%regen_aero2_dn(k,i,j) = micro%regen_aero2_dn(k,i,j) &
                                            + cnmhx_num
            endif
          endif
