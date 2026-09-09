@@ -352,7 +352,9 @@ IF(GROUP.EQ.'$MODEL_OPTIONS') THEN
  IF(VR.EQ.'ISCMY')        CALL varseti (VR,ISCMY,NV,1,II,0,90000)
  IF(VR.EQ.'ICHECKMIC')    CALL varseti (VR,ICHECKMIC,NV,1,II,0,2)
  IF(VR.EQ.'IMBUDGET')     CALL varseti (VR,IMBUDGET,NV,1,II,0,3)
- IF(VR.EQ.'IUVWTEND')     CALL varseti (VR,IUVWTEND,NV,1,II,0,1)
+ !IUVWTEND: 0=off, 1=accelerations only (UP_DUDT/VP_DVDT/WP_DWDT),
+ !          2=full momentum budget (PGF/advection/diffusion/coriolis/rayleigh)
+ IF(VR.EQ.'IUVWTEND')     CALL varseti (VR,IUVWTEND,NV,1,II,0,2)
  IF(VR.EQ.'IRIME')        CALL varseti (VR,IRIME,NV,1,II,0,1)
  IF(VR.EQ.'IPLAWS')       CALL varseti (VR,IPLAWS,NV,1,II,0,2)
  IF(VR.EQ.'ISEDIM')       CALL varseti (VR,ISEDIM,NV,1,II,0,1)

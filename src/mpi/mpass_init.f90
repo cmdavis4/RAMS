@@ -29,7 +29,7 @@ implicit none
   !Saleeby(2016)
   !Increment memory buffer size here if you add RAMSIN Namelist variables.
   !Add to the appropriate section below as (#-of-them * arraysize).
-  nwords = 224 * 1                 & !single values (added NFLUX_FORCINGS)
+  nwords = 225 * 1                 & !single values (added NFLUX_FORCINGS, IUVWTEND)
          +   1 * nflexparams        & !flexparams array (mem_flexparams)
          +   1 * 8                 & !micro (8-hydromet types for gnu)
          +   3 * aerocat           & !micro (number aerosol species)
@@ -298,6 +298,7 @@ implicit none
     CALL par_put_int   (ISCMY,1)
     CALL par_put_int   (ICHECKMIC,1)
     CALL par_put_int   (IMBUDGET,1)
+    CALL par_put_int   (IUVWTEND,1)
     CALL par_put_int   (IRIME,1)
     CALL par_put_int   (IPLAWS,1)
     CALL par_put_int   (ISEDIM,1)
@@ -649,6 +650,7 @@ implicit none
     CALL par_get_int   (ISCMY,1)
     CALL par_get_int   (ICHECKMIC,1)
     CALL par_get_int   (IMBUDGET,1)
+    CALL par_get_int   (IUVWTEND,1)
     CALL par_get_int   (IRIME,1)
     CALL par_get_int   (IPLAWS,1)
     CALL par_get_int   (ISEDIM,1)
