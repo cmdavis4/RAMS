@@ -21,6 +21,8 @@ implicit none
                          ,abc1np,abc2np,abc1mp,abc2mp               &
                          ,regen_aero1_np,regen_aero1_mp             &
                          ,regen_aero2_np,regen_aero2_mp             &
+                         ,regen_aero1_dndt,regen_aero1_dmdt         &
+                         ,regen_aero2_dndt,regen_aero2_dmdt         &
                          !Immersion freezing nuclei tracking
                          ,immercp,immerdp,immerrp,ifnnucp           &
                          !Aerosol tracking variables
@@ -230,6 +232,19 @@ implicit none
            allocate (micro%regen_aero1_mp(n1,n2,n3))
            allocate (micro%regen_aero2_np(n1,n2,n3))
            allocate (micro%regen_aero2_mp(n1,n2,n3))
+           !Aerosol regeneration source, accumulated over one analysis output
+           !interval and reset after the write -- same convention as every
+           !other IMBUDGET process rate (see adj1, mic_adj.f90).
+           if(imbudget>=1) then
+             allocate (micro%regen_aero1_dndt(n1,n2,n3))
+             micro%regen_aero1_dndt = 0.
+             allocate (micro%regen_aero1_dmdt(n1,n2,n3))
+             micro%regen_aero1_dmdt = 0.
+             allocate (micro%regen_aero2_dndt(n1,n2,n3))
+             micro%regen_aero2_dndt = 0.
+             allocate (micro%regen_aero2_dmdt(n1,n2,n3))
+             micro%regen_aero2_dmdt = 0.
+           endif
            if(jnmb(1) >= 1) allocate (micro%cnmcp(n1,n2,n3))
            if(jnmb(8) >= 1) allocate (micro%cnmdp(n1,n2,n3))
            if(jnmb(2) >= 1) allocate (micro%cnmrp(n1,n2,n3))
@@ -529,6 +544,10 @@ implicit none
    if (allocated(micro%abc1mp))   deallocate (micro%abc1mp)
    if (allocated(micro%abc2mp))   deallocate (micro%abc2mp)
    if (allocated(micro%regen_aero1_np)) deallocate (micro%regen_aero1_np)
+   if (allocated(micro%regen_aero1_dndt)) deallocate (micro%regen_aero1_dndt)
+   if (allocated(micro%regen_aero1_dmdt)) deallocate (micro%regen_aero1_dmdt)
+   if (allocated(micro%regen_aero2_dndt)) deallocate (micro%regen_aero2_dndt)
+   if (allocated(micro%regen_aero2_dmdt)) deallocate (micro%regen_aero2_dmdt)
    if (allocated(micro%regen_aero1_mp)) deallocate (micro%regen_aero1_mp)
    if (allocated(micro%regen_aero2_np)) deallocate (micro%regen_aero2_np)
    if (allocated(micro%regen_aero2_mp)) deallocate (micro%regen_aero2_mp)
@@ -872,6 +891,22 @@ implicit none
       CALL vtables2 (micro%regen_aero1_np(1,1,1),microm%regen_aero1_np(1,1,1)  &
                  ,ng, npts, imean,  &
                  'REGEN_AERO1_NP :3:anal:mpti:mpt1')
+   if (allocated(micro%regen_aero1_dndt)) &
+      CALL vtables2 (micro%regen_aero1_dndt(1,1,1),microm%regen_aero1_dndt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'REGEN_AERO1_DNDT :3:anal:mpti:mpt1')
+   if (allocated(micro%regen_aero1_dmdt)) &
+      CALL vtables2 (micro%regen_aero1_dmdt(1,1,1),microm%regen_aero1_dmdt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'REGEN_AERO1_DMDT :3:anal:mpti:mpt1')
+   if (allocated(micro%regen_aero2_dndt)) &
+      CALL vtables2 (micro%regen_aero2_dndt(1,1,1),microm%regen_aero2_dndt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'REGEN_AERO2_DNDT :3:anal:mpti:mpt1')
+   if (allocated(micro%regen_aero2_dmdt)) &
+      CALL vtables2 (micro%regen_aero2_dmdt(1,1,1),microm%regen_aero2_dmdt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'REGEN_AERO2_DMDT :3:anal:mpti:mpt1')
    if (allocated(micro%regen_aero1_mp)) &
       CALL vtables2 (micro%regen_aero1_mp(1,1,1),microm%regen_aero1_mp(1,1,1)  &
                  ,ng, npts, imean,  &

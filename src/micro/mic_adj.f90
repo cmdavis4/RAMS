@@ -28,6 +28,9 @@ Subroutine adj1 (m1,m2,m3,rtp,micro,ngr)
 use mem_micro
 use micphys
 use node_mod, only:mi0,mj0
+use mem_grid, only:time,dtlt
+use io_params, only:frqstate
+use grid_dims, only:maxgrds
 
 implicit none
 
@@ -37,7 +40,28 @@ real, dimension(m1,m2,m3) :: rtp
 real, dimension(m1) :: rtemp
 type (micro_vars) :: micro
 
+! Model time at which the regeneration accumulators were last reset, per grid.
+! negadj1 is called TWICE per timestep (rtimh.f90:159 and :202) and both calls
+! can regenerate aerosol, so the reset below must fire once per timestep, not
+! once per call -- otherwise the first call's contribution is thrown away.
+real, save, dimension(maxgrds) :: regen_reset_time = -1.
+
 if (level .eq. 0) return
+
+! Zero the regeneration accumulators after an analysis write, then start
+! accumulating again. Same condition range_check() uses for the other micro
+! budget variables (mic_misc.f90:498), so REGEN_AERO*_D[NM]DT covers the same
+! window as VAPLIQT, EVAPLIQT, NUCCLDRT and the rest.
+if(iccnlev>=2 .and. imbudget>=1) then
+  if((mod(time+0.001,frqstate(ngr)).lt.dtlt .or. time.lt.0.001) .and. &
+     regen_reset_time(ngr) /= time) then
+    micro%regen_aero1_dndt = 0.
+    micro%regen_aero1_dmdt = 0.
+    micro%regen_aero2_dndt = 0.
+    micro%regen_aero2_dmdt = 0.
+    regen_reset_time(ngr) = time
+  endif
+endif
 
 do lcat = 1,ncat
    do k = 1,m1
@@ -175,13 +199,30 @@ do j = 1,m3
          cnmhx_num = cnmhx(k,lcat) * (0.23873/aero_rhosol(aerocat)) / &
               ((rg * aero_rg2rm(aerocat)) ** 3.)
 
-         !Restore aerosols to regenerated category
+         !Restore aerosols to regenerated category.
+         !The D[NM]DT companions accumulate the same increment, giving the
+         !regeneration SOURCE alone: regen_aero*_np/mp are also drawn down by
+         !re-activation in mic_driv, so their time difference is a net change,
+         !not a source. Accumulated over one output interval and reset at the
+         !top of this routine, exactly like the other IMBUDGET process rates.
          if(rg <= 0.96e-6) then
            micro%regen_aero1_mp(k,i,j) = micro%regen_aero1_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero1_np(k,i,j) = micro%regen_aero1_np(k,i,j) + cnmhx_num
+           if(imbudget>=1) then
+             micro%regen_aero1_dmdt(k,i,j) = micro%regen_aero1_dmdt(k,i,j) &
+                                           + cnmhx(k,lcat)
+             micro%regen_aero1_dndt(k,i,j) = micro%regen_aero1_dndt(k,i,j) &
+                                           + cnmhx_num
+           endif
          else
            micro%regen_aero2_mp(k,i,j) = micro%regen_aero2_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero2_np(k,i,j) = micro%regen_aero2_np(k,i,j) + cnmhx_num  
+           if(imbudget>=1) then
+             micro%regen_aero2_dmdt(k,i,j) = micro%regen_aero2_dmdt(k,i,j) &
+                                           + cnmhx(k,lcat)
+             micro%regen_aero2_dndt(k,i,j) = micro%regen_aero2_dndt(k,i,j) &
+                                           + cnmhx_num
+           endif
          endif
 
          !Statement to check the restoration of aerosol data
