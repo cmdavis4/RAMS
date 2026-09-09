@@ -153,11 +153,11 @@ integer :: iccnlev,ic,rgb
 real :: cin_max,ccn1_max,ccn2_max,dust1_max,dust2_max,saltf_max,saltj_max &
  ,salts_max,enxferratio,rxferratio,ccnmass,ccnnum,rxtemp,cxtemp,fracmass &
  ,cxloss,concen_nuc,aeromass,rg,rhosol,cldrat,epsil,ant,rcm,rmlar,rmsma &
- ,power,scnmass,dcnmass,dinmass,abc1_max,abc2_max
+ ,power,scnmass,dcnmass,dinmass,abc1_max,abc2_max,rcnmass,rinmass
 real, dimension(nzpmax) :: nifn
 
 !Tracking total aerosol mass, immersion freezing number in hydrometeors cats
-real, dimension(nzpmax,ncat) :: cnmhx,immerhx,snmhx,dnmhx,dinhx
+real, dimension(nzpmax,ncat) :: cnmhx,immerhx,snmhx,dnmhx,dinhx,rnmhx,rinhx
 real, dimension(ncat) :: pcpraerox,accpaerox,pcprdustx,accpdustx
 real, dimension(nzpmax) :: ifnnucx,total_in
 

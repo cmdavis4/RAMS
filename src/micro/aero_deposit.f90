@@ -303,6 +303,9 @@ do acat=1,aerocat
          endif
          if(itrkdust==1 .and. (acat==3.or.acat==4)) &
           dnmhx(k,lcat) = dnmhx(k,lcat) + (amas_remove(lcat) / dn0(k))
+         ! Regenerated aerosol tracking
+         if(itrkregen==1 .and. (acat==aerocat-1.or.acat==aerocat)) &
+          rnmhx(k,lcat) = rnmhx(k,lcat) + (amas_remove(lcat) / dn0(k))
        endif
      enddo
     endif !wet scavenge if micro level=3 at least mincon

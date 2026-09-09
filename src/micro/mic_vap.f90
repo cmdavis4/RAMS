@@ -328,6 +328,12 @@ do k = k1,k2
       dinmass = dinhx(k,lcat) * rxferratio
       dinhx(k,lcat) = dinhx(k,lcat) - dinmass
      endif
+     if(itrkregen==1)then
+      rcnmass = rnmhx(k,lcat) * rxferratio
+      rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+      rinmass = rinhx(k,lcat) * rxferratio
+      rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+     endif
    endif
 
    !Remove immersion freezing nuclei from cloud 
@@ -428,6 +434,8 @@ do k = k1,k2
            if(itrkepsilon==1) scnmass = snmhx(k,3) * rxferratio
            if(itrkdust==1)    dcnmass = dnmhx(k,3) * rxferratio
            if(itrkdustifn==1) dinmass = dinhx(k,3) * rxferratio
+           if(itrkregen==1)    rcnmass = rnmhx(k,3) * rxferratio
+           if(itrkregen==1) rinmass = rinhx(k,3) * rxferratio
           endif
          endif
 
@@ -479,6 +487,12 @@ do k = k1,k2
          dinhx(k,3) = dinhx(k,3) - dinmass
          dinhx(k,4) = dinhx(k,4) + dinmass
         endif
+      if(itrkregen==1) then
+         rnmhx(k,3) = rnmhx(k,3) - rcnmass
+         rnmhx(k,4) = rnmhx(k,4) + rcnmass
+         rinhx(k,3) = rinhx(k,3) - rinmass
+         rinhx(k,4) = rinhx(k,4) + rinmass
+        endif
       endif
 
       rx(k,3) = rx(k,3) - dvap
@@ -528,6 +542,8 @@ do k = k1,k2
               if(itrkepsilon==1) scnmass = snmhx(k,3) * rxferratio
               if(itrkdust==1)    dcnmass = dnmhx(k,3) * rxferratio
               if(itrkdustifn==1) dinmass = dinhx(k,3) * rxferratio
+              if(itrkregen==1)    rcnmass = rnmhx(k,3) * rxferratio
+              if(itrkregen==1) rinmass = rinhx(k,3) * rxferratio
              endif
             endif
           elseif(delta_r<0.0) then !xfer more Snow to Pristine ice
@@ -541,6 +557,8 @@ do k = k1,k2
               if(itrkepsilon==1) scnmass = snmhx(k,4) * rxferratio
               if(itrkdust==1)    dcnmass = dnmhx(k,4) * rxferratio
               if(itrkdustifn==1) dinmass = dinhx(k,4) * rxferratio
+              if(itrkregen==1)    rcnmass = rnmhx(k,4) * rxferratio
+              if(itrkregen==1) rinmass = rinhx(k,4) * rxferratio
              endif
             endif
           endif
@@ -560,6 +578,12 @@ do k = k1,k2
             if(itrkdustifn==1) then
              dinhx(k,3) = dinhx(k,3) - dinmass
              dinhx(k,4) = dinhx(k,4) + dinmass
+            endif
+            if(itrkregen==1) then
+             rnmhx(k,3) = rnmhx(k,3) - rcnmass
+             rnmhx(k,4) = rnmhx(k,4) + rcnmass
+             rinhx(k,3) = rinhx(k,3) - rinmass
+             rinhx(k,4) = rinhx(k,4) + rinmass
             endif
           endif
 

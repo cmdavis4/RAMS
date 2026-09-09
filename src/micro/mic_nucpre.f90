@@ -290,6 +290,9 @@ real, dimension(m1) :: dn0,rv
          dnmhx(k,3) = dnmhx(k,3) + totifnm(k,acat)
        if(itrkdustifn==1 .and. (acat==3 .or. acat==4)) &
          dinhx(k,3) = dinhx(k,3) + totifnm(k,acat)
+        ! Regenerated aerosol tracking
+        if(itrkregen==1 .and. (acat==aerocat-1.or.acat==aerocat)) &
+        rinhx(k,3) = rinhx(k,3) + totifnm(k,acat)
       endif
 
       aero_rg(acat) = aero_medrad(acat) ! Default median radius

@@ -310,6 +310,15 @@ elseif (jnmb(1) >= 5) then
              xdust2cldrt(k) = xdust2cldrt(k) + vaprccn * budget_scalet
           if(acat==4 .and. drop==8 .and. imbudget==3 .and. idust >= 1) &
              xdust2drzrt(k) = xdust2drzrt(k) + vaprccn * budget_scalet
+         ! Regenerated aerosol diagnostics
+         ! Acat==aerocate-1 -> small regenerated mode, acat==aerocat -> large
+         !  regenerated mode
+         ! drop==1 -> cloud nucleation
+         ! Don't need to worry about idust for regenerated aerosol, so drop that
+          if(acat==aerocat-1 .and. drop==1 .and. imbudget==3) &
+             xregen1cldrt(k) = xregen1cldrt(k) + vaprccn * budget_scalet
+          if(acat==aerocat .and. drop==1 .and. imbudget==3) &
+             xregen2cldrt(k) = xregen2cldrt(k) + vaprccn * budget_scalet
 
           !Convert units for setting up lognormal distribution
           concen_tab(acat) = concen_tab(acat) * dn0(k) !Convert #/kg to #/m3
@@ -431,6 +440,8 @@ elseif (jnmb(1) >= 5) then
             endif
             if(itrkdust==1 .and. (acat==3 .or. acat==4)) &
               dnmhx(k,drop) = dnmhx(k,drop) + ccnmass
+            if(itrkregen==1 .and. (acat==aerocat-1 .or. acat==aerocat)) &
+              rnmhx(k,drop) = rnmhx(k,drop) + ccnmass
           endif
 
           !Store number of large particles for immersion freezing
@@ -590,6 +601,14 @@ do k = kc1,kc2
      dinhx(k,1) = dinhx(k,1) - dinmass
      dinhx(k,3) = dinhx(k,3) + dinmass
     endif
+    if(itrkregen==1)then
+     rcnmass  = rnmhx(k,1) * rxferratio
+     rnmhx(k,1) = rnmhx(k,1) - rcnmass
+     rnmhx(k,3) = rnmhx(k,3) + rcnmass
+     rinmass  = rinhx(k,1) * rxferratio
+     rinhx(k,1) = rinhx(k,1) - rinmass
+     rinhx(k,3) = rinhx(k,3) + rinmass
+    endif
    endif
 
    !Remove immersion freezing nuclei from cloud 
@@ -689,6 +708,15 @@ do k = kd1,kd2
      dinhx(k,8) = dinhx(k,8) - dinmass
      dinhx(k,3) = dinhx(k,3) + dinmass
     endif
+   if(itrkregen==1)then
+     rcnmass  = rnmhx(k,8) * rxferratio
+     rnmhx(k,8) = rnmhx(k,8) - rcnmass
+     rnmhx(k,3) = rnmhx(k,3) + rcnmass
+     rinmass  = rinhx(k,8) * rxferratio
+     rinhx(k,8) = rinhx(k,8) - rinmass
+     rinhx(k,3) = rinhx(k,3) + rinmass
+    endif
+
    endif
 
    !Remove immersion freezing nuclei from cloud 
@@ -959,6 +987,17 @@ do k = 2,m1-1
          dinmass  = dinhx(k,lcat) * rxferratio
          dinhx(k,lcat) = dinhx(k,lcat) - dinmass
          dinhx(k,3)    = dinhx(k,3)    + dinmass
+        endif
+        if(itrkregen==1)then
+         rcnmass  = rnmhx(k,lcat) * rxferratio
+         rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+         rnmhx(k,3)    = rnmhx(k,3)    + rcnmass
+         !Add new immersion freezing dust mass to dust as IN tracking
+         rinhx(k,3)    = rinhx(k,3)    + rcnmass
+         !Xfer dust mass from liquid hydromet to ice if present
+         rinmass  = rinhx(k,lcat) * rxferratio
+         rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+         rinhx(k,3)    = rinhx(k,3)    + rinmass
         endif
        endif
 
