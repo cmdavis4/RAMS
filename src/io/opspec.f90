@@ -365,9 +365,12 @@ elseif (level .eq. 3) then
    print*,' unless ICCNLEV>0 for nucleation scavenging.'
    IFATERR = IFATERR + 1
  endif
- if (imbudget .ge. 3 .and. idust .eq. 0) THEN
-   print*,'FATAL - If IMBUDGET=3 then IDUST must be > 0.'
-   print*,' Cannot track dust if there is no dust turned on.'
+ if (imbudget .ge. 3 .and. idust .eq. 0 .and. iccnlev .lt. 2) THEN
+   print*,'FATAL - If IMBUDGET=3 then IDUST>0 or ICCNLEV>=2 is required.'
+   print*,' IMBUDGET=3 tracks nucleation scavenging by aerosol type:'
+   print*,' dust (DUST*CLDRT/DRZRT, needs IDUST>0) and regenerated'
+   print*,' aerosol (REGEN*CLDRT/DRZRT, needs ICCNLEV>=2). With neither'
+   print*,' there is nothing for IMBUDGET=3 to add over IMBUDGET=2.'
    IFATERR = IFATERR + 1
  endif
 
