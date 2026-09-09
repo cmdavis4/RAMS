@@ -284,6 +284,12 @@ real, dimension(mzp,mxp,myp) :: thvlast
  CALL vpsets ()          
  CALL acctimes ('VPSETS')
 
+!------------------------------------------------------------------------------
+!  Realised acceleration (uc-up)/dtlt. Must come after vpsets so it is built
+!  from exactly the uc/up that anal_write will write.
+!------------------------------------------------------------------------------
+ if(iuvwtend>=1) CALL compute_uvw_accel ()
+
 callmassflux=0    !flag for output BC mass flux: (0=off, 1==on)
 massfluxfreq=300. !frequency of BC mass flux (seconds)
 if(callmassflux==1) &

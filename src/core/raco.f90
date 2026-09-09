@@ -88,8 +88,11 @@ allocate(heatfx1(m2,m3))
 ! their per-sub-step dpdx into these arrays. After the loop we divide by
 ! nnacoust to get an average rate [m/s^2] over the acoustic phase.
 if(iuvwtend>=2) then
-   basic_g(ngrid)%up_pgforce = 0.
-   basic_g(ngrid)%vp_pgforce = 0.
+   basic_g(ngrid)%up_pgforce  = 0.
+   basic_g(ngrid)%vp_pgforce  = 0.
+   basic_g(ngrid)%up_rayleigh = 0.
+   basic_g(ngrid)%vp_rayleigh = 0.
+   basic_g(ngrid)%wp_rayleigh = 0.
 endif
 
 do iter=1,nnacoust(ngrid)
@@ -139,10 +142,16 @@ if (ngrid .eq. 1) CALL update_cyclic (LBC_PP)
 
 enddo
 
-! Average accumulated U/V PGF over the acoustic sub-steps to get a rate.
+! Convert both accumulators to rates [m/s^2].
+!   PGF: dpdx is already a rate, summed once per sub-step -> divide by nnacoust.
+!   Rayleigh: a summed Delta [m/s] over the whole 2*dtlt leapfrog interval
+!             -> divide by 2*dtlt.
 if(iuvwtend>=2) then
-   basic_g(ngrid)%up_pgforce = basic_g(ngrid)%up_pgforce / real(nnacoust(ngrid))
-   basic_g(ngrid)%vp_pgforce = basic_g(ngrid)%vp_pgforce / real(nnacoust(ngrid))
+   basic_g(ngrid)%up_pgforce  = basic_g(ngrid)%up_pgforce / real(nnacoust(ngrid))
+   basic_g(ngrid)%vp_pgforce  = basic_g(ngrid)%vp_pgforce / real(nnacoust(ngrid))
+   basic_g(ngrid)%up_rayleigh = basic_g(ngrid)%up_rayleigh / (2.0*dtlt)
+   basic_g(ngrid)%vp_rayleigh = basic_g(ngrid)%vp_rayleigh / (2.0*dtlt)
+   basic_g(ngrid)%wp_rayleigh = basic_g(ngrid)%wp_rayleigh / (2.0*dtlt)
 endif
 
 deallocate(acoc)
@@ -209,7 +218,15 @@ enddo
 if (distim .ne. 0.) then
    ! 3rd to last argument is theta tendency which is only used
    ! during rayleigh friction calculation for theta (1st arg == 4)
+   ! Isolate the Rayleigh (sponge) contribution so it can be removed from the
+   ! PGF residual and reported on its own. rayf modifies the field in place,
+   ! so bracketing the call gives exactly what it changed. Accumulated as a
+   ! summed Delta over the acoustic sub-steps; acoust() converts to a rate.
+   if(iuvwtend>=2) basic_g(ngrid)%up_rayleigh = &
+                   basic_g(ngrid)%up_rayleigh - up
    CALL rayf (1,m1,m2,m3,ia,iz,ja,jz,up,th0,dummy,rtgu,topu)
+   if(iuvwtend>=2) basic_g(ngrid)%up_rayleigh = &
+                   basic_g(ngrid)%up_rayleigh + up
 endif
 
 do j = 1,m3
@@ -293,7 +310,15 @@ if (jdim .eq. 1) then
    if (distim .ne. 0.) then
       ! 3rd to last argument is theta tendency which is only used
       ! during rayleigh friction calculation for theta (1st arg == 4)
+      ! Isolate the Rayleigh (sponge) contribution so it can be removed from the
+      ! PGF residual and reported on its own. rayf modifies the field in place,
+      ! so bracketing the call gives exactly what it changed. Accumulated as a
+      ! summed Delta over the acoustic sub-steps; acoust() converts to a rate.
+      if(iuvwtend>=2) basic_g(ngrid)%vp_rayleigh = &
+                      basic_g(ngrid)%vp_rayleigh - vp
       CALL rayf (2,m1,m2,m3,ia,iz,ja,jz,vp,th0,dummy,rtgv,topv)
+      if(iuvwtend>=2) basic_g(ngrid)%vp_rayleigh = &
+                      basic_g(ngrid)%vp_rayleigh + vp
    endif
 
    do j = 1,m3
@@ -332,6 +357,8 @@ Subroutine prdctw1 (m1,m2,m3,ia,iz,ja,jz  &
 
 use mem_grid
 use node_mod, only:nmachs
+use mem_basic
+use io_params, only: iuvwtend
 
 implicit none
 
@@ -349,7 +376,15 @@ real :: dummy
 if (distim .ne. 0.) then
    ! 3rd to last argument is theta tendency which is only used
    ! during rayleigh friction calculation for theta (1st arg == 4)
+   ! Isolate the Rayleigh (sponge) contribution so it can be removed from the
+   ! PGF residual and reported on its own. rayf modifies the field in place,
+   ! so bracketing the call gives exactly what it changed. Accumulated as a
+   ! summed Delta over the acoustic sub-steps; acoust() converts to a rate.
+   if(iuvwtend>=2) basic_g(ngrid)%wp_rayleigh = &
+                   basic_g(ngrid)%wp_rayleigh - wp
    CALL rayf (3,m1,m2,m3,ia,iz,ja,jz,wp,wp,dummy,rtgt,topt)
+   if(iuvwtend>=2) basic_g(ngrid)%wp_rayleigh = &
+                   basic_g(ngrid)%wp_rayleigh + wp
 endif
 
 !      do j=ja,jz
@@ -764,15 +799,19 @@ endif
 do j = ja,jz
    do i = ia,iz
       do k = 2,m1-2
-         !Calculate W buoyancy budgets (m/s)
-         !Calculate W due to advection and diffusion (current wt)
-         !Multiply by 2*dt for leapfrog timestep t-dt to t+dt
+         !W budget terms, as RATES [m/s^2].
+         !These used to be pre-multiplied by 2*dtlt and stored as a Delta_w
+         ![m/s] over the leapfrog interval, which made them impossible to add
+         !directly to wp_advection / wp_diffusion / the U and V terms (all
+         !rates). They are now left as rates so every member of the momentum
+         !budget shares one unit. This DIVERGES FROM UPSTREAM RAMS/INCUS,
+         !where WP_BUOY_THETA, WP_BUOY_COND and WP_ADVDIF are [m/s].
+         !The (k)+(k+1) sum is the same staggering applied to wt below, so
+         !wpbuoytheta+wpbuoycond is exactly the buoyancy rate added to wt.
          if(imbudget>=1 .or. iuvwtend>=2) then
-           wpadvdif(k,i,j)    = 2.0 * dtlt * wt(k,i,j)
-           wpbuoytheta(k,i,j) = 2.0 * dtlt * (wpbuoytheta(k,i,j) &
-                                            + wpbuoytheta(k+1,i,j))
-           wpbuoycond(k,i,j)  = 2.0 * dtlt * (wpbuoycond(k,i,j) &
-                                            + wpbuoycond(k+1,i,j))
+           wpadvdif(k,i,j)    = wt(k,i,j)
+           wpbuoytheta(k,i,j) = wpbuoytheta(k,i,j) + wpbuoytheta(k+1,i,j)
+           wpbuoycond(k,i,j)  = wpbuoycond(k,i,j)  + wpbuoycond(k+1,i,j)
          endif
          wt(k,i,j) = wt(k,i,j) + vtemp(k,i,j) + vtemp(k+1,i,j)
       enddo
@@ -831,36 +870,76 @@ m1 = nnzp(ngrid)
 m2 = nnxp(ngrid)
 m3 = nnyp(ngrid)
 
-! Compute WP_PGFORCE from change in wp during acoustic solver.
+! Compute WP_PGFORCE as the residual of the acoustic-solver increment.
 !
-! The acoustic loop applies, for each of nnacoust sub-steps:
-!     wp = wp + dts*wt + (vertical PGF terms)
-! with dts = 2*dtlt/nnacoust and wt held constant across sub-steps. So the
-! total contribution to Delta_wp from the explicit tendencies is 2*dtlt*wt,
-! where wt at this point = wp_advection + wp_diffusion (rates) plus the
-! buoyancy contribution staggered to w-levels.
+! The vertical PGF cannot be extracted directly: it is applied in two pieces,
+! an explicit part in prdctw1 (a1da2*acoc*(pp_k - pp_k+1)) and an implicit
+! Crank-Nicholson part completed through the tridiagonal solve in prdctw2 and
+! prdctw3, so no single array ever holds it. Taking it as a residual is the
+! only practical route.
 !
-! wp_buoy_theta and wp_buoy_cond are already pre-scaled by 2*dtlt and
-! staggered (k+k+1) inside boyanc, so they are already a Delta_w [m/s].
-! wp_advection and wp_diffusion are stored as raw rates [m/s^2], so they
-! must be multiplied by 2*dtlt here to convert to a Delta_w.
+! Everything else that moves wp inside the acoustic loop is therefore
+! subtracted off here:
+!   dts*wt              -> wp_advection + wp_diffusion (+ buoyancy, folded
+!                          into wt by boyanc and stored separately)
+!   rayf                -> wp_rayleigh, bracketed around the call in prdctw1
+! What is left is the true vertical PGF, except at k=1, where prdctw2
+! overwrites wp with the bottom boundary condition (-heatfx1*rtgt) when
+! nstbot==1. k=1 and k=nz are not meaningful in any of these fields.
 !
-! Resulting wp_pgforce is Delta_w [m/s] from the vertical PGF over the
-! full big timestep, comparable in units to wp_buoy_theta / wp_buoy_cond.
-!
-! Boundary cells (k=1 and k=nz) are not physically meaningful: the acoustic
-! solver overwrites wp there with boundary conditions each sub-step.
+! All terms are rates [m/s^2]. The acoustic loop advances wp over 2*dtlt
+! (leapfrog t-dt to t+dt), so the increment is divided by 2*dtlt.
 !
 ! Note: wp_pgforce appears on both sides below. On the RHS it holds wp_before
 ! (stored by save_wp_before_acoustic); on the LHS it receives the final PGF.
+!
 if(iuvwtend>=2) then
   basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3) =  &
-    (basic_g(ngrid)%wp(1:m1,1:m2,1:m3) - basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3))  &
-    - 2.0*dtlt * basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3)  &
-    - 2.0*dtlt * basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3)  &
+      (basic_g(ngrid)%wp(1:m1,1:m2,1:m3)  &
+       - basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3)) / (2.0*dtlt)  &
+    - basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3)  &
+    - basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3)  &
     - basic_g(ngrid)%wp_buoy_theta(1:m1,1:m2,1:m3)  &
-    - basic_g(ngrid)%wp_buoy_cond(1:m1,1:m2,1:m3)
+    - basic_g(ngrid)%wp_buoy_cond(1:m1,1:m2,1:m3)  &
+    - basic_g(ngrid)%wp_rayleigh(1:m1,1:m2,1:m3)
 endif
 
 return
 END SUBROUTINE compute_wp_pgforce
+
+!##############################################################################
+Subroutine compute_uvw_accel ()
+
+use mem_basic
+use mem_grid, only:ngrid,dtlt
+use io_params, only: iuvwtend
+
+implicit none
+
+! The realised acceleration at every grid point [m/s^2].
+!
+! Call this at the END of timestep(), after vpsets, so it is formed from
+! exactly the arrays anal_write will write.
+!
+! At that point (see predict(), rtimi.f90, iac=2):
+!     uc = raw value at time level n+1  -- the model time being stamped
+!     up = Asselin-filtered value at level n  -- one dtlt earlier
+! so (uc-up)/dtlt is a backward difference over one big timestep. The eps=0.2
+! Asselin filter preserves a linear trend exactly, so this is a consistent
+! estimate of du/dt, centred at t-dtlt/2.
+!
+! This is deliberately NOT the same interval the momentum budget closes over:
+! the budget terms sum to the acoustic-solver increment across the leapfrog
+! interval [t-dtlt, t+dtlt], centred on t. The two agree to O(dtlt), not to
+! round-off. This one is the quantity you would get by differencing the
+! written fields in post-processing -- computed here in full precision, before
+! any lossy compression touches uc/up.
+
+if(iuvwtend<1) return
+
+basic_g(ngrid)%up_dudt = (basic_g(ngrid)%uc - basic_g(ngrid)%up) / dtlt
+basic_g(ngrid)%vp_dvdt = (basic_g(ngrid)%vc - basic_g(ngrid)%vp) / dtlt
+basic_g(ngrid)%wp_dwdt = (basic_g(ngrid)%wc - basic_g(ngrid)%wp) / dtlt
+
+return
+END SUBROUTINE compute_uvw_accel
