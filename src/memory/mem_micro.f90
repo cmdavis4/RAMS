@@ -32,6 +32,11 @@ implicit none
                          ,dnmap,dnmgp,dnmhp                         &
                          ,dincp,dindp,dinrp,dinpp,dinsp             &
                          ,dinap,dingp,dinhp                         &
+                         !Regenerated aerosol tracking variables
+                         ,rnmcp,rnmdp,rnmrp,rnmpp,rnmsp             &
+                         ,rnmap,rnmgp,rnmhp                         &
+                         ,rincp,rindp,rinrp,rinpp,rinsp             &
+                         ,rinap,ringp,rinhp                         &
                          ,snmcp,snmdp,snmrp,snmpp,snmsp             &
                          ,snmap,snmgp,snmhp                         &
                          ,resol_aero1_mp,resol_aero2_mp &
@@ -51,6 +56,7 @@ implicit none
            ,aggrselfprist,aggrselfsnowt,aggrprissnowt                      &
            ! MICRO BUDGET PROCESSES (imbudget >=3)
            ,dust1cldrt,dust2cldrt,dust1drzrt,dust2drzrt                    &
+           ,regen1cldrt,regen2cldrt,regen1drzrt,regen2drzrt                &
            ! BIN MICROPHYSICS, and some extra budget variables  
            ,t_old,rv_old,nuccldct,nucicect,inuchomct,inucifnct
 
@@ -65,6 +71,7 @@ implicit none
                          ,pcpg,qpcpg,dpcpg                          &
                          !Accumulated aerosols and accumulation rate
                          ,accpdust,pcprdust,accpaero,pcpraero       &
+                         ,accpregen,pcprregen                       &
                          !Bin precip vars
                          ,accpic,accpip,accpid,pcpric,pcprid,pcprip &
                          !Dust erodible fraction
@@ -277,6 +284,28 @@ implicit none
             if(jnmb(6) >= 1) allocate (micro%dingp(n1,n2,n3))
             if(jnmb(7) >= 1) allocate (micro%dinhp(n1,n2,n3))
            endif
+           !Regenerated aerosol mass in hydrometeors, and the part of it
+           !that has served as ice nuclei. Mirrors ITRKDUST/ITRKDUSTIFN.
+           if(itrkregen==1 .and. iccnlev>=2) then
+            allocate (micro%accpregen(n2,n3))
+            allocate (micro%pcprregen(n2,n3))
+            if(jnmb(1) >= 1) allocate (micro%rnmcp(n1,n2,n3))
+            if(jnmb(8) >= 1) allocate (micro%rnmdp(n1,n2,n3))
+            if(jnmb(2) >= 1) allocate (micro%rnmrp(n1,n2,n3))
+            if(jnmb(3) >= 1) allocate (micro%rnmpp(n1,n2,n3))
+            if(jnmb(4) >= 1) allocate (micro%rnmsp(n1,n2,n3))
+            if(jnmb(5) >= 1) allocate (micro%rnmap(n1,n2,n3))
+            if(jnmb(6) >= 1) allocate (micro%rnmgp(n1,n2,n3))
+            if(jnmb(7) >= 1) allocate (micro%rnmhp(n1,n2,n3))
+            if(jnmb(1) >= 1) allocate (micro%rincp(n1,n2,n3))
+            if(jnmb(8) >= 1) allocate (micro%rindp(n1,n2,n3))
+            if(jnmb(2) >= 1) allocate (micro%rinrp(n1,n2,n3))
+            if(jnmb(3) >= 1) allocate (micro%rinpp(n1,n2,n3))
+            if(jnmb(4) >= 1) allocate (micro%rinsp(n1,n2,n3))
+            if(jnmb(5) >= 1) allocate (micro%rinap(n1,n2,n3))
+            if(jnmb(6) >= 1) allocate (micro%ringp(n1,n2,n3))
+            if(jnmb(7) >= 1) allocate (micro%rinhp(n1,n2,n3))
+           endif
            if(itrkepsilon==1) then
             allocate (micro%resol_aero1_mp(n1,n2,n3))
             allocate (micro%resol_aero2_mp(n1,n2,n3))
@@ -363,6 +392,12 @@ implicit none
            allocate (micro%dust2cldrt(n1,n2,n3))
            allocate (micro%dust1drzrt(n1,n2,n3))
            allocate (micro%dust2drzrt(n1,n2,n3))
+         endif
+         if(imbudget==3 .and. iccnlev>=2) then
+           allocate (micro%regen1cldrt(n1,n2,n3))
+           allocate (micro%regen2cldrt(n1,n2,n3))
+           allocate (micro%regen1drzrt(n1,n2,n3))
+           allocate (micro%regen2drzrt(n1,n2,n3))
          endif
       endif
       if (level == 4) then
@@ -588,6 +623,25 @@ implicit none
    if (allocated(micro%dingp))   deallocate (micro%dingp)
    if (allocated(micro%dinhp))   deallocate (micro%dinhp)
 
+   if (allocated(micro%rnmcp))   deallocate (micro%rnmcp)
+   if (allocated(micro%rnmdp))   deallocate (micro%rnmdp)
+   if (allocated(micro%rnmrp))   deallocate (micro%rnmrp)
+   if (allocated(micro%rnmpp))   deallocate (micro%rnmpp)
+   if (allocated(micro%rnmsp))   deallocate (micro%rnmsp)
+   if (allocated(micro%rnmap))   deallocate (micro%rnmap)
+   if (allocated(micro%rnmgp))   deallocate (micro%rnmgp)
+   if (allocated(micro%rnmhp))   deallocate (micro%rnmhp)
+   if (allocated(micro%rincp))   deallocate (micro%rincp)
+   if (allocated(micro%rindp))   deallocate (micro%rindp)
+   if (allocated(micro%rinrp))   deallocate (micro%rinrp)
+   if (allocated(micro%rinpp))   deallocate (micro%rinpp)
+   if (allocated(micro%rinsp))   deallocate (micro%rinsp)
+   if (allocated(micro%rinap))   deallocate (micro%rinap)
+   if (allocated(micro%ringp))   deallocate (micro%ringp)
+   if (allocated(micro%rinhp))   deallocate (micro%rinhp)
+   if (allocated(micro%accpregen))deallocate (micro%accpregen)
+   if (allocated(micro%pcprregen))deallocate (micro%pcprregen)
+
    if (allocated(micro%snmcp))   deallocate (micro%snmcp)
    if (allocated(micro%snmdp))   deallocate (micro%snmdp)
    if (allocated(micro%snmrp))   deallocate (micro%snmrp)
@@ -687,6 +741,10 @@ implicit none
     if (allocated(micro%dust2cldrt))        deallocate (micro%dust2cldrt)
     if (allocated(micro%dust1drzrt))        deallocate (micro%dust1drzrt)
     if (allocated(micro%dust2drzrt))        deallocate (micro%dust2drzrt)
+    if (allocated(micro%regen1cldrt))       deallocate (micro%regen1cldrt)
+    if (allocated(micro%regen2cldrt))       deallocate (micro%regen2cldrt)
+    if (allocated(micro%regen1drzrt))       deallocate (micro%regen1drzrt)
+    if (allocated(micro%regen2drzrt))       deallocate (micro%regen2drzrt)
 
     !Bin microphysics variables
     if (allocated(micro%pcpvip))       deallocate (micro%pcpvip)
@@ -1040,6 +1098,74 @@ implicit none
                  ,ng, npts, imean,  &
                  'DINHP :3:anal:mpti:mpt1')
 
+!Regenerated aerosol mass-in-hydrometeors tracking variables
+   if (allocated(micro%rnmcp)) &
+      CALL vtables2 (micro%rnmcp(1,1,1),microm%rnmcp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMCP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmdp)) &
+      CALL vtables2 (micro%rnmdp(1,1,1),microm%rnmdp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMDP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmrp)) &
+      CALL vtables2 (micro%rnmrp(1,1,1),microm%rnmrp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMRP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmpp)) &
+      CALL vtables2 (micro%rnmpp(1,1,1),microm%rnmpp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMPP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmsp)) &
+      CALL vtables2 (micro%rnmsp(1,1,1),microm%rnmsp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMSP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmap)) &
+      CALL vtables2 (micro%rnmap(1,1,1),microm%rnmap(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMAP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmgp)) &
+      CALL vtables2 (micro%rnmgp(1,1,1),microm%rnmgp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMGP :3:anal:mpti:mpt1')
+   if (allocated(micro%rnmhp)) &
+      CALL vtables2 (micro%rnmhp(1,1,1),microm%rnmhp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RNMHP :3:anal:mpti:mpt1')
+
+!Regenerated aerosol as Ice nuclei mass-in-hydrometeors tracking variables
+   if (allocated(micro%rincp)) &
+      CALL vtables2 (micro%rincp(1,1,1),microm%rincp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINCP :3:anal:mpti:mpt1')
+   if (allocated(micro%rindp)) &
+      CALL vtables2 (micro%rindp(1,1,1),microm%rindp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINDP :3:anal:mpti:mpt1')
+   if (allocated(micro%rinrp)) &
+      CALL vtables2 (micro%rinrp(1,1,1),microm%rinrp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINRP :3:anal:mpti:mpt1')
+   if (allocated(micro%rinpp)) &
+      CALL vtables2 (micro%rinpp(1,1,1),microm%rinpp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINPP :3:anal:mpti:mpt1')
+   if (allocated(micro%rinsp)) &
+      CALL vtables2 (micro%rinsp(1,1,1),microm%rinsp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINSP :3:anal:mpti:mpt1')
+   if (allocated(micro%rinap)) &
+      CALL vtables2 (micro%rinap(1,1,1),microm%rinap(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINAP :3:anal:mpti:mpt1')
+   if (allocated(micro%ringp)) &
+      CALL vtables2 (micro%ringp(1,1,1),microm%ringp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINGP :3:anal:mpti:mpt1')
+   if (allocated(micro%rinhp)) &
+      CALL vtables2 (micro%rinhp(1,1,1),microm%rinhp(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'RINHP :3:anal:mpti:mpt1')
+
 !Total aerosol soluble mass-in-hydrometeors for aerosol tracking
    if (allocated(micro%snmcp)) &
       CALL vtables2 (micro%snmcp(1,1,1),microm%snmcp(1,1,1)  &
@@ -1351,6 +1477,22 @@ implicit none
         CALL vtables2 (micro%dust2drzrt(1,1,1),microm%dust2drzrt(1,1,1)  &
                        ,ng, npts, imean,  &
                        'DUST2DRZRT :3:anal:mpti')
+   if (allocated(micro%regen1cldrt)) &
+        CALL vtables2 (micro%regen1cldrt(1,1,1),microm%regen1cldrt(1,1,1)  &
+                       ,ng, npts, imean,  &
+                       'REGEN1CLDRT :3:anal:mpti')
+   if (allocated(micro%regen2cldrt)) &
+        CALL vtables2 (micro%regen2cldrt(1,1,1),microm%regen2cldrt(1,1,1)  &
+                       ,ng, npts, imean,  &
+                       'REGEN2CLDRT :3:anal:mpti')
+   if (allocated(micro%regen1drzrt)) &
+        CALL vtables2 (micro%regen1drzrt(1,1,1),microm%regen1drzrt(1,1,1)  &
+                       ,ng, npts, imean,  &
+                       'REGEN1DRZRT :3:anal:mpti')
+   if (allocated(micro%regen2drzrt)) &
+        CALL vtables2 (micro%regen2drzrt(1,1,1),microm%regen2drzrt(1,1,1)  &
+                       ,ng, npts, imean,  &
+                       'REGEN2DRZRT :3:anal:mpti')
 
    npts=n2*n3
    if (allocated(micro%accpr)) &
@@ -1441,6 +1583,16 @@ implicit none
       CALL vtables2 (micro%pcprdust(1,1),microm%pcprdust(1,1)  &
                  ,ng, npts, imean,  &
                  'PCPRDUST :2:anal')
+
+!Regenerated aerosol mass precipitation to the surface
+   if (allocated(micro%accpregen)) &
+      CALL vtables2 (micro%accpregen(1,1),microm%accpregen(1,1)  &
+                 ,ng, npts, imean,  &
+                 'ACCPREGEN :2:anal:mpti')
+   if (allocated(micro%pcprregen)) &
+      CALL vtables2 (micro%pcprregen(1,1),microm%pcprregen(1,1)  &
+                 ,ng, npts, imean,  &
+                 'PCPRREGEN :2:anal')
 
 !Dust erodible fraction
    if (allocated(micro%dustfrac)) &

@@ -32,7 +32,7 @@ integer :: idiffperts
 integer :: level,icloud,idriz,irain,ipris,isnow,iaggr,igraup,ihail      &
   ,irime,iplaws,iaerosol,idust,idustloft,iabcarb,isalt,iaerorad,iifn    &
   ,imbudget,isedim,itrkepsilon,itrkdust,itrkdustifn,iaerodep,icheckmic  &
-  ,iaeroprnt,iaerohist,iifn_formula,iscm,iscmx,iscmy
+  ,iaeroprnt,iaerohist,iifn_formula,iscm,iscmx,iscmy,itrkregen
 
 integer, dimension(maxgrds) :: iaerolbc,ico2lbc
 real, dimension(maxgrds) :: bctau
@@ -120,6 +120,7 @@ real, dimension(nzpmax) :: xinuchomrt,xinuccontrt,xinucifnrt,xinuchazrt   &
 
 !For imbudget>=3
 real, dimension(nzpmax) :: xdust1cldrt,xdust2cldrt,xdust1drzrt,xdust2drzrt
+real, dimension(nzpmax) :: xregen1cldrt,xregen2cldrt,xregen1drzrt,xregen2drzrt
 
 !******Variables Needed for BUBBLE SIMULATION ******************************
 integer :: ibubble,ibubgrd,ibdxia,ibdxiz,ibdyja,ibdyjz,ibdzk1,ibdzk2
@@ -158,7 +159,8 @@ real, dimension(nzpmax) :: nifn
 
 !Tracking total aerosol mass, immersion freezing number in hydrometeors cats
 real, dimension(nzpmax,ncat) :: cnmhx,immerhx,snmhx,dnmhx,dinhx,rnmhx,rinhx
-real, dimension(ncat) :: pcpraerox,accpaerox,pcprdustx,accpdustx
+real, dimension(ncat) :: pcpraerox,accpaerox,pcprdustx,accpdustx &
+                       ,pcprregenx,accpregenx
 real, dimension(nzpmax) :: ifnnucx,total_in
 
 !Number of bins in lognormal aerosol distribution

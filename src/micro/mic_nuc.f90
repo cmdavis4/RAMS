@@ -310,15 +310,18 @@ elseif (jnmb(1) >= 5) then
              xdust2cldrt(k) = xdust2cldrt(k) + vaprccn * budget_scalet
           if(acat==4 .and. drop==8 .and. imbudget==3 .and. idust >= 1) &
              xdust2drzrt(k) = xdust2drzrt(k) + vaprccn * budget_scalet
-         ! Regenerated aerosol diagnostics
-         ! Acat==aerocate-1 -> small regenerated mode, acat==aerocat -> large
-         !  regenerated mode
-         ! drop==1 -> cloud nucleation
-         ! Don't need to worry about idust for regenerated aerosol, so drop that
+          !Regenerated aerosol Budget diagnostics
+          !acat==aerocat-1 -> small regenerated mode, acat==aerocat -> large
+          !drop==1 -> cloud nucleation, drop==8 -> drizzle nucleation
+          !No idust guard needed here: these modes exist whenever ICCNLEV>=2
           if(acat==aerocat-1 .and. drop==1 .and. imbudget==3) &
              xregen1cldrt(k) = xregen1cldrt(k) + vaprccn * budget_scalet
-          if(acat==aerocat .and. drop==1 .and. imbudget==3) &
+          if(acat==aerocat-1 .and. drop==8 .and. imbudget==3) &
+             xregen1drzrt(k) = xregen1drzrt(k) + vaprccn * budget_scalet
+          if(acat==aerocat   .and. drop==1 .and. imbudget==3) &
              xregen2cldrt(k) = xregen2cldrt(k) + vaprccn * budget_scalet
+          if(acat==aerocat   .and. drop==8 .and. imbudget==3) &
+             xregen2drzrt(k) = xregen2drzrt(k) + vaprccn * budget_scalet
 
           !Convert units for setting up lognormal distribution
           concen_tab(acat) = concen_tab(acat) * dn0(k) !Convert #/kg to #/m3

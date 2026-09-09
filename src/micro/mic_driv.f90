@@ -636,48 +636,64 @@ if (iccnlev>=2) then
     if(itrkepsilon==1) CALL ae1kmic (2,k3(1),micro%snmcp(1,i,j),snmhx(1,1))
     if(itrkdust==1)    CALL ae1kmic (2,k3(1),micro%dnmcp(1,i,j),dnmhx(1,1))
     if(itrkdustifn==1) CALL ae1kmic (2,k3(1),micro%dincp(1,i,j),dinhx(1,1))
+    if(itrkregen==1)   CALL ae1kmic (2,k3(1),micro%rnmcp(1,i,j),rnmhx(1,1))
+    if(itrkregen==1)   CALL ae1kmic (2,k3(1),micro%rincp(1,i,j),rinhx(1,1))
    endif
    if (jnmb(2) >= 1) then
     CALL ae1kmic (2,k2(11),micro%cnmrp(1,i,j),cnmhx(1,2))
     if(itrkepsilon==1) CALL ae1kmic (2,k2(11),micro%snmrp(1,i,j),snmhx(1,2))
     if(itrkdust==1)    CALL ae1kmic (2,k2(11),micro%dnmrp(1,i,j),dnmhx(1,2))
     if(itrkdustifn==1) CALL ae1kmic (2,k2(11),micro%dinrp(1,i,j),dinhx(1,2))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rnmrp(1,i,j),rnmhx(1,2))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rinrp(1,i,j),rinhx(1,2))
    endif
    if (jnmb(3) >= 1) then
     CALL ae1kmic (2,k3(3),micro%cnmpp(1,i,j),cnmhx(1,3))
     if(itrkepsilon==1) CALL ae1kmic (2,k3(3),micro%snmpp(1,i,j),snmhx(1,3))
     if(itrkdust==1)    CALL ae1kmic (2,k3(3),micro%dnmpp(1,i,j),dnmhx(1,3))
     if(itrkdustifn==1) CALL ae1kmic (2,k3(3),micro%dinpp(1,i,j),dinhx(1,3))
+    if(itrkregen==1)   CALL ae1kmic (2,k3(3),micro%rnmpp(1,i,j),rnmhx(1,3))
+    if(itrkregen==1)   CALL ae1kmic (2,k3(3),micro%rinpp(1,i,j),rinhx(1,3))
    endif
    if (jnmb(4) >= 1) then
     CALL ae1kmic (2,k2(11),micro%cnmsp(1,i,j),cnmhx(1,4))
     if(itrkepsilon==1) CALL ae1kmic (2,k2(11),micro%snmsp(1,i,j),snmhx(1,4))
     if(itrkdust==1)    CALL ae1kmic (2,k2(11),micro%dnmsp(1,i,j),dnmhx(1,4))
     if(itrkdustifn==1) CALL ae1kmic (2,k2(11),micro%dinsp(1,i,j),dinhx(1,4))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rnmsp(1,i,j),rnmhx(1,4))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rinsp(1,i,j),rinhx(1,4))
    endif
    if (jnmb(5) >= 1) then
     CALL ae1kmic (2,k2(11),micro%cnmap(1,i,j),cnmhx(1,5))
     if(itrkepsilon==1) CALL ae1kmic (2,k2(11),micro%snmap(1,i,j),snmhx(1,5))
     if(itrkdust==1)    CALL ae1kmic (2,k2(11),micro%dnmap(1,i,j),dnmhx(1,5))
     if(itrkdustifn==1) CALL ae1kmic (2,k2(11),micro%dinap(1,i,j),dinhx(1,5))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rnmap(1,i,j),rnmhx(1,5))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rinap(1,i,j),rinhx(1,5))
    endif
    if (jnmb(6) >= 1) then
     CALL ae1kmic (2,k2(11),micro%cnmgp(1,i,j),cnmhx(1,6))
     if(itrkepsilon==1) CALL ae1kmic (2,k2(11),micro%snmgp(1,i,j),snmhx(1,6))
     if(itrkdust==1)    CALL ae1kmic (2,k2(11),micro%dnmgp(1,i,j),dnmhx(1,6))
     if(itrkdustifn==1) CALL ae1kmic (2,k2(11),micro%dingp(1,i,j),dinhx(1,6))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rnmgp(1,i,j),rnmhx(1,6))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%ringp(1,i,j),rinhx(1,6))
    endif
    if (jnmb(7) >= 1) then
     CALL ae1kmic (2,k2(11),micro%cnmhp(1,i,j),cnmhx(1,7))
     if(itrkepsilon==1) CALL ae1kmic (2,k2(11),micro%snmhp(1,i,j),snmhx(1,7))
     if(itrkdust==1)    CALL ae1kmic (2,k2(11),micro%dnmhp(1,i,j),dnmhx(1,7))
     if(itrkdustifn==1) CALL ae1kmic (2,k2(11),micro%dinhp(1,i,j),dinhx(1,7))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rnmhp(1,i,j),rnmhx(1,7))
+    if(itrkregen==1)   CALL ae1kmic (2,k2(11),micro%rinhp(1,i,j),rinhx(1,7))
    endif
    if (jnmb(8) >= 1) then
     CALL ae1kmic (2,dtop,micro%cnmdp(1,i,j),cnmhx(1,8))
     if(itrkepsilon==1) CALL ae1kmic (2,dtop,micro%snmdp(1,i,j),snmhx(1,8))
     if(itrkdust==1)    CALL ae1kmic (2,dtop,micro%dnmdp(1,i,j),dnmhx(1,8))
     if(itrkdustifn==1) CALL ae1kmic (2,dtop,micro%dindp(1,i,j),dinhx(1,8))
+    if(itrkregen==1)   CALL ae1kmic (2,dtop,micro%rnmdp(1,i,j),rnmhx(1,8))
+    if(itrkregen==1)   CALL ae1kmic (2,dtop,micro%rindp(1,i,j),rinhx(1,8))
    endif
    !Regenerated aerosol variables
    CALL ae1kmic (2,m1-1,micro%regen_aero1_np(1,i,j),aerocon(1,aerocat-1))
@@ -700,6 +716,13 @@ if (iccnlev>=2) then
     do lcat=1,ncat
      micro%accpdust(i,j) = micro%accpdust(i,j) + accpdustx(lcat)
      micro%pcprdust(i,j) = micro%pcprdust(i,j) + pcprdustx(lcat)
+    enddo
+   endif
+   if(itrkregen==1) then
+    micro%pcprregen(i,j) = 0.0
+    do lcat=1,ncat
+     micro%accpregen(i,j) = micro%accpregen(i,j) + accpregenx(lcat)
+     micro%pcprregen(i,j) = micro%pcprregen(i,j) + pcprregenx(lcat)
     enddo
    endif
 endif
@@ -842,6 +865,12 @@ if(imbudget==3 .and. idust>=1) then
   CALL ae1kmic (1,m1,micro%dust1drzrt(1,i,j),xdust1drzrt(1))
   CALL ae1kmic (1,m1,micro%dust2drzrt(1,i,j),xdust2drzrt(1))
 endif
+if(imbudget==3 .and. iccnlev>=2) then
+  CALL ae1kmic (1,m1,micro%regen1cldrt(1,i,j),xregen1cldrt(1))
+  CALL ae1kmic (1,m1,micro%regen2cldrt(1,i,j),xregen2cldrt(1))
+  CALL ae1kmic (1,m1,micro%regen1drzrt(1,i,j),xregen1drzrt(1))
+  CALL ae1kmic (1,m1,micro%regen2drzrt(1,i,j),xregen2drzrt(1))
+endif
 
 !Set Micro Budgets bottom level with first level above ground
 if(imbudget>=1) then
@@ -908,6 +937,12 @@ if(imbudget==3 .and. idust>=1) then
   micro%dust2cldrt(1,i,j)     = micro%dust2cldrt(2,i,j)
   micro%dust1drzrt(1,i,j)     = micro%dust1drzrt(2,i,j)
   micro%dust2drzrt(1,i,j)     = micro%dust2drzrt(2,i,j)
+endif
+if(imbudget==3 .and. iccnlev>=2) then
+  micro%regen1cldrt(1,i,j)    = micro%regen1cldrt(2,i,j)
+  micro%regen2cldrt(1,i,j)    = micro%regen2cldrt(2,i,j)
+  micro%regen1drzrt(1,i,j)    = micro%regen1drzrt(2,i,j)
+  micro%regen2drzrt(1,i,j)    = micro%regen2drzrt(2,i,j)
 endif
 
 return

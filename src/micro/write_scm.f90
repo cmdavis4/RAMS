@@ -276,6 +276,26 @@ if(level == 3) then
    if(jnmb(6)>=1) CALL iofil ('dingp.txt',micro_g(ng)%dingp(:,i,j),m1,wf,fln)
    if(jnmb(7)>=1) CALL iofil ('dinhp.txt',micro_g(ng)%dinhp(:,i,j),m1,wf,fln)
   endif
+  if(itrkregen==1) then
+   CALL iofil ('accpregen.txt',micro_g(ng)%accpregen(i,j),1,wf,fln)
+   CALL iofil ('pcprregen.txt',micro_g(ng)%pcprregen(i,j),1,wf,fln)
+   if(jnmb(1)>=1) CALL iofil ('rnmcp.txt',micro_g(ng)%rnmcp(:,i,j),m1,wf,fln)
+   if(jnmb(8)>=1) CALL iofil ('rnmdp.txt',micro_g(ng)%rnmdp(:,i,j),m1,wf,fln)
+   if(jnmb(2)>=1) CALL iofil ('rnmrp.txt',micro_g(ng)%rnmrp(:,i,j),m1,wf,fln)
+   if(jnmb(3)>=1) CALL iofil ('rnmpp.txt',micro_g(ng)%rnmpp(:,i,j),m1,wf,fln)
+   if(jnmb(4)>=1) CALL iofil ('rnmsp.txt',micro_g(ng)%rnmsp(:,i,j),m1,wf,fln)
+   if(jnmb(5)>=1) CALL iofil ('rnmap.txt',micro_g(ng)%rnmap(:,i,j),m1,wf,fln)
+   if(jnmb(6)>=1) CALL iofil ('rnmgp.txt',micro_g(ng)%rnmgp(:,i,j),m1,wf,fln)
+   if(jnmb(7)>=1) CALL iofil ('rnmhp.txt',micro_g(ng)%rnmhp(:,i,j),m1,wf,fln)
+   if(jnmb(1)>=1) CALL iofil ('rincp.txt',micro_g(ng)%rincp(:,i,j),m1,wf,fln)
+   if(jnmb(8)>=1) CALL iofil ('rindp.txt',micro_g(ng)%rindp(:,i,j),m1,wf,fln)
+   if(jnmb(2)>=1) CALL iofil ('rinrp.txt',micro_g(ng)%rinrp(:,i,j),m1,wf,fln)
+   if(jnmb(3)>=1) CALL iofil ('rinpp.txt',micro_g(ng)%rinpp(:,i,j),m1,wf,fln)
+   if(jnmb(4)>=1) CALL iofil ('rinsp.txt',micro_g(ng)%rinsp(:,i,j),m1,wf,fln)
+   if(jnmb(5)>=1) CALL iofil ('rinap.txt',micro_g(ng)%rinap(:,i,j),m1,wf,fln)
+   if(jnmb(6)>=1) CALL iofil ('ringp.txt',micro_g(ng)%ringp(:,i,j),m1,wf,fln)
+   if(jnmb(7)>=1) CALL iofil ('rinhp.txt',micro_g(ng)%rinhp(:,i,j),m1,wf,fln)
+  endif
   if(itrkepsilon==1) then
    CALL iofil ('resol_aero1_mp.txt',micro_g(ng)%resol_aero1_mp(:,i,j),m1,wf,fln)
    CALL iofil ('resol_aero2_mp.txt',micro_g(ng)%resol_aero2_mp(:,i,j),m1,wf,fln)

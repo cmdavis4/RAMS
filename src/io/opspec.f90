@@ -327,6 +327,7 @@ elseif (level .eq. 3) then
  endif
  if (itrkepsilon .lt. 0 .or. itrkepsilon .gt. 1 .or. &
      itrkdust    .lt. 0 .or. itrkdust    .gt. 1 .or. &
+     itrkregen   .lt. 0 .or. itrkregen   .gt. 1 .or. &
      itrkdustifn .lt. 0 .or. itrkdustifn .gt. 1) THEN
   print*,'FATAL - AEROSOL TRACKING FLAGS MUST BE 0-1'
   IFATERR = IFATERR + 1
@@ -370,10 +371,11 @@ elseif (level .eq. 3) then
    IFATERR = IFATERR + 1
  endif
 
- if ((itrkepsilon.gt.0 .or. itrkdust.gt.0 .or. itrkdustifn.gt.0) &
-      .and. iccnlev.lt.2) THEN
+ if ((itrkepsilon.gt.0 .or. itrkdust.gt.0 .or. itrkdustifn.gt.0 &
+      .or. itrkregen.gt.0) .and. iccnlev.lt.2) THEN
    print*,'FATAL - Aerosol tracking = 0 since ICCNLEV < 2.'
-   print*,'Either set ICCNLEV>=2 or set ITRKEPSILON=ITRKDUST=ITRKDUSTIFN=0'
+   print*,'Either set ICCNLEV>=2 or set'
+   print*,'ITRKEPSILON=ITRKDUST=ITRKDUSTIFN=ITRKREGEN=0'
    IFATERR = IFATERR + 1
  endif
  if ((itrkdust.gt.0 .or. itrkdustifn.gt.0) .and. idust.eq.0) THEN
@@ -417,13 +419,14 @@ elseif (level .eq. 4) then
        itrkepsilon > 0 .or. &
        itrkdust    > 0 .or. &
        itrkdustifn > 0 .or. &
+       itrkregen   > 0 .or. &
        icheckmic   > 0) THEN
     print*,'FATAL - The following microphysics ON/OFF switches are not used'
     print*,'in HUCM Bin Microphysics, so set them to zero for OFF.'
     print*,''
     print*,'ICLOUD, IDRIZ, IRAIN, ISNOW, IAGGR, IAEROSOL' 
     print*,'IABCARB, ISALT, IDUST, ICCNLEV, IAERORAD, IAERODEP, IAEROPRNT' 
-    print*,'ITRKEPSILON, ITRKDUST, ITRKDUSTIFN, ICHECKMIC.'
+    print*,'ITRKEPSILON, ITRKDUST, ITRKDUSTIFN, ITRKREGEN, ICHECKMIC.'
     print*,''
     print*,'HUCM only uses the following microphysics flags:'
     print*,''

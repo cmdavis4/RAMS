@@ -206,6 +206,56 @@ do k = 1,mzp
          if(isnanr(micro_g(ngrid)%dindp(k,i,j))) prtflg=1
        endif
      endif
+     if(itrkregen==1)then
+       if(icloud>=1)then
+         if(isnanr(micro_g(ngrid)%rnmcp(k,i,j))) prtflg=1
+       endif
+       if(irain>=1)then
+         if(isnanr(micro_g(ngrid)%rnmrp(k,i,j))) prtflg=1
+       endif
+       if(ipris>=1)then
+         if(isnanr(micro_g(ngrid)%rnmpp(k,i,j))) prtflg=1
+       endif
+       if(isnow>=1)then
+         if(isnanr(micro_g(ngrid)%rnmsp(k,i,j))) prtflg=1
+       endif
+       if(iaggr>=1)then
+         if(isnanr(micro_g(ngrid)%rnmap(k,i,j))) prtflg=1
+       endif
+       if(igraup>=1)then
+         if(isnanr(micro_g(ngrid)%rnmgp(k,i,j))) prtflg=1
+       endif
+       if(ihail>=1)then
+         if(isnanr(micro_g(ngrid)%rnmhp(k,i,j))) prtflg=1
+       endif
+       if(idriz>=1)then
+         if(isnanr(micro_g(ngrid)%rnmdp(k,i,j))) prtflg=1
+       endif
+       if(icloud>=1)then
+         if(isnanr(micro_g(ngrid)%rincp(k,i,j))) prtflg=1
+       endif
+       if(irain>=1)then
+         if(isnanr(micro_g(ngrid)%rinrp(k,i,j))) prtflg=1
+       endif
+       if(ipris>=1)then
+         if(isnanr(micro_g(ngrid)%rinpp(k,i,j))) prtflg=1
+       endif
+       if(isnow>=1)then
+         if(isnanr(micro_g(ngrid)%rinsp(k,i,j))) prtflg=1
+       endif
+       if(iaggr>=1)then
+         if(isnanr(micro_g(ngrid)%rinap(k,i,j))) prtflg=1
+       endif
+       if(igraup>=1)then
+         if(isnanr(micro_g(ngrid)%ringp(k,i,j))) prtflg=1
+       endif
+       if(ihail>=1)then
+         if(isnanr(micro_g(ngrid)%rinhp(k,i,j))) prtflg=1
+       endif
+       if(idriz>=1)then
+         if(isnanr(micro_g(ngrid)%rindp(k,i,j))) prtflg=1
+       endif
+     endif
    endif
 
    !CHECK IMMERSION FREEZING NUCLEI TRACKING VARIABLES
@@ -437,6 +487,24 @@ do k = 1,mzp
        if(igraup>=1)print*,'dingp:         ',micro_g(ngrid)%dingp(k,i,j)
        if(ihail>=1) print*,'dinhp:         ',micro_g(ngrid)%dinhp(k,i,j)
        if(idriz>=1) print*,'dindp:         ',micro_g(ngrid)%dindp(k,i,j)
+      endif
+      if(itrkregen==1)then
+       if(icloud>=1)print*,'rnmcp:         ',micro_g(ngrid)%rnmcp(k,i,j)
+       if(irain>=1) print*,'rnmrp:         ',micro_g(ngrid)%rnmrp(k,i,j)
+       if(ipris>=1) print*,'rnmpp:         ',micro_g(ngrid)%rnmpp(k,i,j)
+       if(isnow>=1) print*,'rnmsp:         ',micro_g(ngrid)%rnmsp(k,i,j)
+       if(iaggr>=1) print*,'rnmap:         ',micro_g(ngrid)%rnmap(k,i,j)
+       if(igraup>=1)print*,'rnmgp:         ',micro_g(ngrid)%rnmgp(k,i,j)
+       if(ihail>=1) print*,'rnmhp:         ',micro_g(ngrid)%rnmhp(k,i,j)
+       if(idriz>=1) print*,'rnmdp:         ',micro_g(ngrid)%rnmdp(k,i,j)
+       if(icloud>=1)print*,'rincp:         ',micro_g(ngrid)%rincp(k,i,j)
+       if(irain>=1) print*,'rinrp:         ',micro_g(ngrid)%rinrp(k,i,j)
+       if(ipris>=1) print*,'rinpp:         ',micro_g(ngrid)%rinpp(k,i,j)
+       if(isnow>=1) print*,'rinsp:         ',micro_g(ngrid)%rinsp(k,i,j)
+       if(iaggr>=1) print*,'rinap:         ',micro_g(ngrid)%rinap(k,i,j)
+       if(igraup>=1)print*,'ringp:         ',micro_g(ngrid)%ringp(k,i,j)
+       if(ihail>=1) print*,'rinhp:         ',micro_g(ngrid)%rinhp(k,i,j)
+       if(idriz>=1) print*,'rindp:         ',micro_g(ngrid)%rindp(k,i,j)
       endif
       if(itrkepsilon==1)then
        print*,'regensol1:     ',micro_g(ngrid)%resol_aero1_mp(k,i,j)

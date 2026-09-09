@@ -1511,6 +1511,14 @@ do lcat = 1,8
                    dinhx(k,lcat) = dinhx(k,lcat) - dinmass
                    dinhx(k,jcat) = dinhx(k,jcat) + dinmass
                   endif
+                  if(itrkregen==1)then
+                   rcnmass  = rnmhx(k,lcat) * rxferratio
+                   rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+                   rnmhx(k,jcat) = rnmhx(k,jcat) + rcnmass
+                   rinmass  = rinhx(k,lcat) * rxferratio
+                   rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+                   rinhx(k,jcat) = rinhx(k,jcat) + rinmass
+                  endif
                endif
                !Transfer immersion freezing nuclei between cloud, driz, rain
                if(iifn==3 .and. iccnlev>=1 .and. cx(k,lcat)>0.0) then

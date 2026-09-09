@@ -118,11 +118,15 @@ if(iccnlev>=2) then
   accpaerox(lcat) = 0.
   pcprdustx(lcat) = 0.
   accpdustx(lcat) = 0.
+  pcprregenx(lcat) = 0.
+  accpregenx(lcat) = 0.
   do k = 1,m1
     cnmhx(k,lcat) = 0.
     snmhx(k,lcat) = 0.
     dnmhx(k,lcat) = 0.
     dinhx(k,lcat) = 0.
+    rnmhx(k,lcat) = 0.
+    rinhx(k,lcat) = 0.
   enddo
  enddo
  do k = 1,m1
@@ -206,6 +210,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,1) = micro%snmcp(k,i,j)
       if(itrkdust==1)    dnmhx(k,1) = micro%dnmcp(k,i,j)
       if(itrkdustifn==1) dinhx(k,1) = micro%dincp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,1) = micro%rnmcp(k,i,j)
+      if(itrkregen==1)   rinhx(k,1) = micro%rincp(k,i,j)
      endif
    endif
    !Aerosol masses in rain
@@ -215,6 +221,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,2) = micro%snmrp(k,i,j)
       if(itrkdust==1)    dnmhx(k,2) = micro%dnmrp(k,i,j)
       if(itrkdustifn==1) dinhx(k,2) = micro%dinrp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,2) = micro%rnmrp(k,i,j)
+      if(itrkregen==1)   rinhx(k,2) = micro%rinrp(k,i,j)
      endif
    endif
    !Aerosol masses in pristine ice 
@@ -224,6 +232,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,3) = micro%snmpp(k,i,j)
       if(itrkdust==1)    dnmhx(k,3) = micro%dnmpp(k,i,j)
       if(itrkdustifn==1) dinhx(k,3) = micro%dinpp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,3) = micro%rnmpp(k,i,j)
+      if(itrkregen==1)   rinhx(k,3) = micro%rinpp(k,i,j)
      endif
    endif
    !Aerosol masses in snow
@@ -233,6 +243,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,4) = micro%snmsp(k,i,j)
       if(itrkdust==1)    dnmhx(k,4) = micro%dnmsp(k,i,j)
       if(itrkdustifn==1) dinhx(k,4) = micro%dinsp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,4) = micro%rnmsp(k,i,j)
+      if(itrkregen==1)   rinhx(k,4) = micro%rinsp(k,i,j)
      endif
    endif
    !Aerosol masses in aggregates
@@ -242,6 +254,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,5) = micro%snmap(k,i,j)
       if(itrkdust==1)    dnmhx(k,5) = micro%dnmap(k,i,j)
       if(itrkdustifn==1) dinhx(k,5) = micro%dinap(k,i,j)
+      if(itrkregen==1)   rnmhx(k,5) = micro%rnmap(k,i,j)
+      if(itrkregen==1)   rinhx(k,5) = micro%rinap(k,i,j)
      endif
    endif
    !Aerosol masses in graupel
@@ -251,6 +265,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,6) = micro%snmgp(k,i,j)
       if(itrkdust==1)    dnmhx(k,6) = micro%dnmgp(k,i,j)
       if(itrkdustifn==1) dinhx(k,6) = micro%dingp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,6) = micro%rnmgp(k,i,j)
+      if(itrkregen==1)   rinhx(k,6) = micro%ringp(k,i,j)
      endif
    endif
    !Aerosol masses in hail
@@ -260,6 +276,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,7) = micro%snmhp(k,i,j)
       if(itrkdust==1)    dnmhx(k,7) = micro%dnmhp(k,i,j)
       if(itrkdustifn==1) dinhx(k,7) = micro%dinhp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,7) = micro%rnmhp(k,i,j)
+      if(itrkregen==1)   rinhx(k,7) = micro%rinhp(k,i,j)
      endif
    endif
    !Aerosol masses in drizzle
@@ -269,6 +287,8 @@ if (iccnlev>=2) then
       if(itrkepsilon==1) snmhx(k,8) = micro%snmdp(k,i,j)
       if(itrkdust==1)    dnmhx(k,8) = micro%dnmdp(k,i,j)
       if(itrkdustifn==1) dinhx(k,8) = micro%dindp(k,i,j)
+      if(itrkregen==1)   rnmhx(k,8) = micro%rnmdp(k,i,j)
+      if(itrkregen==1)   rinhx(k,8) = micro%rindp(k,i,j)
      endif
    endif
  enddo
@@ -484,6 +504,14 @@ if(imbudget==3 .and. idust>=1) then
    xdust2drzrt(k)    = micro%dust2drzrt(k,i,j)
  enddo
 endif
+if(imbudget==3 .and. iccnlev>=2) then
+ do k = 1,m1
+   xregen1cldrt(k)   = micro%regen1cldrt(k,i,j)
+   xregen2cldrt(k)   = micro%regen2cldrt(k,i,j)
+   xregen1drzrt(k)   = micro%regen1drzrt(k,i,j)
+   xregen2drzrt(k)   = micro%regen2drzrt(k,i,j)
+ enddo
+endif
 
 !Microphysics budget arrays
 !ZERO OUT INSTANTANEOUS dT FROM LATENT HEATING 
@@ -565,6 +593,14 @@ if(mod(time+0.001,frq).lt.dtlt .or. time.lt.0.001)then
    xdust2cldrt(k)    = 0.
    xdust1drzrt(k)    = 0.
    xdust2drzrt(k)    = 0.
+  enddo
+ endif
+ if(imbudget==3 .and. iccnlev>=2) then
+  do k = 1,m1
+   xregen1cldrt(k)   = 0.
+   xregen2cldrt(k)   = 0.
+   xregen1drzrt(k)   = 0.
+   xregen2drzrt(k)   = 0.
   enddo
  endif
 endif !If time to reset at analysis write
@@ -797,6 +833,14 @@ elseif (lcat == 3) then
           dinhx(k,lcat) = dinhx(k,lcat) - dinmass
           dinhx(k,1)    = dinhx(k,1) + dinmass
          endif
+         if(itrkregen==1)then
+          rcnmass = rnmhx(k,lcat) * rxferratio
+          rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+          rnmhx(k,1)    = rnmhx(k,1) + rcnmass
+          rinmass = rinhx(k,lcat) * rxferratio
+          rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+          rinhx(k,1)    = rinhx(k,1) + rinmass
+         endif
       endif
 
       rx(k,lcat) = rx(k,lcat) - rmelt
@@ -852,6 +896,14 @@ elseif (lcat == 4 .or. lcat == 5) then
              dinmass = dinhx(k,lcat) * rxferratio
              dinhx(k,lcat) = dinhx(k,lcat) - dinmass
              dinhx(k,6)    = dinhx(k,6) + dinmass
+            endif
+            if(itrkregen==1)then
+             rcnmass = rnmhx(k,lcat) * rxferratio
+             rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+             rnmhx(k,6)    = rnmhx(k,6) + rcnmass
+             rinmass = rinhx(k,lcat) * rxferratio
+             rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+             rinhx(k,6)    = rinhx(k,6) + rinmass
             endif
          endif
 
@@ -917,6 +969,14 @@ elseif (lcat == 6) then
              dinhx(k,lcat) = dinhx(k,lcat) - dinmass
              dinhx(k,2)    = dinhx(k,2) + dinmass
             endif
+            if(itrkregen==1)then
+             rcnmass = rnmhx(k,lcat) * rxferratio
+             rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+             rnmhx(k,2)    = rnmhx(k,2) + rcnmass
+             rinmass = rinhx(k,lcat) * rxferratio
+             rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+             rinhx(k,2)    = rinhx(k,2) + rinmass
+            endif
          endif
 
          if(imbudget >= 1) xmelticet(k)  = xmelticet(k) + rx(k,6) * budget_scalet
@@ -969,6 +1029,14 @@ elseif (lcat == 7) then
              dinhx(k,lcat) = dinhx(k,lcat) - dinmass
              dinhx(k,2)    = dinhx(k,2) + dinmass
             endif
+            if(itrkregen==1)then
+             rcnmass = rnmhx(k,lcat) * rxferratio
+             rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+             rnmhx(k,2)    = rnmhx(k,2) + rcnmass
+             rinmass = rinhx(k,lcat) * rxferratio
+             rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+             rinhx(k,2)    = rinhx(k,2) + rinmass
+            endif
          endif
 
          if(imbudget >= 1) xmelticet(k)  = xmelticet(k) + rx(k,7) * budget_scalet
@@ -1012,6 +1080,14 @@ elseif (lcat == 7) then
              dinhx(k,lcat) = dinhx(k,lcat) - dinmass
              dinhx(k,2)    = dinhx(k,2) + dinmass
             endif
+            if(itrkregen==1)then
+             rcnmass = rnmhx(k,lcat) * rxferratio
+             rnmhx(k,lcat) = rnmhx(k,lcat) - rcnmass
+             rnmhx(k,2)    = rnmhx(k,2) + rcnmass
+             rinmass = rinhx(k,lcat) * rxferratio
+             rinhx(k,lcat) = rinhx(k,lcat) - rinmass
+             rinhx(k,2)    = rinhx(k,2) + rinmass
+            endif
          endif
 
          rx(k,2) = rx(k,2) + rmltshed
@@ -1050,9 +1126,9 @@ implicit none
 integer :: m1,lcat,ngr,k1,k2,k,lhcat,iemb,kkf,kk
 real :: colddn0,rolddn0,qrolddn0,dispemb,riemb,psfc,qpcpg,pcpg &
    ,dpcpg,dtlti,qnew,alphasfc,psfcdust,cnmold,snmold,dnmold,dinold,immerold &
-   ,pctemp,prtemp,psfctemp,psfcaero
+   ,pctemp,prtemp,psfctemp,psfcaero,psfcregen,rnmold,rinold
 real, dimension(m1) :: rtp,thp,theta,dn0,cnew,rnew,qrnew &
-                      ,cnmnew,snmnew,immernew,dnmnew,dinnew
+                      ,cnmnew,snmnew,immernew,dnmnew,dinnew,rnmnew,rinnew
 real, dimension(m1,maxkfall,nembfall,nhcat,ndensrtgt,nband) :: pcpfillc,pcpfillr
 real, dimension(maxkfall,nembfall,nhcat,ndensrtgt,nband) :: sfcpcp
 real, dimension(m1,nembfall,nhcat,ndensrtgt,nband) :: allpcp
@@ -1061,10 +1137,13 @@ snmold=0.
 cnmold=0.
 dinold=0.
 dnmold=0.
+rinold=0.
+rnmold=0.
 immerold=0.
 psfc=0.
 psfcaero=0.
 psfcdust=0.
+psfcregen=0.
 pcprx(lcat) = 0.
 do k = 1,m1
    rnew(k) = 0.
@@ -1075,6 +1154,8 @@ do k = 1,m1
    snmnew(k) = 0.
    dnmnew(k) = 0.
    dinnew(k) = 0.
+   rnmnew(k) = 0.
+   rinnew(k) = 0.
    immernew(k) = 0.
 enddo
 
@@ -1092,6 +1173,8 @@ do k = k1,k2
        if(itrkepsilon==1) snmold = snmhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
        if(itrkdust==1)    dnmold = dnmhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
        if(itrkdustifn==1) dinold = dinhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
+       if(itrkregen==1)   rnmold = rnmhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
+       if(itrkregen==1)   rinold = rinhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
       endif
 
       !For tracking immersion freezing nuclei
@@ -1121,6 +1204,7 @@ do k = k1,k2
          !Aerosol and solubility tracking
          if(iccnlev>=2)	psfcaero = cnmold * psfctemp
          if(iccnlev>=2.and.itrkdust==1) psfcdust = dnmold * psfctemp
+         if(iccnlev>=2.and.itrkregen==1) psfcregen = rnmold * psfctemp
       endif
 
       do kkf = 1,min(maxkfall,k-1)
@@ -1136,6 +1220,8 @@ do k = k1,k2
           if(itrkepsilon==1) snmnew(kk) = snmnew(kk) + snmold * dn0i(kk) * prtemp
           if(itrkdust==1)    dnmnew(kk) = dnmnew(kk) + dnmold * dn0i(kk) * prtemp
           if(itrkdustifn==1) dinnew(kk) = dinnew(kk) + dinold * dn0i(kk) * prtemp
+          if(itrkregen==1)   rnmnew(kk) = rnmnew(kk) + rnmold * dn0i(kk) * prtemp
+          if(itrkregen==1)   rinnew(kk) = rinnew(kk) + rinold * dn0i(kk) * prtemp
          endif
          !For tracking immersion freezing nuclei
          if(iifn==3 .and. iccnlev>=1 .and. (lcat==1.or.lcat==2.or.lcat==8)) &
@@ -1151,6 +1237,8 @@ do k = k1,k2
            pcpraerox(lcat) = pcpraerox(lcat) + psfcaero
          if(iccnlev>=2 .and. itrkdust==1) &
            pcprdustx(lcat) = pcprdustx(lcat) + psfcdust
+         if(iccnlev>=2 .and. itrkregen==1) &
+           pcprregenx(lcat) = pcprregenx(lcat) + psfcregen
       endif
 
       !Precip rate at all levels (mm/s)
@@ -1174,6 +1262,10 @@ if(iccnlev>=2) then
     accpdustx(lcat) = pcprdustx(lcat)
     pcprdustx(lcat) = pcprdustx(lcat) * dtlti
   endif
+  if(itrkregen==1) then
+    accpregenx(lcat) = pcprregenx(lcat)
+    pcprregenx(lcat) = pcprregenx(lcat) * dtlti
+  endif
 endif
 
 do k = 2,k2
@@ -1195,6 +1287,8 @@ do k = 2,k2
      if(itrkepsilon==1) snmhx(k,lcat) = snmnew(k)
      if(itrkdust==1)    dnmhx(k,lcat) = dnmnew(k)
      if(itrkdustifn==1) dinhx(k,lcat) = dinnew(k)
+     if(itrkregen==1)   rnmhx(k,lcat) = rnmnew(k)
+     if(itrkregen==1)   rinhx(k,lcat) = rinnew(k)
    endif
 
    !For tracking immersion freezing nuclei
@@ -1213,6 +1307,8 @@ do k = 2,k2
         if(itrkepsilon==1) snmhx(k,lcat) = 0.
         if(itrkdust==1)    dnmhx(k,lcat) = 0.
         if(itrkdustifn==1) dinhx(k,lcat) = 0.
+        if(itrkregen==1)   rnmhx(k,lcat) = 0.
+        if(itrkregen==1)   rinhx(k,lcat) = 0.
       endif
       !For tracking immersion freezing nuclei
       if(iifn==3 .and. iccnlev>=1 .and. (lcat==1.or.lcat==2.or.lcat==8)) &
@@ -1239,9 +1335,9 @@ real :: colddn0,rolddn0,qrolddn0,riemb,psfc,qpcpg,pcpg,pcpvxtemp1,pcpvxtemp2 &
    ,dpcpg,dtlti,qnew,alphasfc,psfcdust,cnmold,snmold,dnmold,dinold,immerold &
    ,rtgt,embwt1,embwt2,dmb,dmode,bwt1,bwt2,bdenpowfac &
    ,psfcaero,densrtgt,denwt1,denwt2,psfctemp1,psfctemp2,pctemp1,pctemp2 &
-   ,prtemp1,prtemp2
+   ,prtemp1,prtemp2,psfcregen,rnmold,rinold
 real, dimension(m1) :: rtp,thp,theta,dn0,cnew,rnew,qrnew &
-   ,cnmnew,snmnew,dnmnew,dinnew,immernew
+   ,cnmnew,snmnew,dnmnew,dinnew,immernew,rnmnew,rinnew
 real, dimension(m1,maxkfall,nembfall,nhcat,ndensrtgt,nband) :: pcpfillc,pcpfillr
 real, dimension(maxkfall,nembfall,nhcat,ndensrtgt,nband) :: sfcpcp
 real, dimension(m1,nembfall,nhcat,ndensrtgt,nband) :: allpcp
@@ -1250,10 +1346,13 @@ snmold=0.
 cnmold=0.
 dinold=0.
 dnmold=0.
+rinold=0.
+rnmold=0.
 immerold=0.
 psfc=0.
 psfcaero=0.
 psfcdust=0.
+psfcregen=0.
 idensrtgt=0
 pcprx(lcat) = 0.
 do k = 1,m1
@@ -1265,6 +1364,8 @@ do k = 1,m1
    snmnew(k) = 0.
    dnmnew(k) = 0.
    dinnew(k) = 0.
+   rnmnew(k) = 0.
+   rinnew(k) = 0.
    immernew(k) = 0.
 enddo
 
@@ -1282,6 +1383,8 @@ do k = k1,k2
        if(itrkepsilon==1) snmold = snmhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
        if(itrkdust==1)    dnmold = dnmhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
        if(itrkdustifn==1) dinold = dinhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
+       if(itrkregen==1)   rnmold = rnmhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
+       if(itrkregen==1)   rinold = rinhx(k,lcat) * dn0(k) !Convert kg/kg to kg/m3
       endif
 
       !For tracking immersion freezing nuclei
@@ -1382,6 +1485,7 @@ do k = k1,k2
          !Aerosol accumulation
          if(iccnlev>=2) psfcaero = cnmold * (psfctemp1 + psfctemp2)
          if(iccnlev>=2 .and. itrkdust==1) psfcdust = dnmold*(psfctemp1+psfctemp2)
+         if(iccnlev>=2 .and. itrkregen==1) psfcregen = rnmold*(psfctemp1+psfctemp2)
       endif
 
       do kkf = 1,min(maxkfall,k-1)
@@ -1418,6 +1522,10 @@ do k = k1,k2
                               * (prtemp1 + prtemp2)
            if(itrkdustifn==1) dinnew(kk) = dinnew(kk) + dinold  * dn0i(kk) &
                               * (prtemp1 + prtemp2)
+           if(itrkregen==1)   rnmnew(kk) = rnmnew(kk) + rnmold  * dn0i(kk) &
+                              * (prtemp1 + prtemp2)
+           if(itrkregen==1)   rinnew(kk) = rinnew(kk) + rinold  * dn0i(kk) &
+                              * (prtemp1 + prtemp2)
          endif
          !For tracking immersion freezing nuclei
          if(iifn==3 .and. iccnlev>=1 .and. (lcat==1.or.lcat==2.or.lcat==8)) &
@@ -1433,6 +1541,8 @@ do k = k1,k2
            pcpraerox(lcat) = pcpraerox(lcat) + psfcaero
          if(iccnlev>=2 .and. itrkdust==1) &
            pcprdustx(lcat) = pcprdustx(lcat) + psfcdust
+         if(iccnlev>=2 .and. itrkregen==1) &
+           pcprregenx(lcat) = pcprregenx(lcat) + psfcregen
       endif
 
       !Precip rate at all levels (mm/s)
@@ -1466,6 +1576,10 @@ if(iccnlev>=2) then
     accpdustx(lcat) = pcprdustx(lcat)
     pcprdustx(lcat) = pcprdustx(lcat) * dtlti
   endif
+  if(itrkregen==1) then
+    accpregenx(lcat) = pcprregenx(lcat)
+    pcprregenx(lcat) = pcprregenx(lcat) * dtlti
+  endif
 endif
 
 do k = 2,k2
@@ -1487,6 +1601,8 @@ do k = 2,k2
      if(itrkepsilon==1) snmhx(k,lcat) = snmnew(k)
      if(itrkdust==1)    dnmhx(k,lcat) = dnmnew(k)
      if(itrkdustifn==1) dinhx(k,lcat) = dinnew(k)
+     if(itrkregen==1)   rnmhx(k,lcat) = rnmnew(k)
+     if(itrkregen==1)   rinhx(k,lcat) = rinnew(k)
    endif
 
    !For tracking immersion freezing nuclei
@@ -1504,6 +1620,8 @@ do k = 2,k2
         if(itrkepsilon==1) snmhx(k,lcat) = 0.
         if(itrkdust==1)    dnmhx(k,lcat) = 0.
         if(itrkdustifn==1) dinhx(k,lcat) = 0.
+        if(itrkregen==1)   rnmhx(k,lcat) = 0.
+        if(itrkregen==1)   rinhx(k,lcat) = 0.
       endif
       !For tracking immersion freezing nuclei
       if(iifn==3 .and. iccnlev>=1 .and. (lcat==1.or.lcat==2.or.lcat==8)) &

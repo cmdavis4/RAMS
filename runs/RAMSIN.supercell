@@ -604,6 +604,8 @@
    ITRKEPSILON = 1,        ! Tracking aerosol solubility for regeneration
    ITRKDUST    = 1,        ! Tracking dust sub-species within hydrometeors
    ITRKDUSTIFN = 1,        ! Tracing dust that served as ice nuclei
+   ITRKREGEN   = 0,        ! Tracing regenerated aerosol mass in hydrometeors
+                           !  and regenerated aerosol that served as ice nuclei
 
  $END
 

@@ -73,6 +73,8 @@ do lcat = 1,ncat
       snmhx(k,lcat) = 0.
       dnmhx(k,lcat) = 0.
       dinhx(k,lcat) = 0.
+      rnmhx(k,lcat) = 0.
+      rinhx(k,lcat) = 0.
       immerhx(k,lcat) = 0.
    enddo
 enddo
@@ -154,6 +156,24 @@ do j = 1,m3
        if(jnmb(7)>0) CALL ae1kmic (1,m1,dinhx(1,7),micro%dinhp(1,i,j))
        if(jnmb(8)>0) CALL ae1kmic (1,m1,dinhx(1,8),micro%dindp(1,i,j))
      endif
+     if(itrkregen==1) then
+       if(jnmb(1)>0) CALL ae1kmic (1,m1,rnmhx(1,1),micro%rnmcp(1,i,j))
+       if(jnmb(2)>0) CALL ae1kmic (1,m1,rnmhx(1,2),micro%rnmrp(1,i,j))
+       if(jnmb(3)>0) CALL ae1kmic (1,m1,rnmhx(1,3),micro%rnmpp(1,i,j))
+       if(jnmb(4)>0) CALL ae1kmic (1,m1,rnmhx(1,4),micro%rnmsp(1,i,j))
+       if(jnmb(5)>0) CALL ae1kmic (1,m1,rnmhx(1,5),micro%rnmap(1,i,j))
+       if(jnmb(6)>0) CALL ae1kmic (1,m1,rnmhx(1,6),micro%rnmgp(1,i,j))
+       if(jnmb(7)>0) CALL ae1kmic (1,m1,rnmhx(1,7),micro%rnmhp(1,i,j))
+       if(jnmb(8)>0) CALL ae1kmic (1,m1,rnmhx(1,8),micro%rnmdp(1,i,j))
+       if(jnmb(1)>0) CALL ae1kmic (1,m1,rinhx(1,1),micro%rincp(1,i,j))
+       if(jnmb(2)>0) CALL ae1kmic (1,m1,rinhx(1,2),micro%rinrp(1,i,j))
+       if(jnmb(3)>0) CALL ae1kmic (1,m1,rinhx(1,3),micro%rinpp(1,i,j))
+       if(jnmb(4)>0) CALL ae1kmic (1,m1,rinhx(1,4),micro%rinsp(1,i,j))
+       if(jnmb(5)>0) CALL ae1kmic (1,m1,rinhx(1,5),micro%rinap(1,i,j))
+       if(jnmb(6)>0) CALL ae1kmic (1,m1,rinhx(1,6),micro%ringp(1,i,j))
+       if(jnmb(7)>0) CALL ae1kmic (1,m1,rinhx(1,7),micro%rinhp(1,i,j))
+       if(jnmb(8)>0) CALL ae1kmic (1,m1,rinhx(1,8),micro%rindp(1,i,j))
+     endif
    endif
 
    !Zero out very small mixing ratios
@@ -233,6 +253,8 @@ do j = 1,m3
          if(itrkepsilon==1) snmhx(k,lcat) = 0.
          if(itrkdust==1)    dnmhx(k,lcat) = 0.
          if(itrkdustifn==1) dinhx(k,lcat) = 0.
+         if(itrkregen==1)   rnmhx(k,lcat) = 0.
+         if(itrkregen==1)   rinhx(k,lcat) = 0.
        endif
 
        !Aerosol and solubility tracking
@@ -241,6 +263,8 @@ do j = 1,m3
          if(itrkepsilon==1 .and. snmhx(k,lcat)<minmashydro) snmhx(k,lcat) = 0.
          if(itrkdust==1    .and. dnmhx(k,lcat)<minmashydro) dnmhx(k,lcat) = 0.
          if(itrkdustifn==1 .and. dinhx(k,lcat)<minmashydro) dinhx(k,lcat) = 0.
+         if(itrkregen==1   .and. rnmhx(k,lcat)<minmashydro) rnmhx(k,lcat) = 0.
+         if(itrkregen==1   .and. rinhx(k,lcat)<minmashydro) rinhx(k,lcat) = 0.
          if(itrkepsilon==1 .and. snmhx(k,lcat)>cnmhx(k,lcat)) &
            snmhx(k,lcat)=0.99*cnmhx(k,lcat)
        endif
@@ -265,6 +289,8 @@ do j = 1,m3
            if(itrkepsilon==1) snmhx(k,lcat) = snmhx(k,lcat) * frac
            if(itrkdust==1)    dnmhx(k,lcat) = dnmhx(k,lcat) * frac
            if(itrkdustifn==1) dinhx(k,lcat) = dinhx(k,lcat) * frac
+           if(itrkregen==1)   rnmhx(k,lcat) = rnmhx(k,lcat) * frac
+           if(itrkregen==1)   rinhx(k,lcat) = rinhx(k,lcat) * frac
          endif
        enddo
      endif
@@ -354,6 +380,24 @@ do j = 1,m3
       if(jnmb(6)>0) CALL ae1kmic (1,m1,micro%dingp(1,i,j),dinhx(1,6))
       if(jnmb(7)>0) CALL ae1kmic (1,m1,micro%dinhp(1,i,j),dinhx(1,7))
       if(jnmb(8)>0) CALL ae1kmic (1,m1,micro%dindp(1,i,j),dinhx(1,8))
+     endif
+     if(itrkregen==1)then
+      if(jnmb(1)>0) CALL ae1kmic (1,m1,micro%rnmcp(1,i,j),rnmhx(1,1))
+      if(jnmb(2)>0) CALL ae1kmic (1,m1,micro%rnmrp(1,i,j),rnmhx(1,2))
+      if(jnmb(3)>0) CALL ae1kmic (1,m1,micro%rnmpp(1,i,j),rnmhx(1,3))
+      if(jnmb(4)>0) CALL ae1kmic (1,m1,micro%rnmsp(1,i,j),rnmhx(1,4))
+      if(jnmb(5)>0) CALL ae1kmic (1,m1,micro%rnmap(1,i,j),rnmhx(1,5))
+      if(jnmb(6)>0) CALL ae1kmic (1,m1,micro%rnmgp(1,i,j),rnmhx(1,6))
+      if(jnmb(7)>0) CALL ae1kmic (1,m1,micro%rnmhp(1,i,j),rnmhx(1,7))
+      if(jnmb(8)>0) CALL ae1kmic (1,m1,micro%rnmdp(1,i,j),rnmhx(1,8))
+      if(jnmb(1)>0) CALL ae1kmic (1,m1,micro%rincp(1,i,j),rinhx(1,1))
+      if(jnmb(2)>0) CALL ae1kmic (1,m1,micro%rinrp(1,i,j),rinhx(1,2))
+      if(jnmb(3)>0) CALL ae1kmic (1,m1,micro%rinpp(1,i,j),rinhx(1,3))
+      if(jnmb(4)>0) CALL ae1kmic (1,m1,micro%rinsp(1,i,j),rinhx(1,4))
+      if(jnmb(5)>0) CALL ae1kmic (1,m1,micro%rinap(1,i,j),rinhx(1,5))
+      if(jnmb(6)>0) CALL ae1kmic (1,m1,micro%ringp(1,i,j),rinhx(1,6))
+      if(jnmb(7)>0) CALL ae1kmic (1,m1,micro%rinhp(1,i,j),rinhx(1,7))
+      if(jnmb(8)>0) CALL ae1kmic (1,m1,micro%rindp(1,i,j),rinhx(1,8))
      endif
    endif
 
