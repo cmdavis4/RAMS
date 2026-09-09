@@ -91,7 +91,7 @@ real :: c1
 real, dimension(:,:,:), allocatable :: cor_term
 
 ! Allocate and initialize array to accumulate Coriolis tendency
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   allocate(cor_term(m1,m2,m3))
   cor_term = 0.0
 endif
@@ -118,7 +118,7 @@ do j=ja,jz
          ut(k,i,j)=ut(k,i,j) + coriolis_contribution
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution
          endif
       enddo
@@ -127,7 +127,7 @@ enddo
 
 if (initial == 2 .or. (initial == 3 .and. initorig == 2)) then
   ! Store Coriolis term before early return
-  if(iuvwtend>=1) then
+  if(iuvwtend>=2) then
     basic_g(ngrid)%up_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
     deallocate(cor_term)
   endif
@@ -145,7 +145,7 @@ if (itopo == 1) then
          do k = 2,m1-1
             coriolis_contribution2 = - fcor(i,j) * vctr5(k)
             ut(k,i,j) = ut(k,i,j) + coriolis_contribution2
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
             endif
          enddo
@@ -159,7 +159,7 @@ else
          do k = 2,m1-1
             coriolis_contribution2 = - fcor(i,j) * v01dn(k,ngrid)
             ut(k,i,j) = ut(k,i,j) + coriolis_contribution2
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
             endif
          enddo
@@ -169,7 +169,7 @@ else
 endif
 
 ! Store accumulated Coriolis term for budget diagnostics
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   basic_g(ngrid)%up_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
   deallocate(cor_term)
 endif
@@ -201,7 +201,7 @@ real :: coriolis_contribution, coriolis_contribution2
 !       This routine calculates coriolis tendencies to v
 
 ! Allocate and initialize array to accumulate Coriolis tendency
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   allocate(cor_term(m1,m2,m3))
   cor_term = 0.0
 endif
@@ -228,7 +228,7 @@ do j = ja,jz
          vt(k,i,j) = vt(k,i,j) + coriolis_contribution
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution
          endif
       enddo
@@ -237,7 +237,7 @@ enddo
 
 if (initial == 2 .or. (initial == 3 .and. initorig == 2)) then
   ! Store Coriolis term before early return
-  if(iuvwtend>=1) then
+  if(iuvwtend>=2) then
     basic_g(ngrid)%vp_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
     deallocate(cor_term)
   endif
@@ -255,7 +255,7 @@ if (itopo == 1) then
          do k = 2,m1-1
             coriolis_contribution2 = fcor(i,j) * vctr5(k)
             vt(k,i,j) = vt(k,i,j) + coriolis_contribution2
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
             endif
          enddo
@@ -269,7 +269,7 @@ else
          do k = 2,m1-1
             coriolis_contribution2 = fcor(i,j) * u01dn(k,ngrid)
             vt(k,i,j) = vt(k,i,j) + coriolis_contribution2
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               cor_term(k,i,j) = cor_term(k,i,j) + coriolis_contribution2
             endif
          enddo
@@ -279,7 +279,7 @@ else
 endif
 
 ! Store accumulated Coriolis term for budget diagnostics
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   basic_g(ngrid)%vp_coriolis(1:m1,1:m2,1:m3) = cor_term(1:m1,1:m2,1:m3)
   deallocate(cor_term)
 endif

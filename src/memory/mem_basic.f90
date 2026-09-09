@@ -14,7 +14,9 @@ implicit none
                          ,up_pgforce,vp_pgforce,wp_pgforce &
                          ,up_coriolis,vp_coriolis &
                          ,up_advection,vp_advection,wp_advection &
-                         ,up_diffusion,vp_diffusion,wp_diffusion
+                         ,up_diffusion,vp_diffusion,wp_diffusion &
+                         ,up_rayleigh,vp_rayleigh,wp_rayleigh &
+                         ,up_dudt,vp_dvdt,wp_dwdt
 
       ! These were used for testing perturbations of updated
       ! domain-mean base state quantities. Could be useful in testing.
@@ -68,24 +70,39 @@ implicit none
       allocate (basic%th00(n1,n2,n3))
       allocate (basic%rvt00(n1,n2,n3))
 
-      if(imbudget>=1 .or. iuvwtend>=1) then
-        allocate (basic%wp_buoy_theta(n1,n2,n3))
-        allocate (basic%wp_buoy_cond(n1,n2,n3))
-        allocate (basic%wp_advdif(n1,n2,n3))
+      if(imbudget>=1 .or. iuvwtend>=2) then
+        allocate (basic%wp_buoy_theta(n1,n2,n3)) ; basic%wp_buoy_theta = 0.
+        allocate (basic%wp_buoy_cond(n1,n2,n3))  ; basic%wp_buoy_cond  = 0.
+        allocate (basic%wp_advdif(n1,n2,n3))     ; basic%wp_advdif     = 0.
       endif
 
+      !IUVWTEND>=1: realised acceleration, (uc-up)/dtlt etc. [m/s^2]
       if(iuvwtend>=1) then
-        allocate (basic%up_pgforce(n1,n2,n3))
-        allocate (basic%vp_pgforce(n1,n2,n3))
-        allocate (basic%wp_pgforce(n1,n2,n3))
-        allocate (basic%up_coriolis(n1,n2,n3))
-        allocate (basic%vp_coriolis(n1,n2,n3))
-        allocate (basic%up_advection(n1,n2,n3))
-        allocate (basic%vp_advection(n1,n2,n3))
-        allocate (basic%wp_advection(n1,n2,n3))
-        allocate (basic%up_diffusion(n1,n2,n3))
-        allocate (basic%vp_diffusion(n1,n2,n3))
-        allocate (basic%wp_diffusion(n1,n2,n3))
+        allocate (basic%up_dudt(n1,n2,n3)) ; basic%up_dudt = 0.
+        allocate (basic%vp_dvdt(n1,n2,n3)) ; basic%vp_dvdt = 0.
+        allocate (basic%wp_dwdt(n1,n2,n3)) ; basic%wp_dwdt = 0.
+      endif
+
+      !IUVWTEND>=2: full momentum budget. Every array is zeroed here, not just
+      !allocated: a producer can be skipped entirely by the run configuration
+      !(coriolis() returns at once when ICORFLG=0, so corlsu/corlsv never touch
+      !up_coriolis/vp_coriolis) and an unzeroed array is written to the analysis
+      !file as uninitialised memory.
+      if(iuvwtend>=2) then
+        allocate (basic%up_pgforce(n1,n2,n3))   ; basic%up_pgforce   = 0.
+        allocate (basic%vp_pgforce(n1,n2,n3))   ; basic%vp_pgforce   = 0.
+        allocate (basic%wp_pgforce(n1,n2,n3))   ; basic%wp_pgforce   = 0.
+        allocate (basic%up_coriolis(n1,n2,n3))  ; basic%up_coriolis  = 0.
+        allocate (basic%vp_coriolis(n1,n2,n3))  ; basic%vp_coriolis  = 0.
+        allocate (basic%up_advection(n1,n2,n3)) ; basic%up_advection = 0.
+        allocate (basic%vp_advection(n1,n2,n3)) ; basic%vp_advection = 0.
+        allocate (basic%wp_advection(n1,n2,n3)) ; basic%wp_advection = 0.
+        allocate (basic%up_diffusion(n1,n2,n3)) ; basic%up_diffusion = 0.
+        allocate (basic%vp_diffusion(n1,n2,n3)) ; basic%vp_diffusion = 0.
+        allocate (basic%wp_diffusion(n1,n2,n3)) ; basic%wp_diffusion = 0.
+        allocate (basic%up_rayleigh(n1,n2,n3))  ; basic%up_rayleigh  = 0.
+        allocate (basic%vp_rayleigh(n1,n2,n3))  ; basic%vp_rayleigh  = 0.
+        allocate (basic%wp_rayleigh(n1,n2,n3))  ; basic%wp_rayleigh  = 0.
       endif
 
 return
@@ -136,6 +153,12 @@ implicit none
    if (allocated(basic%up_diffusion))  deallocate (basic%up_diffusion)
    if (allocated(basic%vp_diffusion))  deallocate (basic%vp_diffusion)
    if (allocated(basic%wp_diffusion))  deallocate (basic%wp_diffusion)
+   if (allocated(basic%up_rayleigh))   deallocate (basic%up_rayleigh)
+   if (allocated(basic%vp_rayleigh))   deallocate (basic%vp_rayleigh)
+   if (allocated(basic%wp_rayleigh))   deallocate (basic%wp_rayleigh)
+   if (allocated(basic%up_dudt))       deallocate (basic%up_dudt)
+   if (allocated(basic%vp_dvdt))       deallocate (basic%vp_dvdt)
+   if (allocated(basic%wp_dwdt))       deallocate (basic%wp_dwdt)
 
 return
 END SUBROUTINE dealloc_basic
@@ -298,6 +321,30 @@ implicit none
       CALL vtables2 (basic%wp_diffusion(1,1,1),basicm%wp_diffusion(1,1,1)  &
                  ,ng, npts, imean,  &
                  'WP_DIFFUSION :3:anal:mpti')
+   if (allocated(basic%up_rayleigh))  &
+      CALL vtables2 (basic%up_rayleigh(1,1,1),basicm%up_rayleigh(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'UP_RAYLEIGH :3:anal:mpti')
+   if (allocated(basic%vp_rayleigh))  &
+      CALL vtables2 (basic%vp_rayleigh(1,1,1),basicm%vp_rayleigh(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'VP_RAYLEIGH :3:anal:mpti')
+   if (allocated(basic%wp_rayleigh))  &
+      CALL vtables2 (basic%wp_rayleigh(1,1,1),basicm%wp_rayleigh(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'WP_RAYLEIGH :3:anal:mpti')
+   if (allocated(basic%up_dudt))  &
+      CALL vtables2 (basic%up_dudt(1,1,1),basicm%up_dudt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'UP_DUDT :3:anal:mpti')
+   if (allocated(basic%vp_dvdt))  &
+      CALL vtables2 (basic%vp_dvdt(1,1,1),basicm%vp_dvdt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'VP_DVDT :3:anal:mpti')
+   if (allocated(basic%wp_dwdt))  &
+      CALL vtables2 (basic%wp_dwdt(1,1,1),basicm%wp_dwdt(1,1,1)  &
+                 ,ng, npts, imean,  &
+                 'WP_DWDT :3:anal:mpti')
 
    ! 2D CORIOLIS INFO FOR VTABLES
    npts=n2*n3

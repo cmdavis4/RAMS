@@ -152,7 +152,7 @@ endif
 dtlvi = 1.0 / dtlv
 
 ! Allocate temporary array for U diffusion tendency
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   allocate(u_diff_term(m1,m2,m3))
   u_diff_term = 0.0
 endif
@@ -165,7 +165,7 @@ if (jd .eq. 1) then
                + dtlvi * (vt3do(k,i,j) - up(k,i,j))  &
                - (vt3dj(k,i,j) + vt3dk(k,i,j)) / dn0u(k,i,j)
             ! Store U diffusion tendency
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               u_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j) - up(k,i,j))  &
                                  - (vt3dj(k,i,j) + vt3dk(k,i,j)) / dn0u(k,i,j)
             endif
@@ -180,7 +180,7 @@ else
                + dtlvi * (vt3do(k,i,j)-up(k,i,j))  &
                - vt3dj(k,i,j) / dn0u(k,i,j)
             ! Store U diffusion tendency
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               u_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j)-up(k,i,j))  &
                                  - vt3dj(k,i,j) / dn0u(k,i,j)
             endif
@@ -190,7 +190,7 @@ else
 endif
 
 ! Copy U diffusion tendency to output array
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   basic_g(ngrid)%up_diffusion(1:m1,1:m2,1:m3) = u_diff_term(1:m1,1:m2,1:m3)
   deallocate(u_diff_term)
 endif
@@ -268,7 +268,7 @@ elseif(ihorgrad.eq.2)then
 endif
 
 ! Allocate temporary array for V diffusion tendency
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   allocate(v_diff_term(m1,m2,m3))
   v_diff_term = 0.0
 endif
@@ -279,7 +279,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + dtlvi * (vt3do(k,i,j)-vp(k,i,j))  &
              - (vt3dj(k,i,j) + vt3dk(k,i,j)) / dn0v(k,i,j)
          ! Store V diffusion tendency
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            v_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j)-vp(k,i,j))  &
                               - (vt3dj(k,i,j) + vt3dk(k,i,j)) / dn0v(k,i,j)
          endif
@@ -288,7 +288,7 @@ do j = ja,jzv
 enddo
 
 ! Copy V diffusion tendency to output array
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   basic_g(ngrid)%vp_diffusion(1:m1,1:m2,1:m3) = v_diff_term(1:m1,1:m2,1:m3)
   deallocate(v_diff_term)
 endif
@@ -383,7 +383,7 @@ else
 endif
 
 ! Allocate temporary array for W diffusion tendency
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   allocate(w_diff_term(m1,m2,m3))
   w_diff_term = 0.0
 endif
@@ -397,7 +397,7 @@ if (jd .eq. 1) then
                - (vt3dj(k,i,j) + vt3dk(k,i,j))  &
                / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
             ! Store W diffusion tendency
-            if(iuvwtend>=1) then
+            if(iuvwtend>=2) then
               w_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j) - wp(k,i,j))  &
                                  - (vt3dj(k,i,j) + vt3dk(k,i,j))  &
                                  / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
@@ -414,7 +414,7 @@ else
                - vt3dj(k,i,j)  &
                / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
              ! Store W diffusion tendency
-             if(iuvwtend>=1) then
+             if(iuvwtend>=2) then
                w_diff_term(k,i,j) = dtlvi * (vt3do(k,i,j) - wp(k,i,j))  &
                                   - vt3dj(k,i,j)  &
                                   / ((dn0(k,i,j) + dn0(k+1,i,j)) * .5)
@@ -425,7 +425,7 @@ else
 endif
 
 ! Copy W diffusion tendency to output array
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3) = w_diff_term(1:m1,1:m2,1:m3)
   deallocate(w_diff_term)
 endif

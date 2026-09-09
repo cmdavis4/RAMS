@@ -162,7 +162,7 @@ real :: u_adv_x, u_adv_y, u_adv_z, v_adv_x, v_adv_y, v_adv_z
 real :: w_adv_x, w_adv_y, w_adv_z
 
 ! Allocate and initialize arrays to accumulate advection tendencies
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   allocate(u_adv_term(m1,m2,m3))
   allocate(v_adv_term(m1,m2,m3))
   allocate(w_adv_term(m1,m2,m3))
@@ -230,7 +230,7 @@ do j = ja,jz
          ut(k,i,j) = ut(k,i,j) + u_adv_x
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_x
          endif
       enddo
@@ -249,7 +249,7 @@ do j = ja,jz
          ut(k,i,j) = ut(k,i,j) + u_adv_y
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_y
          endif
       enddo
@@ -268,7 +268,7 @@ do j = ja,jz
          ut(k,i,j) = ut(k,i,j) + u_adv_z
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            u_adv_term(k,i,j) = u_adv_term(k,i,j) + u_adv_z
          endif
       enddo
@@ -297,7 +297,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + v_adv_x
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_x
          endif
       enddo
@@ -316,7 +316,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + v_adv_y
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_y
          endif
       enddo
@@ -335,7 +335,7 @@ do j = ja,jzv
          vt(k,i,j) = vt(k,i,j) + v_adv_z
 
          ! Store for budget diagnostics
-         if(iuvwtend>=1) then
+         if(iuvwtend>=2) then
            v_adv_term(k,i,j) = v_adv_term(k,i,j) + v_adv_z
          endif
       enddo
@@ -358,7 +358,7 @@ do j = ja,jz
             + (flxu(k,i,j) + flxu(k+1,i,j) - flxu(k,i-1,j)  &
             - flxu(k+1,i-1,j)) * 2.* wc(k,i,j) )
          wt(k,i,j) = wt(k,i,j) + w_adv_x
-         if(iuvwtend>=1) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_x
+         if(iuvwtend>=2) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_x
       enddo
 
       do k = 2,m1-2
@@ -370,7 +370,7 @@ do j = ja,jz
             + (flxv(k,i,j) + flxv(k+1,i,j) - flxv(k,i,j-jdim)  &
             - flxv(k+1,i,j-jdim)) * 2.* wc(k,i,j) )
          wt(k,i,j) = wt(k,i,j) + w_adv_y
-         if(iuvwtend>=1) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_y
+         if(iuvwtend>=2) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_y
       enddo
 
       do k = 2,m1-2
@@ -381,13 +381,13 @@ do j = ja,jz
                * (wc(k,i,j) + wc(k+1,i,j))   &
             + (flxw(k+1,i,j) - flxw(k-1,i,j)) * 2.* wc(k,i,j) )
          wt(k,i,j) = wt(k,i,j) + w_adv_z
-         if(iuvwtend>=1) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_z
+         if(iuvwtend>=2) w_adv_term(k,i,j) = w_adv_term(k,i,j) + w_adv_z
       enddo
    enddo
 enddo
 
 ! Store accumulated advection tendencies for budget diagnostics
-if(iuvwtend>=1) then
+if(iuvwtend>=2) then
   basic_g(ngrid)%up_advection(1:m1,1:m2,1:m3) = u_adv_term(1:m1,1:m2,1:m3)
   basic_g(ngrid)%vp_advection(1:m1,1:m2,1:m3) = v_adv_term(1:m1,1:m2,1:m3)
   basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3) = w_adv_term(1:m1,1:m2,1:m3)
