@@ -588,26 +588,135 @@ implicit none
 
 integer :: n1,n2,n3,i,j,k,ifm,nsc,ii,jj
 real, dimension(n1,n2,n3) :: tracerp,dn0
-! Vertical gridpoints per tracer species, sourced from RAMSIN FLEXPARAMS:
-!   flexparams(4) = n_z_points_per_tracer
-integer :: n_z_points_per_tracer
-real :: tracer_init_value
+! Two initialization modes, both driven by RAMSIN FLEXPARAMS (see FLEXPARAMS.md):
+!
+!   flexparams(4) = n_z_points_per_tracer  horizontal slabs, one per species (original mode)
+!   flexparams(6) = n_bubble_shells        nested shells filling the warm bubble (shell mode)
+!   flexparams(7) = n_outer_shells         shells outside the bubble, out to the limit below
+!   flexparams(8) = outer_shell_limit      outermost normalized bubble radius those shells reach
+!   flexparams(9) = 1 to make the species after the shells an environment tracer, filling
+!                   everything beyond outer_shell_limit
+!
+! Shell mode labels the bubble's air by where it started. Species 1 fills the innermost shell,
+! and so on outward, so a later thermal boundary can be scored by how much of each shell's air it
+! contains and how much environment air it has entrained. Shells are nested on the SAME normalized
+! ellipsoidal radius the cosine-squared bubble is built on (subroutine bubble in ruser.f90), and
+! read the same IBD* namelist entries, so the tracers and the bubble cannot drift apart.
+! The shells inside the bubble have equal volume, so each species starts with equal mass: shell
+! boundaries sit at the cube roots of equal fractions of the bubble's volume.
+integer :: n_z_points_per_tracer, n_bubble_shells, n_outer_shells, shell_index, bubble_center_k
+real :: tracer_init_value, outer_shell_limit
+real :: bubble_center_x, bubble_center_y, bubble_center_z
+real :: bubble_radius_x, bubble_radius_y, bubble_radius_z
+real :: cell_x, cell_y, cell_z
+real :: normalized_x_squared, normalized_y_squared, normalized_z_squared, normalized_radius
+real :: shell_inner_radius, shell_outer_radius, outer_shell_volume_step
+logical :: environment_species
 
 n_z_points_per_tracer = nint(flexparams(4))
+n_bubble_shells = nint(flexparams(6))
+n_outer_shells = max(nint(flexparams(7)), 0)
+outer_shell_limit = flexparams(8)
+environment_species = (nint(flexparams(9)) >= 1)
 tracer_init_value = 100000.
 
 ! Initialize Tracers
 if(print_msg) print*,'Start Initializing Tracers, Grid:',ifm,' Tracer:',nsc
 
-do j = 1,n3
- do i = 1,n2
-   ! Get the vertical levels for this tracer
-   do k = 2 + (nsc-1)*n_z_points_per_tracer,min(1 + nsc*n_z_points_per_tracer, mzp-1)
-      tracerp(k,i,j)=tracer_init_value
-   enddo
+if (n_bubble_shells <= 0) then
 
+ ! ---- Slab mode: one horizontal slab of levels per species ----
+ do j = 1,n3
+  do i = 1,n2
+    ! Get the vertical levels for this tracer
+    do k = 2 + (nsc-1)*n_z_points_per_tracer,min(1 + nsc*n_z_points_per_tracer, mzp-1)
+       tracerp(k,i,j)=tracer_init_value
+    enddo
+
+  enddo
  enddo
-enddo
+
+else
+
+ ! ---- Shell mode: nested shells on the bubble's normalized radius ----
+ ! Only the cosine-squared bubble defines the ellipsoid the shells are built on
+ if (ibubble /= 2 .and. ibubble /= 4) then
+   print*,'Tracer shells (FLEXPARAMS(6)>0) require the cosine-squared bubble: set IBUBBLE=2 or 4'
+   stop 'init_tracer: tracer shells without a cosine-squared bubble'
+ endif
+ if (n_outer_shells > 0 .and. outer_shell_limit <= 1.0) then
+   print*,'FLEXPARAMS(8) (outer_shell_limit) must exceed 1 when FLEXPARAMS(7) asks for outer shells'
+   stop 'init_tracer: outer shells with no room outside the bubble'
+ endif
+
+ ! Bubble center and radii, exactly as subroutine bubble builds them
+ bubble_center_x = deltax * ( (ibdxia+ibdxiz)/2.0 - nnxp(1)/2.0 )
+ bubble_center_y = deltax * ( (ibdyja+ibdyjz)/2.0 - nnyp(1)/2.0 )
+ bubble_center_k = int(ibdzk1+ibdzk2)/2.0
+ bubble_center_z = zmn(bubble_center_k,1)
+ bubble_radius_x = (ibdxiz-ibdxia) * deltax * 0.5
+ bubble_radius_y = (ibdyjz-ibdyja) * deltax * 0.5
+ bubble_radius_z = (zmn(ibdzk2,1)-zmn(ibdzk1,1)) * 0.5
+
+ ! Which shell of normalized radius this species marks
+ if (nsc <= n_bubble_shells) then
+   ! Equal-volume shells inside the bubble: equal starting mass per species
+   shell_inner_radius = (real(nsc-1)/real(n_bubble_shells)) ** (1.0/3.0)
+   shell_outer_radius = (real(nsc  )/real(n_bubble_shells)) ** (1.0/3.0)
+ elseif (nsc <= n_bubble_shells + n_outer_shells) then
+   ! Equal-volume shells outside the bubble, out to outer_shell_limit
+   shell_index = nsc - n_bubble_shells
+   outer_shell_volume_step = (outer_shell_limit**3 - 1.0) / real(n_outer_shells)
+   shell_inner_radius = (1.0 + real(shell_index-1)*outer_shell_volume_step) ** (1.0/3.0)
+   shell_outer_radius = (1.0 + real(shell_index  )*outer_shell_volume_step) ** (1.0/3.0)
+ elseif (environment_species .and. nsc == n_bubble_shells + n_outer_shells + 1) then
+   ! Everything beyond the outermost shell: the air the thermal can entrain
+   shell_inner_radius = outer_shell_limit
+   shell_outer_radius = huge(1.0)
+ else
+   ! Species past the requested shells stay empty
+   if(print_msg) print*,'  Tracer',nsc,'is past the requested shells; left empty'
+   return
+ endif
+
+ if(print_msg) print*,'  Tracer',nsc,'fills normalized bubble radii', &
+    shell_inner_radius,'to',min(shell_outer_radius,outer_shell_limit)
+
+ do j = 1,n3
+  do i = 1,n2
+    do k = 2,mzp-1
+       ! Cell center in the bubble's coordinate frame
+       cell_x = (xmn(i+i0,1)+xmn(i+i0+1,1))*0.5
+       cell_y = (ymn(j+j0,1)+ymn(j+j0+1,1))*0.5
+       cell_z = (zmn(k,1)+zmn(k+1,1))*0.5
+       ! A zero radius means the bubble is infinite along that axis, so it adds no distance
+       if (bubble_radius_x /= 0) then
+         normalized_x_squared = ((cell_x-bubble_center_x)/bubble_radius_x)**2
+       else
+         normalized_x_squared = 0.0
+       endif
+       if (bubble_radius_y /= 0) then
+         normalized_y_squared = ((cell_y-bubble_center_y)/bubble_radius_y)**2
+       else
+         normalized_y_squared = 0.0
+       endif
+       normalized_z_squared = ((cell_z-bubble_center_z)/bubble_radius_z)**2
+       ! In 2-D let the y direction follow x, as the bubble does
+       if(jdim==0) normalized_y_squared = normalized_x_squared
+       normalized_radius = sqrt(normalized_x_squared+normalized_y_squared+normalized_z_squared)
+
+       ! Fill this species' shell; the inner edge belongs to the shell, the outer edge does not,
+       ! so neighbouring species never overlap
+       if (normalized_radius >= shell_inner_radius .and. &
+           normalized_radius <  shell_outer_radius) then
+         tracerp(k,i,j)=tracer_init_value
+       endif
+    enddo
+
+  enddo
+ enddo
+
+endif
 
 if(nsc.eq.itracer .and. print_msg) print*,' '
 
