@@ -1,5 +1,9 @@
 # Wind Tendency Terms in RAMS - Analysis Report
 
+> **Historical.** This report was written before most of these terms were added to
+> the output. Its IMBUDGET conditions and "not output" labels are out of date. For
+> current behaviour, see [docs/momentum_budgets.md](docs/momentum_budgets.md).
+
 This document catalogs wind tendency terms that are calculated within RAMS during model integration. These terms contribute to the evolution of U, V, and W winds but many are not currently stored for output.
 
 ## Summary of Findings

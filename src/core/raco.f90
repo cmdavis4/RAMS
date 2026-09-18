@@ -760,7 +760,7 @@ real :: dtlt
 
 allocate(vtemp(m1,m2,m3))
 
-if(imbudget>=1 .or. iuvwtend>=2) then
+if(iuvwtend>=2) then
  allocate(wpbuoytheta(m1,m2,m3))
  allocate(wpbuoycond(m1,m2,m3))
  allocate(wpadvdif(m1,m2,m3))
@@ -776,7 +776,7 @@ if (level .ge. 1) then
             vtemp(k,i,j) = gg * ((theta(k,i,j) * (1. + .61 * rv(k,i,j))  &
                - th0(k,i,j)) / th0(k,i,j) - (rtc(k,i,j) - rv(k,i,j)) )
             !calculate partial W buoyancy budgets
-            if(imbudget>=1 .or. iuvwtend>=2) then
+            if(iuvwtend>=2) then
               wpbuoytheta(k,i,j) = gg * ((theta(k,i,j)*(1.+.61*rv(k,i,j)) &
                 - th0(k,i,j)) / th0(k,i,j))
               wpbuoycond(k,i,j)  = gg * (-1.0*(rtc(k,i,j) - rv(k,i,j)))
@@ -790,7 +790,7 @@ else
          do k = 2,m1-1
             vtemp(k,i,j) = gg * (theta(k,i,j) / th0(k,i,j) - 1.)
             !calculate partial W buoyancy budgets
-            if(imbudget>=1 .or. iuvwtend>=2) wpbuoytheta(k,i,j) = vtemp(k,i,j)
+            if(iuvwtend>=2) wpbuoytheta(k,i,j) = vtemp(k,i,j)
          enddo
       enddo
    enddo
@@ -808,7 +808,7 @@ do j = ja,jz
          !where WP_BUOY_THETA, WP_BUOY_COND and WP_ADVDIF are [m/s].
          !The (k)+(k+1) sum is the same staggering applied to wt below, so
          !wpbuoytheta+wpbuoycond is exactly the buoyancy rate added to wt.
-         if(imbudget>=1 .or. iuvwtend>=2) then
+         if(iuvwtend>=2) then
            wpadvdif(k,i,j)    = wt(k,i,j)
            wpbuoytheta(k,i,j) = wpbuoytheta(k,i,j) + wpbuoytheta(k+1,i,j)
            wpbuoycond(k,i,j)  = wpbuoycond(k,i,j)  + wpbuoycond(k+1,i,j)
@@ -821,7 +821,7 @@ enddo
 deallocate(vtemp)
 
 !Copy local W buoyancy budgets (m/s) to global budget variables
-if(imbudget>=1 .or. iuvwtend>=2) then
+if(iuvwtend>=2) then
  basic_g(ngrid)%wp_buoy_theta = wpbuoytheta
  basic_g(ngrid)%wp_buoy_cond  = wpbuoycond
  basic_g(ngrid)%wp_advdif     = wpadvdif
@@ -834,26 +834,36 @@ return
 END SUBROUTINE boyanc
 
 !##############################################################################
-Subroutine save_wp_before_acoustic ()
+Subroutine save_uvw_before_acoustic ()
 
-use mem_tend
+! Save u, v and w at the past time level n-1, just before the acoustic solver.
+!
+! RAMS steps momentum with leapfrog: the acoustic solver advances the "past"
+! arrays up/vp/wp from level n-1 straight to level n+1 (see predict() in
+! rtimi.f90), and level n-1 is overwritten and never written to output. The
+! instantaneous acceleration at level n is the centred difference
+! (u(n+1) - u(n-1)) / (2*dtlt), so level n-1 must be kept here.
+!
+! The saved values are parked in the acceleration arrays themselves
+! (up_dudt, vp_dvdt, wp_dwdt) to avoid a separate scratch array.
+! compute_wp_pgforce() reads wp_dwdt as w(n-1); compute_uvw_accel() then
+! overwrites all three with the accelerations at the end of the step.
+
 use mem_basic
 use mem_grid, only:ngrid
 use io_params, only: iuvwtend
 
 implicit none
 
-! Save wp before acoustic solver for PGF calculation
-!
-! Note: We temporarily store wp_before in the wp_pgforce array to avoid
-! allocating a separate scratch array. This will be overwritten with the
-! final PGF result in compute_wp_pgforce().
-if(iuvwtend>=2) then
-  basic_g(ngrid)%wp_pgforce = basic_g(ngrid)%wp  ! Temporarily store wp_before
+if(iuvwtend>=1) then
+  ! Keep level n-1 of each wind component
+  basic_g(ngrid)%up_dudt = basic_g(ngrid)%up
+  basic_g(ngrid)%vp_dvdt = basic_g(ngrid)%vp
+  basic_g(ngrid)%wp_dwdt = basic_g(ngrid)%wp
 endif
 
 return
-END SUBROUTINE save_wp_before_acoustic
+END SUBROUTINE save_uvw_before_acoustic
 
 !##############################################################################
 Subroutine compute_wp_pgforce ()
@@ -890,13 +900,13 @@ m3 = nnyp(ngrid)
 ! All terms are rates [m/s^2]. The acoustic loop advances wp over 2*dtlt
 ! (leapfrog t-dt to t+dt), so the increment is divided by 2*dtlt.
 !
-! Note: wp_pgforce appears on both sides below. On the RHS it holds wp_before
-! (stored by save_wp_before_acoustic); on the LHS it receives the final PGF.
+! w at level n-1 (before the acoustic solver) is read from wp_dwdt, where
+! save_uvw_before_acoustic() parked it.
 !
 if(iuvwtend>=2) then
   basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3) =  &
       (basic_g(ngrid)%wp(1:m1,1:m2,1:m3)  &
-       - basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3)) / (2.0*dtlt)  &
+       - basic_g(ngrid)%wp_dwdt(1:m1,1:m2,1:m3)) / (2.0*dtlt)  &
     - basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3)  &
     - basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3)  &
     - basic_g(ngrid)%wp_buoy_theta(1:m1,1:m2,1:m3)  &
@@ -916,30 +926,29 @@ use io_params, only: iuvwtend
 
 implicit none
 
-! The realised acceleration at every grid point [m/s^2].
+! The instantaneous acceleration of u, v and w at every grid point [m/s^2].
 !
-! Call this at the END of timestep(), after vpsets, so it is formed from
-! exactly the arrays anal_write will write.
+! RAMS steps momentum with leapfrog, so the tendency the model applies at time
+! level n moves the wind from level n-1 to level n+1:
+!     du/dt (level n) = (u(n+1) - u(n-1)) / (2*dtlt)
+! This is the model's own instantaneous time derivative, and it equals the sum
+! of the IUVWTEND=2 budget terms (PGF, advection, diffusion, Coriolis,
+! Rayleigh, and buoyancy for w), which are rates over the same interval.
 !
-! At that point (see predict(), rtimi.f90, iac=2):
-!     uc = raw value at time level n+1  -- the model time being stamped
-!     up = Asselin-filtered value at level n  -- one dtlt earlier
-! so (uc-up)/dtlt is a backward difference over one big timestep. The eps=0.2
-! Asselin filter preserves a linear trend exactly, so this is a consistent
-! estimate of du/dt, centred at t-dtlt/2.
+! It is deliberately NOT (uc - up)/dtlt, the change since the last step:
+! that can be rebuilt from the UC/UP fields in the output, whereas u(n-1) is
+! overwritten during the step and never written.
 !
-! This is deliberately NOT the same interval the momentum budget closes over:
-! the budget terms sum to the acoustic-solver increment across the leapfrog
-! interval [t-dtlt, t+dtlt], centred on t. The two agree to O(dtlt), not to
-! round-off. This one is the quantity you would get by differencing the
-! written fields in post-processing -- computed here in full precision, before
-! any lossy compression touches uc/up.
+! u(n-1) was parked in up_dudt/vp_dvdt/wp_dwdt by save_uvw_before_acoustic().
+! Call this routine at the END of timestep(), after vpsets, so u(n+1) is the
+! same uc/vc/wc that anal_write writes.
 
 if(iuvwtend<1) return
 
-basic_g(ngrid)%up_dudt = (basic_g(ngrid)%uc - basic_g(ngrid)%up) / dtlt
-basic_g(ngrid)%vp_dvdt = (basic_g(ngrid)%vc - basic_g(ngrid)%vp) / dtlt
-basic_g(ngrid)%wp_dwdt = (basic_g(ngrid)%wc - basic_g(ngrid)%wp) / dtlt
+! Centred difference across the leapfrog interval
+basic_g(ngrid)%up_dudt = (basic_g(ngrid)%uc - basic_g(ngrid)%up_dudt) / (2.0*dtlt)
+basic_g(ngrid)%vp_dvdt = (basic_g(ngrid)%vc - basic_g(ngrid)%vp_dvdt) / (2.0*dtlt)
+basic_g(ngrid)%wp_dwdt = (basic_g(ngrid)%wc - basic_g(ngrid)%wp_dwdt) / (2.0*dtlt)
 
 return
 END SUBROUTINE compute_uvw_accel

@@ -357,7 +357,7 @@ IF(GROUP.EQ.'$MODEL_OPTIONS') THEN
  !IMBUDGETACC: 0=output only the instantaneous budget rates (*R),
  !             1=also accumulate and output run totals (ACC*), like ACCPR
  IF(VR.EQ.'IMBUDGETACC')  CALL varseti (VR,IMBUDGETACC,NV,1,II,0,1)
- !IUVWTEND: 0=off, 1=accelerations only (UP_DUDT/VP_DVDT/WP_DWDT),
+ !IUVWTEND: 0=off, 1=instantaneous accelerations only (UP_DUDT/VP_DVDT/WP_DWDT),
  !          2=full momentum budget (PGF/advection/diffusion/coriolis/rayleigh)
  IF(VR.EQ.'IUVWTEND')     CALL varseti (VR,IUVWTEND,NV,1,II,0,2)
  IF(VR.EQ.'IRIME')        CALL varseti (VR,IRIME,NV,1,II,0,1)

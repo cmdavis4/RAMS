@@ -70,13 +70,15 @@ implicit none
       allocate (basic%th00(n1,n2,n3))
       allocate (basic%rvt00(n1,n2,n3))
 
-      if(imbudget>=1 .or. iuvwtend>=2) then
+      !W buoyancy and advection+diffusion terms belong to the full momentum
+      !budget, so they exist only with IUVWTEND=2 (no longer with IMBUDGET)
+      if(iuvwtend>=2) then
         allocate (basic%wp_buoy_theta(n1,n2,n3)) ; basic%wp_buoy_theta = 0.
         allocate (basic%wp_buoy_cond(n1,n2,n3))  ; basic%wp_buoy_cond  = 0.
         allocate (basic%wp_advdif(n1,n2,n3))     ; basic%wp_advdif     = 0.
       endif
 
-      !IUVWTEND>=1: realised acceleration, (uc-up)/dtlt etc. [m/s^2]
+      !IUVWTEND>=1: instantaneous acceleration (u(n+1)-u(n-1))/(2*dtlt) [m/s^2]
       if(iuvwtend>=1) then
         allocate (basic%up_dudt(n1,n2,n3)) ; basic%up_dudt = 0.
         allocate (basic%vp_dvdt(n1,n2,n3)) ; basic%vp_dvdt = 0.

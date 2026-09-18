@@ -261,9 +261,10 @@ real, dimension(mzp,mxp,myp) :: thvlast
  CALL acctimes ('BUOYANCY')
 
 !------------------------------------------------------------------------------
-!  Save wp before acoustic solver (for WP_PGFORCE calculation)
+!  Save u,v,w at level n-1 before the acoustic solver overwrites them
+!  (for UP_DUDT/VP_DVDT/WP_DWDT and WP_PGFORCE)
 !------------------------------------------------------------------------------
- if(iuvwtend>=2) CALL save_wp_before_acoustic ()
+ if(iuvwtend>=1) CALL save_uvw_before_acoustic ()
 
 !------------------------------------------------------------------------------
 !  Acoustic small timesteps
@@ -289,8 +290,8 @@ real, dimension(mzp,mxp,myp) :: thvlast
  CALL acctimes ('VPSETS')
 
 !------------------------------------------------------------------------------
-!  Realised acceleration (uc-up)/dtlt. Must come after vpsets so it is built
-!  from exactly the uc/up that anal_write will write.
+!  Instantaneous acceleration (u(n+1)-u(n-1))/(2*dtlt). Must come after vpsets
+!  so u(n+1) is exactly the uc/vc/wc that anal_write will write.
 !------------------------------------------------------------------------------
  if(iuvwtend>=1) CALL compute_uvw_accel ()
 
