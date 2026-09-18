@@ -31,7 +31,7 @@ integer :: idiffperts
 !--------------------------------------------------------------------------
 integer :: level,icloud,idriz,irain,ipris,isnow,iaggr,igraup,ihail      &
   ,irime,iplaws,iaerosol,idust,idustloft,iabcarb,isalt,iaerorad,iifn    &
-  ,imbudget,isedim,itrkepsilon,itrkdust,itrkdustifn,iaerodep,icheckmic  &
+  ,imbudget,imbudgetacc,isedim,itrkepsilon,itrkdust,itrkdustifn,iaerodep,icheckmic  &
   ,iaeroprnt,iaerohist,iifn_formula,iscm,iscmx,iscmy,itrkregen
 
 integer, dimension(maxgrds) :: iaerolbc,ico2lbc

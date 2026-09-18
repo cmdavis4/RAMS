@@ -501,6 +501,7 @@
 
    ICHECKMIC = 1,            ! Check Micro Negative & Nans: 0=Off,1=on
    IMBUDGET = 3,             ! Micro budgets: 0=Off,1=partial,2=all,3=all+dust
+   IMBUDGETACC = 0,          ! Micro budget run totals (ACC*): 0=off, 1=on
 
    IRIME   = 1,              ! Riming: 0-Bulk, 1-HybridBin 
    IPLAWS  = 2,              ! FallSpeed: 0-Original4.3 

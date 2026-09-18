@@ -25,7 +25,7 @@ character(len=*) :: group,vr,cc
 real :: ff
 integer :: ii,nv
 integer :: inrflg
-integer, parameter ::nvgrid=37,nvstrt=78,nvindat=166,nvsound=10
+integer, parameter ::nvgrid=37,nvstrt=78,nvindat=167,nvsound=10
 integer ::  igrids(nvgrid),istart(nvstrt),iindat(nvindat),isound(nvsound)
 character(len=16) :: grids(nvgrid),start(nvstrt),indat(nvindat),sound(nvsound)
 data igrids/nvgrid*0/,istart/nvstrt*0/,iindat/nvindat*0/,isound/nvsound*0/
@@ -74,7 +74,8 @@ DATA INDAT/  &
      ,'ICONV','ICONGR','ICICENT','ICJCENT','CXRAD','CYRAD'               &
      ,'ICVERT','ICKMAX','CZRAD','ICKCENT','CDIVMAX','CTAU','CTMAX'       &
      ,'IRCE','RCE_SZEN','RCE_SOLC','RCE_UBMN','RCE_BUBL','LEVEL','ISCM'  &
-     ,'ICHECKMIC','ITRACER','ITRACHIST','IMBUDGET','IUVWTEND','IRIME','IPLAWS'      &
+     ,'ICHECKMIC','ITRACER','ITRACHIST','IMBUDGET','IMBUDGETACC','IUVWTEND'  &
+     ,'IRIME','IPLAWS'                                                   &
      ,'ISEDIM','ICLOUD','IDRIZ','IRAIN','IPRIS','ISNOW','IAGGR'          &
      ,'IGRAUP','IHAIL','CPARM','DPARM','RPARM','PPARM','SPARM','APARM'   &
      ,'GPARM','HPARM','GNU','HUCMFILE','NDTCOLL','IAEROSOL','ISALT'      &
@@ -353,6 +354,9 @@ IF(GROUP.EQ.'$MODEL_OPTIONS') THEN
  IF(VR.EQ.'ISCMY')        CALL varseti (VR,ISCMY,NV,1,II,0,90000)
  IF(VR.EQ.'ICHECKMIC')    CALL varseti (VR,ICHECKMIC,NV,1,II,0,2)
  IF(VR.EQ.'IMBUDGET')     CALL varseti (VR,IMBUDGET,NV,1,II,0,3)
+ !IMBUDGETACC: 0=output only the instantaneous budget rates (*R),
+ !             1=also accumulate and output run totals (ACC*), like ACCPR
+ IF(VR.EQ.'IMBUDGETACC')  CALL varseti (VR,IMBUDGETACC,NV,1,II,0,1)
  !IUVWTEND: 0=off, 1=accelerations only (UP_DUDT/VP_DVDT/WP_DWDT),
  !          2=full momentum budget (PGF/advection/diffusion/coriolis/rayleigh)
  IF(VR.EQ.'IUVWTEND')     CALL varseti (VR,IUVWTEND,NV,1,II,0,2)
@@ -546,6 +550,7 @@ WRITE(6,'(100(3(A19,I5)/))')         &
  ,'ISCMY=',ISCMY                     &
  ,'ICHECKMIC=',ICHECKMIC             &
  ,'IMBUDGET=',IMBUDGET               &
+ ,'IMBUDGETACC=',IMBUDGETACC         &
  ,'IUVWTEND=',IUVWTEND               &
  ,'IRIME=',IRIME                     &
  ,'IPLAWS=',IPLAWS                   &

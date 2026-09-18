@@ -257,6 +257,7 @@ if (level .le. 2) then
    ihail = 0
    idriz = 0
    imbudget = 0
+   imbudgetacc = 0
    iccnlev = 0
    iifn = 0
 
@@ -315,6 +316,10 @@ elseif (level .eq. 3) then
  endif
  if (imbudget .lt. 0 .or. imbudget .gt. 3) THEN
   print*,'FATAL - IMBUDGET OUT OF RANGE'
+  IFATERR = IFATERR + 1
+ endif
+ if (imbudgetacc .lt. 0 .or. imbudgetacc .gt. 1) THEN
+  print*,'FATAL - IMBUDGETACC OUT OF RANGE: MUST BE 0-1'
   IFATERR = IFATERR + 1
  endif
  if (iifn .lt. 0 .or. iifn .gt. 3) THEN
