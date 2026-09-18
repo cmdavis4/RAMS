@@ -1504,12 +1504,12 @@ IF(DEL_T.LT.0.AND.any(FF1>0.)) THEN
       SUM_ICE=SUM_ICE+DF1*XI(KR,1)*XI(KR,1)*COL3/RO
       SUM_NUM = SUM_NUM + DF1*XI(KR,1)*COL3/RO*1000.
       IF (imbudget >= 1) THEN
-          micro_g(ngrid)%accnucicer(k,i,j) = micro_g(ngrid)%accnucicer(k,i,j) + SUM_ICE
-          micro_g(ngrid)%accnucicec(k,i,j) = micro_g(ngrid)%accnucicec(k,i,j) + SUM_NUM
+          micro_g(ngrid)%nucicerr(k,i,j) = micro_g(ngrid)%nucicerr(k,i,j) + SUM_ICE
+          micro_g(ngrid)%nucicecr(k,i,j) = micro_g(ngrid)%nucicecr(k,i,j) + SUM_NUM
       END IF
       IF (imbudget >= 2) THEN
-         micro_g(ngrid)%accinuchomr(k,i,j) = micro_g(ngrid)%accinuchomr(k,i,j) + SUM_ICE
-         micro_g(ngrid)%accinuchomc(k,i,j) = micro_g(ngrid)%accinuchomc(k,i,j) + SUM_NUM
+         micro_g(ngrid)%inuchomrr(k,i,j) = micro_g(ngrid)%inuchomrr(k,i,j) + SUM_ICE
+         micro_g(ngrid)%inuchomcr(k,i,j) = micro_g(ngrid)%inuchomcr(k,i,j) + SUM_NUM
       END IF    
    ENDDO
 
@@ -1537,27 +1537,27 @@ REAL FF1(NKR),FF2(NKR,ICEMAX),FF3(NKR),FF4(NKR),FF5(NKR)
 
 IF (IMBUDGET >= 2) THEN !Everything melts - just add it all up
    IF (IPRIS >=2) THEN
-      micro_g(ngrid)%accmeltpris(k,i,j) = micro_g(ngrid)%accmeltpris(k,i,j) &
+      micro_g(ngrid)%meltprisr(k,i,j) = micro_g(ngrid)%meltprisr(k,i,j) &
                         + SUM_MASS(FF2(:,1),XI(:,1),RO,1,KRPRIS(1)-1) &
                         + SUM_MASS(FF2(:,2),XI(:,2),RO,1,KRPRIS(2)-1) &
                         + SUM_MASS(FF2(:,3),XI(:,3),RO,1,KRPRIS(3)-1)
 
-      micro_g(ngrid)%accmeltsnow(k,i,j) = micro_g(ngrid)%accmeltsnow(k,i,j) &
+      micro_g(ngrid)%meltsnowr(k,i,j) = micro_g(ngrid)%meltsnowr(k,i,j) &
                         + SUM_MASS(FF2(:,1),XI(:,1),RO,KRPRIS(1),NKR) &
                         + SUM_MASS(FF2(:,2),XI(:,2),RO,KRPRIS(2),NKR) &
                         + SUM_MASS(FF2(:,3),XI(:,3),RO,KRPRIS(3),NKR)
 
    ELSEIF (IPRIS==1 .or. IPRIS==2 .or. IPRIS==3) THEN
-      micro_g(ngrid)%accmeltpris(k,i,j) = micro_g(ngrid)%accmeltpris(k,i,j) &
+      micro_g(ngrid)%meltprisr(k,i,j) = micro_g(ngrid)%meltprisr(k,i,j) &
               + SUM_MASS(FF2(:,IPRIS),XI(:,IPRIS),RO,1,KRPRIS(IPRIS)-1)
-      micro_g(ngrid)%accmeltsnow(k,i,j) = micro_g(ngrid)%accmeltsnow(k,i,j) &
+      micro_g(ngrid)%meltsnowr(k,i,j) = micro_g(ngrid)%meltsnowr(k,i,j) &
               + SUM_MASS(FF2(:,IPRIS),XI(:,IPRIS),RO,KRPRIS(IPRIS),NKR)
    ENDIF
-   micro_g(ngrid)%accmeltaggr(k,i,j) = micro_g(ngrid)%accmeltaggr(k,i,j) &
+   micro_g(ngrid)%meltaggrr(k,i,j) = micro_g(ngrid)%meltaggrr(k,i,j) &
            + SUM_MASS(FF3,XS,RO,1,NKR)
-   IF(IGRAUP>0) micro_g(ngrid)%accmeltgrau(k,i,j) = micro_g(ngrid)%accmeltgrau(k,i,j) &
+   IF(IGRAUP>0) micro_g(ngrid)%meltgraur(k,i,j) = micro_g(ngrid)%meltgraur(k,i,j) &
                         + SUM_MASS(FF4,XG,RO,1,NKR)
-   IF(IHAIL>0)  micro_g(ngrid)%accmelthail(k,i,j) = micro_g(ngrid)%accmelthail(k,i,j) &
+   IF(IHAIL>0)  micro_g(ngrid)%melthailr(k,i,j) = micro_g(ngrid)%melthailr(k,i,j) &
                         + SUM_MASS(FF5,XH,RO,1,NKR)
 ENDIF 
 
@@ -1577,8 +1577,8 @@ ENDDO
 ! NEW TEMPERATURE :
 ARG_1=333.*SUMICE/RO
 TIN=TIN-ARG_1
-IF (IMBUDGET >= 1) micro_g(ngrid)%accmeltice(k,i,j) = &
-    micro_g(ngrid)%accmeltice(k,i,j) + SUMICE/RO
+IF (IMBUDGET >= 1) micro_g(ngrid)%melticer(k,i,j) = &
+    micro_g(ngrid)%melticer(k,i,j) + SUMICE/RO
 
 RETURN     
 END SUBROUTINE MELT 
@@ -1649,9 +1649,9 @@ CALL NUCLEATION (SUP1,TT,FCCNR,DROPCONCN  &
      PSI1(KR)=PSI1(KR)+DROPCONCN(KR)/DX
 
      IF (imbudget >= 1) THEN
-        micro_g(ngrid)%accnuccldr(k,i,j) = micro_g(ngrid)%accnuccldr(k,i,j) &
+        micro_g(ngrid)%nuccldrr(k,i,j) = micro_g(ngrid)%nuccldrr(k,i,j) &
             + dropconcn(kr)*x1(kr)/dens
-        micro_g(ngrid)%accnuccldc(k,i,j) = micro_g(ngrid)%accnuccldc(k,i,j) &
+        micro_g(ngrid)%nuccldcr(k,i,j) = micro_g(ngrid)%nuccldcr(k,i,j) &
             + dropconcn(kr)/dens*1000.
      ENDIF
   ENDDO
@@ -1752,15 +1752,15 @@ IMPLICIT NONE
             ADDF=DELTAF/DX
             PSI2(KR,ICE)=PSI2(KR,ICE)+ADDF
             IF (imbudget >=1) THEN
-               micro_g(ngrid)%accnucicer(k,i,j) = micro_g(ngrid)%accnucicer(k,i,j) &
+               micro_g(ngrid)%nucicerr(k,i,j) = micro_g(ngrid)%nucicerr(k,i,j) &
                    + DELTAF*X2(KR,ICE)/ROR
-               micro_g(ngrid)%accnucicec(k,i,j) = micro_g(ngrid)%accnucicec(k,i,j) &
+               micro_g(ngrid)%nucicecr(k,i,j) = micro_g(ngrid)%nucicecr(k,i,j) &
                    + DELTAF/ROR*1000.
             ENDIF
             IF (imbudget >= 2) THEN
-               micro_g(ngrid)%accinucifnr(k,i,j) = micro_g(ngrid)%accinucifnr(k,i,j) &
+               micro_g(ngrid)%inucifnrr(k,i,j) = micro_g(ngrid)%inucifnrr(k,i,j) &
                    + DELTAF*X2(KR,ICE)/ROR
-               micro_g(ngrid)%accinucifnc(k,i,j) = micro_g(ngrid)%accinucifnc(k,i,j) &
+               micro_g(ngrid)%inucifncr(k,i,j) = micro_g(ngrid)%inucifncr(k,i,j) &
                    + DELTAF/ROR*1000.
             ENDIF
          ENDDO
@@ -1796,15 +1796,15 @@ IMPLICIT NONE
             DX=3.*X2(k1,ICE)*COL
             PSI2(K1,ICE) = PSI2(K1,ICE) + NUMHET(ki)*1.e-6/DX
             IF (imbudget >=1) THEN
-               micro_g(ngrid)%accnucicer(k,i,j) = micro_g(ngrid)%accnucicer(k,i,j) &
+               micro_g(ngrid)%nucicerr(k,i,j) = micro_g(ngrid)%nucicerr(k,i,j) &
                    + numhet(ki)/DX*COL3*X2(k1,ICE)*X2(k1,ICE)/ROR*1.e-6
-               micro_g(ngrid)%accnucicec(k,i,j) = micro_g(ngrid)%accnucicec(k,i,j) &
+               micro_g(ngrid)%nucicecr(k,i,j) = micro_g(ngrid)%nucicecr(k,i,j) &
                    + numhet(ki)/DX*COL3*X2(k1,ICE)/ROR*1.e-3
             ENDIF
             IF (imbudget >=2) THEN
-               micro_g(ngrid)%accinucifnr(k,i,j) = micro_g(ngrid)%accinucifnr(k,i,j) &
+               micro_g(ngrid)%inucifnrr(k,i,j) = micro_g(ngrid)%inucifnrr(k,i,j) &
                    + numhet(ki)/DX*COL3*X2(k1,ICE)*X2(k1,ICE)/ROR*1.e-6
-               micro_g(ngrid)%accinucifnc(k,i,j) = micro_g(ngrid)%accinucifnc(k,i,j) &
+               micro_g(ngrid)%inucifncr(k,i,j) = micro_g(ngrid)%inucifncr(k,i,j) &
                    + numhet(ki)/DX*COL3*X2(k1,ICE)/ROR*1.e-3
             ENDIF
               
@@ -4746,13 +4746,13 @@ alwc=cont_init_drop*1.e6
 totalcloud = sum(g1(1:krdrop-1))*col*1e-3/rho
 if (icol_drop.eq.1)then 
   if (imbudget >= 1) then
-     micro_g(ngrid)%acccld2rain(kdir,idir,jdir) = micro_g(ngrid)%acccld2rain(kdir,idir,jdir) &
+     micro_g(ngrid)%cld2rainr(kdir,idir,jdir) = micro_g(ngrid)%cld2rainr(kdir,idir,jdir) &
          + totalcloud 
   endif
   CALL coll_xxx (G1,CWLL,XL_MG,CHUCM,IMA,NKR)
   if (imbudget >= 1) then
      totalcloud = sum(g1(1:krdrop-1))*col*1e-3/rho
-     micro_g(ngrid)%acccld2rain(kdir,idir,jdir) = micro_g(ngrid)%acccld2rain(kdir,idir,jdir) &
+     micro_g(ngrid)%cld2rainr(kdir,idir,jdir) = micro_g(ngrid)%cld2rainr(kdir,idir,jdir) &
          - totalcloud 
   endif
 
@@ -4794,16 +4794,16 @@ if (icol_drop.eq.1)then
 !-----------------SNOW-LIQUID COLLISIONS---------------------
  if (iceprocs .eq. 1) then
   if (imbudget >= 1) then
-     micro_g(ngrid)%accrimecld(kdir,idir,jdir) = micro_g(ngrid)%accrimecld(kdir,idir,jdir) &
+     micro_g(ngrid)%rimecldr(kdir,idir,jdir) = micro_g(ngrid)%rimecldr(kdir,idir,jdir) &
           + totalcloud
-     micro_g(ngrid)%accrain2ice(kdir,idir,jdir) = micro_g(ngrid)%accrain2ice(kdir,idir,jdir) &
+     micro_g(ngrid)%rain2icer(kdir,idir,jdir) = micro_g(ngrid)%rain2icer(kdir,idir,jdir) &
           + totalrain
   endif
   if (icol_snow.eq.1)then 
      if (imbudget >= 2) then
-        micro_g(ngrid)%accrimecldaggr(kdir,idir,jdir) = micro_g(ngrid)%accrimecldaggr(kdir,idir,jdir) &
+        micro_g(ngrid)%rimecldaggrr(kdir,idir,jdir) = micro_g(ngrid)%rimecldaggrr(kdir,idir,jdir) &
             + totalcloud 
-        micro_g(ngrid)%accrain2ag(kdir,idir,jdir) = micro_g(ngrid)%accrain2ag(kdir,idir,jdir) &
+        micro_g(ngrid)%rain2agr(kdir,idir,jdir) = micro_g(ngrid)%rain2agr(kdir,idir,jdir) &
             + totalrain
      endif
      if(tt.lt.tcrit) then
@@ -4824,10 +4824,10 @@ if (icol_drop.eq.1)then
      endif
      if (imbudget >= 2) then
         totalcloud = sum(g1(1:krdrop-1))*col*1e-3/rho
-        micro_g(ngrid)%accrimecldaggr(kdir,idir,jdir) = micro_g(ngrid)%accrimecldaggr(kdir,idir,jdir) &
+        micro_g(ngrid)%rimecldaggrr(kdir,idir,jdir) = micro_g(ngrid)%rimecldaggrr(kdir,idir,jdir) &
             - totalcloud 
         totalrain = sum(g1(krdrop:nkr))*col*1e-3/rho
-        micro_g(ngrid)%accrain2ag(kdir,idir,jdir) = micro_g(ngrid)%accrain2ag(kdir,idir,jdir) &
+        micro_g(ngrid)%rain2agr(kdir,idir,jdir) = micro_g(ngrid)%rain2agr(kdir,idir,jdir) &
             - totalrain
      endif
   end if
@@ -4838,9 +4838,9 @@ if (icol_drop.eq.1)then
 ! graupel - water = hail (t ge tcrit ; xg_mg > xl_mg)
   if (icol_graupel.eq.1)then 
      if (imbudget >= 2) then
-        micro_g(ngrid)%accrimecldgrau(kdir,idir,jdir) = micro_g(ngrid)%accrimecldgrau(kdir,idir,jdir) &
+        micro_g(ngrid)%rimecldgraur(kdir,idir,jdir) = micro_g(ngrid)%rimecldgraur(kdir,idir,jdir) &
             + totalcloud 
-        micro_g(ngrid)%accrain2gr(kdir,idir,jdir) = micro_g(ngrid)%accrain2gr(kdir,idir,jdir) &
+        micro_g(ngrid)%rain2grr(kdir,idir,jdir) = micro_g(ngrid)%rain2grr(kdir,idir,jdir) &
             + totalrain
      endif
      if (alwc.lt.alcr_hail) then
@@ -4866,10 +4866,10 @@ if (icol_drop.eq.1)then
      endif
      if (imbudget >= 2) then
          totalcloud = sum(g1(1:krdrop-1))*col*1e-3/rho
-         micro_g(ngrid)%accrimecldgrau(kdir,idir,jdir) = micro_g(ngrid)%accrimecldgrau(kdir,idir,jdir) &
+         micro_g(ngrid)%rimecldgraur(kdir,idir,jdir) = micro_g(ngrid)%rimecldgraur(kdir,idir,jdir) &
              - totalcloud 
          totalrain = sum(g1(krdrop:nkr))*col*1e-3/rho
-         micro_g(ngrid)%accrain2gr(kdir,idir,jdir) = micro_g(ngrid)%accrain2gr(kdir,idir,jdir) &
+         micro_g(ngrid)%rain2grr(kdir,idir,jdir) = micro_g(ngrid)%rain2grr(kdir,idir,jdir) &
              - totalrain
      endif
 !----ICE-MULTIPLICATION : Hallet-Mossop processes (1 per 250 collisions)
@@ -4893,9 +4893,9 @@ if (icol_drop.eq.1)then
 ! hail - water = hail (xh_mg > xl_mg)     (kxyx=3)
   if(icol_hail.eq.1) then
     if (imbudget >= 2) then
-       micro_g(ngrid)%accrimecldhail(kdir,idir,jdir) = micro_g(ngrid)%accrimecldhail(kdir,idir,jdir) &
+       micro_g(ngrid)%rimecldhailr(kdir,idir,jdir) = micro_g(ngrid)%rimecldhailr(kdir,idir,jdir) &
            + totalcloud 
-       micro_g(ngrid)%accrain2ha(kdir,idir,jdir) = micro_g(ngrid)%accrain2ha(kdir,idir,jdir) &
+       micro_g(ngrid)%rain2har(kdir,idir,jdir) = micro_g(ngrid)%rain2har(kdir,idir,jdir) &
            + totalrain
     endif
     CALL coll_xyy (g1,g5,cwlh,xl_mg,xh_mg, &
@@ -4904,10 +4904,10 @@ if (icol_drop.eq.1)then
                        chucm,ima,prdkrn1,nkr,1)
     if (imbudget >= 2) then
        totalcloud = sum(g1(1:krdrop-1))*col*1e-3/rho
-       micro_g(ngrid)%accrimecldhail(kdir,idir,jdir) = micro_g(ngrid)%accrimecldhail(kdir,idir,jdir) &
+       micro_g(ngrid)%rimecldhailr(kdir,idir,jdir) = micro_g(ngrid)%rimecldhailr(kdir,idir,jdir) &
            - totalcloud 
        totalrain = sum(g1(krdrop:nkr))*col*1e-3/rho
-       micro_g(ngrid)%accrain2ha(kdir,idir,jdir) = micro_g(ngrid)%accrain2ha(kdir,idir,jdir) &
+       micro_g(ngrid)%rain2har(kdir,idir,jdir) = micro_g(ngrid)%rain2har(kdir,idir,jdir) &
            - totalrain
     endif
   endif
@@ -4919,9 +4919,9 @@ if (icol_drop.eq.1)then
 ! columns - water = columns/graupel (xi_mg > xl_mg)             (kxyx=4); kxyxz=2)
 ! now: columns - water = columns (xi_mg > xl_mg)             (kxyx=4); kxyxz=2)
   if (imbudget >= 2 .and. ipris > 0) then
-    micro_g(ngrid)%accrimecldsnow(kdir,idir,jdir) = micro_g(ngrid)%accrimecldsnow(kdir,idir,jdir) &
+    micro_g(ngrid)%rimecldsnowr(kdir,idir,jdir) = micro_g(ngrid)%rimecldsnowr(kdir,idir,jdir) &
         + totalcloud
-    micro_g(ngrid)%accrain2sn(kdir,idir,jdir) = micro_g(ngrid)%accrain2sn(kdir,idir,jdir) &
+    micro_g(ngrid)%rain2snr(kdir,idir,jdir) = micro_g(ngrid)%rain2snr(kdir,idir,jdir) &
         + totalrain
   endif
   if(icol_column.eq.1) then
@@ -4973,15 +4973,15 @@ if (icol_drop.eq.1)then
   if (imbudget >= 1) then
      totalcloud = sum(g1(1:krdrop-1))*col*1e-3/rho
      totalrain = sum(g1(krdrop:nkr))*col*1e-3/rho
-     micro_g(ngrid)%accrimecld(kdir,idir,jdir) = micro_g(ngrid)%accrimecld(kdir,idir,jdir) &
+     micro_g(ngrid)%rimecldr(kdir,idir,jdir) = micro_g(ngrid)%rimecldr(kdir,idir,jdir) &
          - totalcloud
-     micro_g(ngrid)%accrain2ice(kdir,idir,jdir) = micro_g(ngrid)%accrain2ice(kdir,idir,jdir) &
+     micro_g(ngrid)%rain2icer(kdir,idir,jdir) = micro_g(ngrid)%rain2icer(kdir,idir,jdir) &
          - totalrain
   endif
   if (imbudget >= 2 .and. ipris > 0) then
-     micro_g(ngrid)%accrimecldsnow(kdir,idir,jdir) = micro_g(ngrid)%accrimecldsnow(kdir,idir,jdir) &
+     micro_g(ngrid)%rimecldsnowr(kdir,idir,jdir) = micro_g(ngrid)%rimecldsnowr(kdir,idir,jdir) &
          - totalcloud
-     micro_g(ngrid)%accrain2sn(kdir,idir,jdir) = micro_g(ngrid)%accrain2sn(kdir,idir,jdir) &
+     micro_g(ngrid)%rain2snr(kdir,idir,jdir) = micro_g(ngrid)%rain2snr(kdir,idir,jdir) &
          - totalrain
   endif
  endif !endif ice present
@@ -4992,7 +4992,7 @@ endif !endif liquid collisions
 if(tt.gt.TTCOAL .and. iceprocs == 1) then
   if (imbudget >= 1) then
      totalprissnow = sum(g3)*col*1e-3/rho
-     micro_g(ngrid)%accaggregate(kdir,idir,jdir) = micro_g(ngrid)%accaggregate(kdir,idir,jdir) &
+     micro_g(ngrid)%aggregater(kdir,idir,jdir) = micro_g(ngrid)%aggregater(kdir,idir,jdir) &
          - totalprissnow
   endif
 !------------COLUMN-ICE COLLISIONS--------------------------------
@@ -5077,7 +5077,7 @@ endif
   endif
   if (imbudget >= 1) then
      totalprissnow = sum(g3)*col*1e-3/rho
-     micro_g(ngrid)%accaggregate(kdir,idir,jdir) = micro_g(ngrid)%accaggregate(kdir,idir,jdir) &
+     micro_g(ngrid)%aggregater(kdir,idir,jdir) = micro_g(ngrid)%aggregater(kdir,idir,jdir) &
          + totalprissnow
   endif
 endif

@@ -31,6 +31,9 @@ CALL zero_budgets ()
 !Main microphysics driver
 CALL micro_proc ()
 
+!Turn this step's budget amounts into rates (and add to run totals)
+CALL finish_bin_budgets ()
+
 return
 END SUBROUTINE micro_bin
 
@@ -319,7 +322,7 @@ do k = 1,mzp
                           ,FF1R,FF1IN,XL,RLEC,RO1BL &
                           ,AA1_MY,BB1_MY,AA2_MY,BB2_MY &
                           ,COL,DTCOND,ICEMAX,NKR &
-                          ,micro_g(ngrid)%accvapcld(k,i,j),micro_g(ngrid)%accvaprain(k,i,j))
+                          ,micro_g(ngrid)%vapcldr(k,i,j),micro_g(ngrid)%vaprainr(k,i,j))
                   !If ice
                   ELSE IF(ISYM1.EQ.0.AND.(TT-273.15).LE.-0.187.AND. &
                      (ISYM2.EQ.1.OR.ISYM3.EQ.1.OR.ISYM4.EQ.1.OR.ISYM5.EQ.1))THEN
@@ -347,7 +350,7 @@ do k = 1,mzp
                           ,AA1_MY,BB1_MY,AA2_MY,BB2_MY &
                           ,COL,DTCOND,ICEMAX,NKR &
                           ,ISYM1,ISYM2,ISYM3,ISYM4,ISYM5 &
-                          ,micro_g(ngrid)%accvapcld(k,i,j),micro_g(ngrid)%accvaprain(k,i,j))
+                          ,micro_g(ngrid)%vapcldr(k,i,j),micro_g(ngrid)%vaprainr(k,i,j))
                   END IF
                   IF (ifastsbm==1) CALL fastsbm_reassign (FF2R,FF3R,FF4R,FF5R)
 
@@ -1112,70 +1115,369 @@ END SUBROUTINE update_thermo
 !##############################################################################
 Subroutine zero_budgets ()
 
+! Start a new model step for the bin-microphysics budgets.
+!
+! Every budget rate array (<name>r) collects the amount its process adds
+! during THIS step, so it is zeroed here at the start of every step.
+! finish_bin_budgets() then adds that amount to the run total (acc<name>,
+! only when IMBUDGETACC=1) and divides it by dtlt to give the rate per
+! second. No output frequency is involved, so changing FRQSTATE or FRQLITE
+! cannot change the budget values.
+
 use mem_micro
-use micro_prm, only: iceprocs
-use mem_grid, only:time,dtlt,istp,ngrid
-use io_params, only: ioutput, frqstate
-use micphys, only:imbudget,ipris,igraup,ihail
+use mem_grid, only:ngrid
 
 implicit none
 
-!-------Zero out micro budgets-----------------------
-if (imbudget >= 1) then
-   micro_g(ngrid)%latheatvapr = 0.
-   if (iceprocs == 1) micro_g(ngrid)%latheatfrzr = 0.
-endif
-
-if (mod(time+0.001,frqstate(ngrid)) < dtlt .or. istp == 1) then
-   if (imbudget >= 1) then
-      micro_g(ngrid)%accnuccldr = 0.
-      micro_g(ngrid)%accnuccldc = 0.
-      micro_g(ngrid)%acccld2rain = 0.
-      micro_g(ngrid)%accvapliq = 0.
-      micro_g(ngrid)%acclatheatvap = 0.
-      if (iceprocs == 1) then
-         micro_g(ngrid)%acclatheatfrz = 0.
-         micro_g(ngrid)%accnucicer = 0.
-         micro_g(ngrid)%accnucicec = 0.
-         micro_g(ngrid)%accvapice = 0.
-         micro_g(ngrid)%accmeltice = 0.
-         micro_g(ngrid)%accrain2ice = 0.
-         micro_g(ngrid)%accaggregate = 0.
-         micro_g(ngrid)%accrimecld = 0.
-      endif
-   endif
-   if (imbudget >= 2) then
-      micro_g(ngrid)%accvapcld = 0.
-      micro_g(ngrid)%accvaprain = 0.
-      if (iceprocs == 1) then
-         micro_g(ngrid)%accinuchomr = 0.
-         micro_g(ngrid)%accinuchomc = 0.
-         micro_g(ngrid)%accinucifnr = 0.
-         micro_g(ngrid)%accinucifnc = 0.
-         if (ipris > 0) micro_g(ngrid)%accvappris = 0.
-         if (ipris > 0) micro_g(ngrid)%accvapsnow = 0.
-         micro_g(ngrid)%accvapaggr = 0.
-         if (igraup > 0) micro_g(ngrid)%accvapgrau = 0.
-         if (ihail > 0) micro_g(ngrid)%accvaphail = 0.
-         if (ipris > 0) micro_g(ngrid)%accmeltpris = 0.
-         if (ipris > 0) micro_g(ngrid)%accmeltsnow = 0.
-         micro_g(ngrid)%accmeltaggr = 0.
-         if (igraup > 0) micro_g(ngrid)%accmeltgrau = 0.
-         if (ihail > 0) micro_g(ngrid)%accmelthail = 0.
-         if (ipris > 0) micro_g(ngrid)%accrimecldsnow = 0.
-         micro_g(ngrid)%accrimecldaggr = 0.
-         if (igraup > 0) micro_g(ngrid)%accrimecldgrau = 0.
-         if (ihail > 0) micro_g(ngrid)%accrimecldhail = 0.
-         if (ipris > 0) micro_g(ngrid)%accrain2sn = 0.
-         micro_g(ngrid)%accrain2ag = 0.
-         if (igraup > 0) micro_g(ngrid)%accrain2gr = 0.
-         if (ihail > 0) micro_g(ngrid)%accrain2ha = 0.
-      endif
-   endif 
-endif
+! Zero this step's amount of every allocated budget process
+if (allocated(micro_g(ngrid)%latheatvapr)) micro_g(ngrid)%latheatvapr = 0.
+if (allocated(micro_g(ngrid)%latheatfrzr)) micro_g(ngrid)%latheatfrzr = 0.
+if (allocated(micro_g(ngrid)%nuccldrr)) micro_g(ngrid)%nuccldrr = 0.
+if (allocated(micro_g(ngrid)%cld2rainr)) micro_g(ngrid)%cld2rainr = 0.
+if (allocated(micro_g(ngrid)%ice2rainr)) micro_g(ngrid)%ice2rainr = 0.
+if (allocated(micro_g(ngrid)%nucicerr)) micro_g(ngrid)%nucicerr = 0.
+if (allocated(micro_g(ngrid)%vapliqr)) micro_g(ngrid)%vapliqr = 0.
+if (allocated(micro_g(ngrid)%vapicer)) micro_g(ngrid)%vapicer = 0.
+if (allocated(micro_g(ngrid)%evapliqr)) micro_g(ngrid)%evapliqr = 0.
+if (allocated(micro_g(ngrid)%evapicer)) micro_g(ngrid)%evapicer = 0.
+if (allocated(micro_g(ngrid)%freezingr)) micro_g(ngrid)%freezingr = 0.
+if (allocated(micro_g(ngrid)%meltingr)) micro_g(ngrid)%meltingr = 0.
+if (allocated(micro_g(ngrid)%melticer)) micro_g(ngrid)%melticer = 0.
+if (allocated(micro_g(ngrid)%rimecldr)) micro_g(ngrid)%rimecldr = 0.
+if (allocated(micro_g(ngrid)%rain2icer)) micro_g(ngrid)%rain2icer = 0.
+if (allocated(micro_g(ngrid)%aggregater)) micro_g(ngrid)%aggregater = 0.
+if (allocated(micro_g(ngrid)%inuchomrr)) micro_g(ngrid)%inuchomrr = 0.
+if (allocated(micro_g(ngrid)%inuccontrr)) micro_g(ngrid)%inuccontrr = 0.
+if (allocated(micro_g(ngrid)%inucifnrr)) micro_g(ngrid)%inucifnrr = 0.
+if (allocated(micro_g(ngrid)%inuchazrr)) micro_g(ngrid)%inuchazrr = 0.
+if (allocated(micro_g(ngrid)%vapcldr)) micro_g(ngrid)%vapcldr = 0.
+if (allocated(micro_g(ngrid)%vaprainr)) micro_g(ngrid)%vaprainr = 0.
+if (allocated(micro_g(ngrid)%vapprisr)) micro_g(ngrid)%vapprisr = 0.
+if (allocated(micro_g(ngrid)%vapsnowr)) micro_g(ngrid)%vapsnowr = 0.
+if (allocated(micro_g(ngrid)%vapaggrr)) micro_g(ngrid)%vapaggrr = 0.
+if (allocated(micro_g(ngrid)%vapgraur)) micro_g(ngrid)%vapgraur = 0.
+if (allocated(micro_g(ngrid)%vaphailr)) micro_g(ngrid)%vaphailr = 0.
+if (allocated(micro_g(ngrid)%vapdrizr)) micro_g(ngrid)%vapdrizr = 0.
+if (allocated(micro_g(ngrid)%evapcldr)) micro_g(ngrid)%evapcldr = 0.
+if (allocated(micro_g(ngrid)%evaprainr)) micro_g(ngrid)%evaprainr = 0.
+if (allocated(micro_g(ngrid)%evapprisr)) micro_g(ngrid)%evapprisr = 0.
+if (allocated(micro_g(ngrid)%evapsnowr)) micro_g(ngrid)%evapsnowr = 0.
+if (allocated(micro_g(ngrid)%evapaggrr)) micro_g(ngrid)%evapaggrr = 0.
+if (allocated(micro_g(ngrid)%evapgraur)) micro_g(ngrid)%evapgraur = 0.
+if (allocated(micro_g(ngrid)%evaphailr)) micro_g(ngrid)%evaphailr = 0.
+if (allocated(micro_g(ngrid)%evapdrizr)) micro_g(ngrid)%evapdrizr = 0.
+if (allocated(micro_g(ngrid)%meltprisr)) micro_g(ngrid)%meltprisr = 0.
+if (allocated(micro_g(ngrid)%meltsnowr)) micro_g(ngrid)%meltsnowr = 0.
+if (allocated(micro_g(ngrid)%meltaggrr)) micro_g(ngrid)%meltaggrr = 0.
+if (allocated(micro_g(ngrid)%meltgraur)) micro_g(ngrid)%meltgraur = 0.
+if (allocated(micro_g(ngrid)%melthailr)) micro_g(ngrid)%melthailr = 0.
+if (allocated(micro_g(ngrid)%rimecldsnowr)) micro_g(ngrid)%rimecldsnowr = 0.
+if (allocated(micro_g(ngrid)%rimecldaggrr)) micro_g(ngrid)%rimecldaggrr = 0.
+if (allocated(micro_g(ngrid)%rimecldgraur)) micro_g(ngrid)%rimecldgraur = 0.
+if (allocated(micro_g(ngrid)%rimecldhailr)) micro_g(ngrid)%rimecldhailr = 0.
+if (allocated(micro_g(ngrid)%rain2prr)) micro_g(ngrid)%rain2prr = 0.
+if (allocated(micro_g(ngrid)%rain2snr)) micro_g(ngrid)%rain2snr = 0.
+if (allocated(micro_g(ngrid)%rain2agr)) micro_g(ngrid)%rain2agr = 0.
+if (allocated(micro_g(ngrid)%rain2grr)) micro_g(ngrid)%rain2grr = 0.
+if (allocated(micro_g(ngrid)%rain2har)) micro_g(ngrid)%rain2har = 0.
+if (allocated(micro_g(ngrid)%aggrselfprisr)) micro_g(ngrid)%aggrselfprisr = 0.
+if (allocated(micro_g(ngrid)%aggrselfsnowr)) micro_g(ngrid)%aggrselfsnowr = 0.
+if (allocated(micro_g(ngrid)%aggrprissnowr)) micro_g(ngrid)%aggrprissnowr = 0.
+if (allocated(micro_g(ngrid)%dust1cldrr)) micro_g(ngrid)%dust1cldrr = 0.
+if (allocated(micro_g(ngrid)%dust2cldrr)) micro_g(ngrid)%dust2cldrr = 0.
+if (allocated(micro_g(ngrid)%dust1drzrr)) micro_g(ngrid)%dust1drzrr = 0.
+if (allocated(micro_g(ngrid)%dust2drzrr)) micro_g(ngrid)%dust2drzrr = 0.
+if (allocated(micro_g(ngrid)%regen1cldrr)) micro_g(ngrid)%regen1cldrr = 0.
+if (allocated(micro_g(ngrid)%regen2cldrr)) micro_g(ngrid)%regen2cldrr = 0.
+if (allocated(micro_g(ngrid)%regen1drzrr)) micro_g(ngrid)%regen1drzrr = 0.
+if (allocated(micro_g(ngrid)%regen2drzrr)) micro_g(ngrid)%regen2drzrr = 0.
+if (allocated(micro_g(ngrid)%nuccldcr)) micro_g(ngrid)%nuccldcr = 0.
+if (allocated(micro_g(ngrid)%nucicecr)) micro_g(ngrid)%nucicecr = 0.
+if (allocated(micro_g(ngrid)%inuchomcr)) micro_g(ngrid)%inuchomcr = 0.
+if (allocated(micro_g(ngrid)%inucifncr)) micro_g(ngrid)%inucifncr = 0.
 
 return
 END SUBROUTINE zero_budgets
+
+!##############################################################################
+Subroutine finish_bin_budgets ()
+
+! Finish the model step for the bin-microphysics budgets.
+!
+! Each budget rate array (<name>r) now holds the amount its process added
+! during this step. Add that amount to the never-reset run total
+! (acc<name>, allocated only when IMBUDGETACC=1), then divide it by the
+! step length dtlt so the output holds the instantaneous rate per second.
+
+use mem_micro
+use mem_grid, only:ngrid,dtlt
+use micphys, only:imbudgetacc
+
+implicit none
+
+if (allocated(micro_g(ngrid)%latheatvapr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%acclatheatvap)) micro_g(ngrid)%acclatheatvap = micro_g(ngrid)%acclatheatvap + micro_g(ngrid)%latheatvapr
+   micro_g(ngrid)%latheatvapr = micro_g(ngrid)%latheatvapr / dtlt
+endif
+if (allocated(micro_g(ngrid)%latheatfrzr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%acclatheatfrz)) micro_g(ngrid)%acclatheatfrz = micro_g(ngrid)%acclatheatfrz + micro_g(ngrid)%latheatfrzr
+   micro_g(ngrid)%latheatfrzr = micro_g(ngrid)%latheatfrzr / dtlt
+endif
+if (allocated(micro_g(ngrid)%nuccldrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accnuccldr)) micro_g(ngrid)%accnuccldr = micro_g(ngrid)%accnuccldr + micro_g(ngrid)%nuccldrr
+   micro_g(ngrid)%nuccldrr = micro_g(ngrid)%nuccldrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%cld2rainr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%acccld2rain)) micro_g(ngrid)%acccld2rain = micro_g(ngrid)%acccld2rain + micro_g(ngrid)%cld2rainr
+   micro_g(ngrid)%cld2rainr = micro_g(ngrid)%cld2rainr / dtlt
+endif
+if (allocated(micro_g(ngrid)%ice2rainr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accice2rain)) micro_g(ngrid)%accice2rain = micro_g(ngrid)%accice2rain + micro_g(ngrid)%ice2rainr
+   micro_g(ngrid)%ice2rainr = micro_g(ngrid)%ice2rainr / dtlt
+endif
+if (allocated(micro_g(ngrid)%nucicerr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accnucicer)) micro_g(ngrid)%accnucicer = micro_g(ngrid)%accnucicer + micro_g(ngrid)%nucicerr
+   micro_g(ngrid)%nucicerr = micro_g(ngrid)%nucicerr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapliqr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapliq)) micro_g(ngrid)%accvapliq = micro_g(ngrid)%accvapliq + micro_g(ngrid)%vapliqr
+   micro_g(ngrid)%vapliqr = micro_g(ngrid)%vapliqr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapicer)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapice)) micro_g(ngrid)%accvapice = micro_g(ngrid)%accvapice + micro_g(ngrid)%vapicer
+   micro_g(ngrid)%vapicer = micro_g(ngrid)%vapicer / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapliqr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapliq)) micro_g(ngrid)%accevapliq = micro_g(ngrid)%accevapliq + micro_g(ngrid)%evapliqr
+   micro_g(ngrid)%evapliqr = micro_g(ngrid)%evapliqr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapicer)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapice)) micro_g(ngrid)%accevapice = micro_g(ngrid)%accevapice + micro_g(ngrid)%evapicer
+   micro_g(ngrid)%evapicer = micro_g(ngrid)%evapicer / dtlt
+endif
+if (allocated(micro_g(ngrid)%freezingr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accfreezing)) micro_g(ngrid)%accfreezing = micro_g(ngrid)%accfreezing + micro_g(ngrid)%freezingr
+   micro_g(ngrid)%freezingr = micro_g(ngrid)%freezingr / dtlt
+endif
+if (allocated(micro_g(ngrid)%meltingr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmelting)) micro_g(ngrid)%accmelting = micro_g(ngrid)%accmelting + micro_g(ngrid)%meltingr
+   micro_g(ngrid)%meltingr = micro_g(ngrid)%meltingr / dtlt
+endif
+if (allocated(micro_g(ngrid)%melticer)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmeltice)) micro_g(ngrid)%accmeltice = micro_g(ngrid)%accmeltice + micro_g(ngrid)%melticer
+   micro_g(ngrid)%melticer = micro_g(ngrid)%melticer / dtlt
+endif
+if (allocated(micro_g(ngrid)%rimecldr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrimecld)) micro_g(ngrid)%accrimecld = micro_g(ngrid)%accrimecld + micro_g(ngrid)%rimecldr
+   micro_g(ngrid)%rimecldr = micro_g(ngrid)%rimecldr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rain2icer)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrain2ice)) micro_g(ngrid)%accrain2ice = micro_g(ngrid)%accrain2ice + micro_g(ngrid)%rain2icer
+   micro_g(ngrid)%rain2icer = micro_g(ngrid)%rain2icer / dtlt
+endif
+if (allocated(micro_g(ngrid)%aggregater)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accaggregate)) micro_g(ngrid)%accaggregate = micro_g(ngrid)%accaggregate + micro_g(ngrid)%aggregater
+   micro_g(ngrid)%aggregater = micro_g(ngrid)%aggregater / dtlt
+endif
+if (allocated(micro_g(ngrid)%inuchomrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accinuchomr)) micro_g(ngrid)%accinuchomr = micro_g(ngrid)%accinuchomr + micro_g(ngrid)%inuchomrr
+   micro_g(ngrid)%inuchomrr = micro_g(ngrid)%inuchomrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%inuccontrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accinuccontr)) micro_g(ngrid)%accinuccontr = micro_g(ngrid)%accinuccontr + micro_g(ngrid)%inuccontrr
+   micro_g(ngrid)%inuccontrr = micro_g(ngrid)%inuccontrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%inucifnrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accinucifnr)) micro_g(ngrid)%accinucifnr = micro_g(ngrid)%accinucifnr + micro_g(ngrid)%inucifnrr
+   micro_g(ngrid)%inucifnrr = micro_g(ngrid)%inucifnrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%inuchazrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accinuchazr)) micro_g(ngrid)%accinuchazr = micro_g(ngrid)%accinuchazr + micro_g(ngrid)%inuchazrr
+   micro_g(ngrid)%inuchazrr = micro_g(ngrid)%inuchazrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapcldr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapcld)) micro_g(ngrid)%accvapcld = micro_g(ngrid)%accvapcld + micro_g(ngrid)%vapcldr
+   micro_g(ngrid)%vapcldr = micro_g(ngrid)%vapcldr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vaprainr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvaprain)) micro_g(ngrid)%accvaprain = micro_g(ngrid)%accvaprain + micro_g(ngrid)%vaprainr
+   micro_g(ngrid)%vaprainr = micro_g(ngrid)%vaprainr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapprisr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvappris)) micro_g(ngrid)%accvappris = micro_g(ngrid)%accvappris + micro_g(ngrid)%vapprisr
+   micro_g(ngrid)%vapprisr = micro_g(ngrid)%vapprisr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapsnowr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapsnow)) micro_g(ngrid)%accvapsnow = micro_g(ngrid)%accvapsnow + micro_g(ngrid)%vapsnowr
+   micro_g(ngrid)%vapsnowr = micro_g(ngrid)%vapsnowr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapaggrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapaggr)) micro_g(ngrid)%accvapaggr = micro_g(ngrid)%accvapaggr + micro_g(ngrid)%vapaggrr
+   micro_g(ngrid)%vapaggrr = micro_g(ngrid)%vapaggrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapgraur)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapgrau)) micro_g(ngrid)%accvapgrau = micro_g(ngrid)%accvapgrau + micro_g(ngrid)%vapgraur
+   micro_g(ngrid)%vapgraur = micro_g(ngrid)%vapgraur / dtlt
+endif
+if (allocated(micro_g(ngrid)%vaphailr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvaphail)) micro_g(ngrid)%accvaphail = micro_g(ngrid)%accvaphail + micro_g(ngrid)%vaphailr
+   micro_g(ngrid)%vaphailr = micro_g(ngrid)%vaphailr / dtlt
+endif
+if (allocated(micro_g(ngrid)%vapdrizr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accvapdriz)) micro_g(ngrid)%accvapdriz = micro_g(ngrid)%accvapdriz + micro_g(ngrid)%vapdrizr
+   micro_g(ngrid)%vapdrizr = micro_g(ngrid)%vapdrizr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapcldr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapcld)) micro_g(ngrid)%accevapcld = micro_g(ngrid)%accevapcld + micro_g(ngrid)%evapcldr
+   micro_g(ngrid)%evapcldr = micro_g(ngrid)%evapcldr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evaprainr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevaprain)) micro_g(ngrid)%accevaprain = micro_g(ngrid)%accevaprain + micro_g(ngrid)%evaprainr
+   micro_g(ngrid)%evaprainr = micro_g(ngrid)%evaprainr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapprisr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevappris)) micro_g(ngrid)%accevappris = micro_g(ngrid)%accevappris + micro_g(ngrid)%evapprisr
+   micro_g(ngrid)%evapprisr = micro_g(ngrid)%evapprisr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapsnowr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapsnow)) micro_g(ngrid)%accevapsnow = micro_g(ngrid)%accevapsnow + micro_g(ngrid)%evapsnowr
+   micro_g(ngrid)%evapsnowr = micro_g(ngrid)%evapsnowr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapaggrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapaggr)) micro_g(ngrid)%accevapaggr = micro_g(ngrid)%accevapaggr + micro_g(ngrid)%evapaggrr
+   micro_g(ngrid)%evapaggrr = micro_g(ngrid)%evapaggrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapgraur)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapgrau)) micro_g(ngrid)%accevapgrau = micro_g(ngrid)%accevapgrau + micro_g(ngrid)%evapgraur
+   micro_g(ngrid)%evapgraur = micro_g(ngrid)%evapgraur / dtlt
+endif
+if (allocated(micro_g(ngrid)%evaphailr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevaphail)) micro_g(ngrid)%accevaphail = micro_g(ngrid)%accevaphail + micro_g(ngrid)%evaphailr
+   micro_g(ngrid)%evaphailr = micro_g(ngrid)%evaphailr / dtlt
+endif
+if (allocated(micro_g(ngrid)%evapdrizr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accevapdriz)) micro_g(ngrid)%accevapdriz = micro_g(ngrid)%accevapdriz + micro_g(ngrid)%evapdrizr
+   micro_g(ngrid)%evapdrizr = micro_g(ngrid)%evapdrizr / dtlt
+endif
+if (allocated(micro_g(ngrid)%meltprisr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmeltpris)) micro_g(ngrid)%accmeltpris = micro_g(ngrid)%accmeltpris + micro_g(ngrid)%meltprisr
+   micro_g(ngrid)%meltprisr = micro_g(ngrid)%meltprisr / dtlt
+endif
+if (allocated(micro_g(ngrid)%meltsnowr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmeltsnow)) micro_g(ngrid)%accmeltsnow = micro_g(ngrid)%accmeltsnow + micro_g(ngrid)%meltsnowr
+   micro_g(ngrid)%meltsnowr = micro_g(ngrid)%meltsnowr / dtlt
+endif
+if (allocated(micro_g(ngrid)%meltaggrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmeltaggr)) micro_g(ngrid)%accmeltaggr = micro_g(ngrid)%accmeltaggr + micro_g(ngrid)%meltaggrr
+   micro_g(ngrid)%meltaggrr = micro_g(ngrid)%meltaggrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%meltgraur)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmeltgrau)) micro_g(ngrid)%accmeltgrau = micro_g(ngrid)%accmeltgrau + micro_g(ngrid)%meltgraur
+   micro_g(ngrid)%meltgraur = micro_g(ngrid)%meltgraur / dtlt
+endif
+if (allocated(micro_g(ngrid)%melthailr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accmelthail)) micro_g(ngrid)%accmelthail = micro_g(ngrid)%accmelthail + micro_g(ngrid)%melthailr
+   micro_g(ngrid)%melthailr = micro_g(ngrid)%melthailr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rimecldsnowr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrimecldsnow)) micro_g(ngrid)%accrimecldsnow = micro_g(ngrid)%accrimecldsnow + micro_g(ngrid)%rimecldsnowr
+   micro_g(ngrid)%rimecldsnowr = micro_g(ngrid)%rimecldsnowr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rimecldaggrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrimecldaggr)) micro_g(ngrid)%accrimecldaggr = micro_g(ngrid)%accrimecldaggr + micro_g(ngrid)%rimecldaggrr
+   micro_g(ngrid)%rimecldaggrr = micro_g(ngrid)%rimecldaggrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rimecldgraur)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrimecldgrau)) micro_g(ngrid)%accrimecldgrau = micro_g(ngrid)%accrimecldgrau + micro_g(ngrid)%rimecldgraur
+   micro_g(ngrid)%rimecldgraur = micro_g(ngrid)%rimecldgraur / dtlt
+endif
+if (allocated(micro_g(ngrid)%rimecldhailr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrimecldhail)) micro_g(ngrid)%accrimecldhail = micro_g(ngrid)%accrimecldhail + micro_g(ngrid)%rimecldhailr
+   micro_g(ngrid)%rimecldhailr = micro_g(ngrid)%rimecldhailr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rain2prr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrain2pr)) micro_g(ngrid)%accrain2pr = micro_g(ngrid)%accrain2pr + micro_g(ngrid)%rain2prr
+   micro_g(ngrid)%rain2prr = micro_g(ngrid)%rain2prr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rain2snr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrain2sn)) micro_g(ngrid)%accrain2sn = micro_g(ngrid)%accrain2sn + micro_g(ngrid)%rain2snr
+   micro_g(ngrid)%rain2snr = micro_g(ngrid)%rain2snr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rain2agr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrain2ag)) micro_g(ngrid)%accrain2ag = micro_g(ngrid)%accrain2ag + micro_g(ngrid)%rain2agr
+   micro_g(ngrid)%rain2agr = micro_g(ngrid)%rain2agr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rain2grr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrain2gr)) micro_g(ngrid)%accrain2gr = micro_g(ngrid)%accrain2gr + micro_g(ngrid)%rain2grr
+   micro_g(ngrid)%rain2grr = micro_g(ngrid)%rain2grr / dtlt
+endif
+if (allocated(micro_g(ngrid)%rain2har)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accrain2ha)) micro_g(ngrid)%accrain2ha = micro_g(ngrid)%accrain2ha + micro_g(ngrid)%rain2har
+   micro_g(ngrid)%rain2har = micro_g(ngrid)%rain2har / dtlt
+endif
+if (allocated(micro_g(ngrid)%aggrselfprisr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accaggrselfpris)) micro_g(ngrid)%accaggrselfpris = micro_g(ngrid)%accaggrselfpris + micro_g(ngrid)%aggrselfprisr
+   micro_g(ngrid)%aggrselfprisr = micro_g(ngrid)%aggrselfprisr / dtlt
+endif
+if (allocated(micro_g(ngrid)%aggrselfsnowr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accaggrselfsnow)) micro_g(ngrid)%accaggrselfsnow = micro_g(ngrid)%accaggrselfsnow + micro_g(ngrid)%aggrselfsnowr
+   micro_g(ngrid)%aggrselfsnowr = micro_g(ngrid)%aggrselfsnowr / dtlt
+endif
+if (allocated(micro_g(ngrid)%aggrprissnowr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accaggrprissnow)) micro_g(ngrid)%accaggrprissnow = micro_g(ngrid)%accaggrprissnow + micro_g(ngrid)%aggrprissnowr
+   micro_g(ngrid)%aggrprissnowr = micro_g(ngrid)%aggrprissnowr / dtlt
+endif
+if (allocated(micro_g(ngrid)%dust1cldrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accdust1cldr)) micro_g(ngrid)%accdust1cldr = micro_g(ngrid)%accdust1cldr + micro_g(ngrid)%dust1cldrr
+   micro_g(ngrid)%dust1cldrr = micro_g(ngrid)%dust1cldrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%dust2cldrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accdust2cldr)) micro_g(ngrid)%accdust2cldr = micro_g(ngrid)%accdust2cldr + micro_g(ngrid)%dust2cldrr
+   micro_g(ngrid)%dust2cldrr = micro_g(ngrid)%dust2cldrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%dust1drzrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accdust1drzr)) micro_g(ngrid)%accdust1drzr = micro_g(ngrid)%accdust1drzr + micro_g(ngrid)%dust1drzrr
+   micro_g(ngrid)%dust1drzrr = micro_g(ngrid)%dust1drzrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%dust2drzrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accdust2drzr)) micro_g(ngrid)%accdust2drzr = micro_g(ngrid)%accdust2drzr + micro_g(ngrid)%dust2drzrr
+   micro_g(ngrid)%dust2drzrr = micro_g(ngrid)%dust2drzrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%regen1cldrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accregen1cldr)) micro_g(ngrid)%accregen1cldr = micro_g(ngrid)%accregen1cldr + micro_g(ngrid)%regen1cldrr
+   micro_g(ngrid)%regen1cldrr = micro_g(ngrid)%regen1cldrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%regen2cldrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accregen2cldr)) micro_g(ngrid)%accregen2cldr = micro_g(ngrid)%accregen2cldr + micro_g(ngrid)%regen2cldrr
+   micro_g(ngrid)%regen2cldrr = micro_g(ngrid)%regen2cldrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%regen1drzrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accregen1drzr)) micro_g(ngrid)%accregen1drzr = micro_g(ngrid)%accregen1drzr + micro_g(ngrid)%regen1drzrr
+   micro_g(ngrid)%regen1drzrr = micro_g(ngrid)%regen1drzrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%regen2drzrr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accregen2drzr)) micro_g(ngrid)%accregen2drzr = micro_g(ngrid)%accregen2drzr + micro_g(ngrid)%regen2drzrr
+   micro_g(ngrid)%regen2drzrr = micro_g(ngrid)%regen2drzrr / dtlt
+endif
+if (allocated(micro_g(ngrid)%nuccldcr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accnuccldc)) micro_g(ngrid)%accnuccldc = micro_g(ngrid)%accnuccldc + micro_g(ngrid)%nuccldcr
+   micro_g(ngrid)%nuccldcr = micro_g(ngrid)%nuccldcr / dtlt
+endif
+if (allocated(micro_g(ngrid)%nucicecr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accnucicec)) micro_g(ngrid)%accnucicec = micro_g(ngrid)%accnucicec + micro_g(ngrid)%nucicecr
+   micro_g(ngrid)%nucicecr = micro_g(ngrid)%nucicecr / dtlt
+endif
+if (allocated(micro_g(ngrid)%inuchomcr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accinuchomc)) micro_g(ngrid)%accinuchomc = micro_g(ngrid)%accinuchomc + micro_g(ngrid)%inuchomcr
+   micro_g(ngrid)%inuchomcr = micro_g(ngrid)%inuchomcr / dtlt
+endif
+if (allocated(micro_g(ngrid)%inucifncr)) then
+   if (imbudgetacc == 1 .and. allocated(micro_g(ngrid)%accinucifnc)) micro_g(ngrid)%accinucifnc = micro_g(ngrid)%accinucifnc + micro_g(ngrid)%inucifncr
+   micro_g(ngrid)%inucifncr = micro_g(ngrid)%inucifncr / dtlt
+endif
+
+return
+END SUBROUTINE finish_bin_budgets
 
 !##############################################################################
 Subroutine adj1_bin (m1,m2,m3,rtp,micro)
@@ -1336,36 +1638,36 @@ else
 endif
 
 if (imbudget >= 1) then
-   micro_g(ngrid)%accvapliq(k,i,j) = micro_g(ngrid)%accvapliq(k,i,j) + &
+   micro_g(ngrid)%vapliqr(k,i,j) = micro_g(ngrid)%vapliqr(k,i,j) + &
       plusminus * sum_mass(ff1r,xl(:),dens,1,nkr)
 
    if(iceprocs.eq.1) &
-      micro_g(ngrid)%accvapice(k,i,j) = micro_g(ngrid)%accvapice(k,i,j) + plusminus * &
+      micro_g(ngrid)%vapicer(k,i,j) = micro_g(ngrid)%vapicer(k,i,j) + plusminus * &
           sum_mass(ff2r(:,1)+ff2r(:,2)+ff2r(:,3)+ff3r+ff4r+ff5r,xs,dens,1,nkr)
 endif
 if (imbudget >= 2) then
-   ! micro_g(ngrid)%accvapcld(k,i,j) = micro_g(ngrid)%accvapcld(k,i,j) +  &
+   ! micro_g(ngrid)%vapcldr(k,i,j) = micro_g(ngrid)%vapcldr(k,i,j) +  &
    !              plusminus * sum_mass(ff1r,xl,dens,1,krdrop-1)
-   ! micro_g(ngrid)%accvaprain(k,i,j) = micro_g(ngrid)%accvaprain(k,i,j) + &
+   ! micro_g(ngrid)%vaprainr(k,i,j) = micro_g(ngrid)%vaprainr(k,i,j) + &
    !              plusminus * sum_mass(ff1r,xl,dens,krdrop,nkr)
-    micro_g(ngrid)%acccld2rain(k,i,j) = micro_g(ngrid)%acccld2rain(k,i,j) + &
+    micro_g(ngrid)%cld2rainr(k,i,j) = micro_g(ngrid)%cld2rainr(k,i,j) + &
                   plusminus * sum_mass(ff1r,xl,dens,krdrop,nkr) + &
-                  plusminus * -1. * micro_g(ngrid)%accvaprain(k,i,j)
+                  plusminus * -1. * micro_g(ngrid)%vaprainr(k,i,j)
 
     if(iceprocs.eq.1) then
        if (ipris > 0) &
-       micro_g(ngrid)%accvappris(k,i,j) = micro_g(ngrid)%accvappris(k,i,j) + &
+       micro_g(ngrid)%vapprisr(k,i,j) = micro_g(ngrid)%vapprisr(k,i,j) + &
                       plusminus * sum_pris(ff2r,dens)
        if (ipris > 0) &
-       micro_g(ngrid)%accvapsnow(k,i,j) = micro_g(ngrid)%accvapsnow(k,i,j) + &
+       micro_g(ngrid)%vapsnowr(k,i,j) = micro_g(ngrid)%vapsnowr(k,i,j) + &
                       plusminus * sum_snow(ff2r,dens)
-       micro_g(ngrid)%accvapaggr(k,i,j) = micro_g(ngrid)%accvapaggr(k,i,j) + &
+       micro_g(ngrid)%vapaggrr(k,i,j) = micro_g(ngrid)%vapaggrr(k,i,j) + &
                       plusminus * sum_mass(ff3r,xs,dens,1,nkr)
        if (igraup > 0) &
-       micro_g(ngrid)%accvapgrau(k,i,j) = micro_g(ngrid)%accvapgrau(k,i,j) + &
+       micro_g(ngrid)%vapgraur(k,i,j) = micro_g(ngrid)%vapgraur(k,i,j) + &
                       plusminus * sum_mass(ff4r,xg,dens,1,nkr)
        if (ihail > 0) &
-       micro_g(ngrid)%accvaphail(k,i,j) = micro_g(ngrid)%accvaphail(k,i,j) + &
+       micro_g(ngrid)%vaphailr(k,i,j) = micro_g(ngrid)%vaphailr(k,i,j) + &
                       plusminus * sum_mass(ff5r,xh,dens,1,nkr)
     endif
 endif
@@ -1417,10 +1719,6 @@ if (imbudget >= 1) then
          sum_mass(ff2r(:,1)+ff2r(:,2)+ff2r(:,3)+ff3r+ff4r+ff5r,xs,dens,1,nkr) 
 endif
 
-if (imbudget >=1 .and. plusminus .eq. 1) then
-   micro_g(ngrid)%acclatheatvap(k,i,j) = micro_g(ngrid)%acclatheatvap(k,i,j) + &
-                                       micro_g(ngrid)%latheatvapr(k,i,j)
-endif
 
 return
 END SUBROUTINE lhv_budget
@@ -1463,10 +1761,6 @@ if (imbudget >= 1 .and. iceprocs == 1) then
       plusminus * (-1.) * alli * fac * sum_mass(ff1r,xl(:),dens,1,nkr) 
 endif
 
-if (imbudget >=1 .and. iceprocs == 1 .and. plusminus .eq. 1) then
-   micro_g(ngrid)%acclatheatfrz(k,i,j) = micro_g(ngrid)%acclatheatfrz(k,i,j) + &
-                                       micro_g(ngrid)%latheatfrzr(k,i,j)
-endif
 
 return
 END SUBROUTINE lhf_budget

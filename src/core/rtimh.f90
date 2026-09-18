@@ -358,7 +358,7 @@ do j=ja,jz
  patch=2
   if(string .eq. 'MICRO')then
    print 101, my_rams_num, kp, ip, jp, k, i, j, 'NUCCLD', string, time &
-     ,micro_g(ngrid)%accnuccldr(k,i,j)
+     ,micro_g(ngrid)%nuccldrr(k,i,j)
    !print 101, my_rams_num, kp, ip, jp, k, i, j, 'FFCD', string, time &
    !  ,micro_g(ngrid)%ffcd(k,i,j,bp)
  endif
