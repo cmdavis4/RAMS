@@ -3,6 +3,18 @@
 # Include definitions
 ###############################################################################
 include ../include.mk
+
+# Version suffix for the executable and library names (rams-<version>).
+# include.mk may set RAMS_VERSION to choose the name itself. If it leaves it
+# unset or empty, the suffix is the one-line $(RAMS_ROOT)/VERSION file, which is
+# tracked in git and bumped whenever a change breaks compatibility with older
+# RAMSIN files or output-variable names.
+ifeq ($(strip $(RAMS_VERSION)),)
+  ifeq ($(wildcard $(RAMS_ROOT)/VERSION),)
+    $(error RAMS_VERSION is not set in include.mk and $(RAMS_ROOT)/VERSION does not exist)
+  endif
+  RAMS_VERSION := $(strip $(shell cat $(RAMS_ROOT)/VERSION))
+endif
 ###############################################################################
 # Compiler commands
 ###############################################################################
