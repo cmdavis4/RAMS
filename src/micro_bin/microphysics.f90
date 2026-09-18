@@ -319,7 +319,7 @@ do k = 1,mzp
                           ,FF1R,FF1IN,XL,RLEC,RO1BL &
                           ,AA1_MY,BB1_MY,AA2_MY,BB2_MY &
                           ,COL,DTCOND,ICEMAX,NKR &
-                          ,micro_g(ngrid)%vapcldt(k,i,j),micro_g(ngrid)%vapraint(k,i,j))
+                          ,micro_g(ngrid)%accvapcld(k,i,j),micro_g(ngrid)%accvaprain(k,i,j))
                   !If ice
                   ELSE IF(ISYM1.EQ.0.AND.(TT-273.15).LE.-0.187.AND. &
                      (ISYM2.EQ.1.OR.ISYM3.EQ.1.OR.ISYM4.EQ.1.OR.ISYM5.EQ.1))THEN
@@ -347,7 +347,7 @@ do k = 1,mzp
                           ,AA1_MY,BB1_MY,AA2_MY,BB2_MY &
                           ,COL,DTCOND,ICEMAX,NKR &
                           ,ISYM1,ISYM2,ISYM3,ISYM4,ISYM5 &
-                          ,micro_g(ngrid)%vapcldt(k,i,j),micro_g(ngrid)%vapraint(k,i,j))
+                          ,micro_g(ngrid)%accvapcld(k,i,j),micro_g(ngrid)%accvaprain(k,i,j))
                   END IF
                   IF (ifastsbm==1) CALL fastsbm_reassign (FF2R,FF3R,FF4R,FF5R)
 
@@ -1128,48 +1128,48 @@ endif
 
 if (mod(time+0.001,frqstate(ngrid)) < dtlt .or. istp == 1) then
    if (imbudget >= 1) then
-      micro_g(ngrid)%nuccldrt = 0.
-      micro_g(ngrid)%nuccldct = 0.
-      micro_g(ngrid)%cld2raint = 0.
-      micro_g(ngrid)%vapliqt = 0.
-      micro_g(ngrid)%latheatvapt = 0.
+      micro_g(ngrid)%accnuccldr = 0.
+      micro_g(ngrid)%accnuccldc = 0.
+      micro_g(ngrid)%acccld2rain = 0.
+      micro_g(ngrid)%accvapliq = 0.
+      micro_g(ngrid)%acclatheatvap = 0.
       if (iceprocs == 1) then
-         micro_g(ngrid)%latheatfrzt = 0.
-         micro_g(ngrid)%nucicert = 0.
-         micro_g(ngrid)%nucicect = 0.
-         micro_g(ngrid)%vapicet = 0.
-         micro_g(ngrid)%melticet = 0.
-         micro_g(ngrid)%rain2icet = 0.
-         micro_g(ngrid)%aggregatet = 0.
-         micro_g(ngrid)%rimecldt = 0.
+         micro_g(ngrid)%acclatheatfrz = 0.
+         micro_g(ngrid)%accnucicer = 0.
+         micro_g(ngrid)%accnucicec = 0.
+         micro_g(ngrid)%accvapice = 0.
+         micro_g(ngrid)%accmeltice = 0.
+         micro_g(ngrid)%accrain2ice = 0.
+         micro_g(ngrid)%accaggregate = 0.
+         micro_g(ngrid)%accrimecld = 0.
       endif
    endif
    if (imbudget >= 2) then
-      micro_g(ngrid)%vapcldt = 0.
-      micro_g(ngrid)%vapraint = 0.
+      micro_g(ngrid)%accvapcld = 0.
+      micro_g(ngrid)%accvaprain = 0.
       if (iceprocs == 1) then
-         micro_g(ngrid)%inuchomrt = 0.
-         micro_g(ngrid)%inuchomct = 0.
-         micro_g(ngrid)%inucifnrt = 0.
-         micro_g(ngrid)%inucifnct = 0.
-         if (ipris > 0) micro_g(ngrid)%vapprist = 0.
-         if (ipris > 0) micro_g(ngrid)%vapsnowt = 0.
-         micro_g(ngrid)%vapaggrt = 0.
-         if (igraup > 0) micro_g(ngrid)%vapgraut = 0.
-         if (ihail > 0) micro_g(ngrid)%vaphailt = 0.
-         if (ipris > 0) micro_g(ngrid)%meltprist = 0.
-         if (ipris > 0) micro_g(ngrid)%meltsnowt = 0.
-         micro_g(ngrid)%meltaggrt = 0.
-         if (igraup > 0) micro_g(ngrid)%meltgraut = 0.
-         if (ihail > 0) micro_g(ngrid)%melthailt = 0.
-         if (ipris > 0) micro_g(ngrid)%rimecldsnowt = 0.
-         micro_g(ngrid)%rimecldaggrt = 0.
-         if (igraup > 0) micro_g(ngrid)%rimecldgraut = 0.
-         if (ihail > 0) micro_g(ngrid)%rimecldhailt = 0.
-         if (ipris > 0) micro_g(ngrid)%rain2snt = 0.
-         micro_g(ngrid)%rain2agt = 0.
-         if (igraup > 0) micro_g(ngrid)%rain2grt = 0.
-         if (ihail > 0) micro_g(ngrid)%rain2hat = 0.
+         micro_g(ngrid)%accinuchomr = 0.
+         micro_g(ngrid)%accinuchomc = 0.
+         micro_g(ngrid)%accinucifnr = 0.
+         micro_g(ngrid)%accinucifnc = 0.
+         if (ipris > 0) micro_g(ngrid)%accvappris = 0.
+         if (ipris > 0) micro_g(ngrid)%accvapsnow = 0.
+         micro_g(ngrid)%accvapaggr = 0.
+         if (igraup > 0) micro_g(ngrid)%accvapgrau = 0.
+         if (ihail > 0) micro_g(ngrid)%accvaphail = 0.
+         if (ipris > 0) micro_g(ngrid)%accmeltpris = 0.
+         if (ipris > 0) micro_g(ngrid)%accmeltsnow = 0.
+         micro_g(ngrid)%accmeltaggr = 0.
+         if (igraup > 0) micro_g(ngrid)%accmeltgrau = 0.
+         if (ihail > 0) micro_g(ngrid)%accmelthail = 0.
+         if (ipris > 0) micro_g(ngrid)%accrimecldsnow = 0.
+         micro_g(ngrid)%accrimecldaggr = 0.
+         if (igraup > 0) micro_g(ngrid)%accrimecldgrau = 0.
+         if (ihail > 0) micro_g(ngrid)%accrimecldhail = 0.
+         if (ipris > 0) micro_g(ngrid)%accrain2sn = 0.
+         micro_g(ngrid)%accrain2ag = 0.
+         if (igraup > 0) micro_g(ngrid)%accrain2gr = 0.
+         if (ihail > 0) micro_g(ngrid)%accrain2ha = 0.
       endif
    endif 
 endif
@@ -1336,36 +1336,36 @@ else
 endif
 
 if (imbudget >= 1) then
-   micro_g(ngrid)%vapliqt(k,i,j) = micro_g(ngrid)%vapliqt(k,i,j) + &
+   micro_g(ngrid)%accvapliq(k,i,j) = micro_g(ngrid)%accvapliq(k,i,j) + &
       plusminus * sum_mass(ff1r,xl(:),dens,1,nkr)
 
    if(iceprocs.eq.1) &
-      micro_g(ngrid)%vapicet(k,i,j) = micro_g(ngrid)%vapicet(k,i,j) + plusminus * &
+      micro_g(ngrid)%accvapice(k,i,j) = micro_g(ngrid)%accvapice(k,i,j) + plusminus * &
           sum_mass(ff2r(:,1)+ff2r(:,2)+ff2r(:,3)+ff3r+ff4r+ff5r,xs,dens,1,nkr)
 endif
 if (imbudget >= 2) then
-   ! micro_g(ngrid)%vapcldt(k,i,j) = micro_g(ngrid)%vapcldt(k,i,j) +  &
+   ! micro_g(ngrid)%accvapcld(k,i,j) = micro_g(ngrid)%accvapcld(k,i,j) +  &
    !              plusminus * sum_mass(ff1r,xl,dens,1,krdrop-1)
-   ! micro_g(ngrid)%vapraint(k,i,j) = micro_g(ngrid)%vapraint(k,i,j) + &
+   ! micro_g(ngrid)%accvaprain(k,i,j) = micro_g(ngrid)%accvaprain(k,i,j) + &
    !              plusminus * sum_mass(ff1r,xl,dens,krdrop,nkr)
-    micro_g(ngrid)%cld2raint(k,i,j) = micro_g(ngrid)%cld2raint(k,i,j) + &
+    micro_g(ngrid)%acccld2rain(k,i,j) = micro_g(ngrid)%acccld2rain(k,i,j) + &
                   plusminus * sum_mass(ff1r,xl,dens,krdrop,nkr) + &
-                  plusminus * -1. * micro_g(ngrid)%vapraint(k,i,j)
+                  plusminus * -1. * micro_g(ngrid)%accvaprain(k,i,j)
 
     if(iceprocs.eq.1) then
        if (ipris > 0) &
-       micro_g(ngrid)%vapprist(k,i,j) = micro_g(ngrid)%vapprist(k,i,j) + &
+       micro_g(ngrid)%accvappris(k,i,j) = micro_g(ngrid)%accvappris(k,i,j) + &
                       plusminus * sum_pris(ff2r,dens)
        if (ipris > 0) &
-       micro_g(ngrid)%vapsnowt(k,i,j) = micro_g(ngrid)%vapsnowt(k,i,j) + &
+       micro_g(ngrid)%accvapsnow(k,i,j) = micro_g(ngrid)%accvapsnow(k,i,j) + &
                       plusminus * sum_snow(ff2r,dens)
-       micro_g(ngrid)%vapaggrt(k,i,j) = micro_g(ngrid)%vapaggrt(k,i,j) + &
+       micro_g(ngrid)%accvapaggr(k,i,j) = micro_g(ngrid)%accvapaggr(k,i,j) + &
                       plusminus * sum_mass(ff3r,xs,dens,1,nkr)
        if (igraup > 0) &
-       micro_g(ngrid)%vapgraut(k,i,j) = micro_g(ngrid)%vapgraut(k,i,j) + &
+       micro_g(ngrid)%accvapgrau(k,i,j) = micro_g(ngrid)%accvapgrau(k,i,j) + &
                       plusminus * sum_mass(ff4r,xg,dens,1,nkr)
        if (ihail > 0) &
-       micro_g(ngrid)%vaphailt(k,i,j) = micro_g(ngrid)%vaphailt(k,i,j) + &
+       micro_g(ngrid)%accvaphail(k,i,j) = micro_g(ngrid)%accvaphail(k,i,j) + &
                       plusminus * sum_mass(ff5r,xh,dens,1,nkr)
     endif
 endif
@@ -1418,7 +1418,7 @@ if (imbudget >= 1) then
 endif
 
 if (imbudget >=1 .and. plusminus .eq. 1) then
-   micro_g(ngrid)%latheatvapt(k,i,j) = micro_g(ngrid)%latheatvapt(k,i,j) + &
+   micro_g(ngrid)%acclatheatvap(k,i,j) = micro_g(ngrid)%acclatheatvap(k,i,j) + &
                                        micro_g(ngrid)%latheatvap(k,i,j)
 endif
 
@@ -1464,7 +1464,7 @@ if (imbudget >= 1 .and. iceprocs == 1) then
 endif
 
 if (imbudget >=1 .and. iceprocs == 1 .and. plusminus .eq. 1) then
-   micro_g(ngrid)%latheatfrzt(k,i,j) = micro_g(ngrid)%latheatfrzt(k,i,j) + &
+   micro_g(ngrid)%acclatheatfrz(k,i,j) = micro_g(ngrid)%acclatheatfrz(k,i,j) + &
                                        micro_g(ngrid)%latheatfrz(k,i,j)
 endif
 

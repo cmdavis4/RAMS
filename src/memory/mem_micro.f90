@@ -41,24 +41,24 @@ implicit none
                          ,snmap,snmgp,snmhp                         &
                          ,resol_aero1_mp,resol_aero2_mp &
            ! MICRO BUDGET PROCESSES (imbudget >=1)
-           ,latheatvap,latheatfrz,nuccldrt,cld2raint,ice2raint,nucicert    &
-           ,vapliqt,vapicet,evapliqt,evapicet,freezingt,meltingt           &
-           ,melticet,rimecldt,rain2icet,aggregatet                         &
-           ,latheatvapt,latheatfrzt                                        &
+           ,latheatvap,latheatfrz,accnuccldr,acccld2rain,accice2rain,accnucicer    &
+           ,accvapliq,accvapice,accevapliq,accevapice,accfreezing,accmelting           &
+           ,accmeltice,accrimecld,accrain2ice,accaggregate                         &
+           ,acclatheatvap,acclatheatfrz                                        &
            ! MICRO BUDGET PROCESSES (imbudget >=2)
-           ,inuchomrt,inuccontrt,inucifnrt,inuchazrt,vapcldt,vapraint      &
-           ,vapprist,vapsnowt,vapaggrt,vapgraut,vaphailt,vapdrizt          &
-           ,evapcldt,evapraint,evapprist,evapsnowt,evapaggrt,evapgraut     &
-           ,evaphailt,evapdrizt                                            &
-           ,meltprist,meltsnowt,meltaggrt,meltgraut,melthailt              &
-           ,rimecldsnowt,rimecldaggrt,rimecldgraut,rimecldhailt            &
-           ,rain2prt,rain2snt,rain2agt,rain2grt,rain2hat                   &
-           ,aggrselfprist,aggrselfsnowt,aggrprissnowt                      &
+           ,accinuchomr,accinuccontr,accinucifnr,accinuchazr,accvapcld,accvaprain      &
+           ,accvappris,accvapsnow,accvapaggr,accvapgrau,accvaphail,accvapdriz          &
+           ,accevapcld,accevaprain,accevappris,accevapsnow,accevapaggr,accevapgrau     &
+           ,accevaphail,accevapdriz                                            &
+           ,accmeltpris,accmeltsnow,accmeltaggr,accmeltgrau,accmelthail              &
+           ,accrimecldsnow,accrimecldaggr,accrimecldgrau,accrimecldhail            &
+           ,accrain2pr,accrain2sn,accrain2ag,accrain2gr,accrain2ha                   &
+           ,accaggrselfpris,accaggrselfsnow,accaggrprissnow                      &
            ! MICRO BUDGET PROCESSES (imbudget >=3)
-           ,dust1cldrt,dust2cldrt,dust1drzrt,dust2drzrt                    &
-           ,regen1cldrt,regen2cldrt,regen1drzrt,regen2drzrt                &
+           ,accdust1cldr,accdust2cldr,accdust1drzr,accdust2drzr                    &
+           ,accregen1cldr,accregen2cldr,accregen1drzr,accregen2drzr                &
            ! BIN MICROPHYSICS, and some extra budget variables  
-           ,t_old,rv_old,nuccldct,nucicect,inuchomct,inucifnct
+           ,t_old,rv_old,accnuccldc,accnucicec,accinuchomc,accinucifnc
 
    ! Variables to be dimenstioned by (nzp,nxp,nyp,nkr) for bin microphysics
    real, allocatable, dimension(:,:,:,:) :: &
@@ -331,73 +331,73 @@ implicit none
          if(imbudget>=1) then
            allocate (micro%latheatvap(n1,n2,n3))
            allocate (micro%latheatfrz(n1,n2,n3))
-           allocate (micro%nuccldrt(n1,n2,n3))
-           allocate (micro%cld2raint(n1,n2,n3))
-           allocate (micro%ice2raint(n1,n2,n3))
-           allocate (micro%nucicert(n1,n2,n3))
-           allocate (micro%vapliqt(n1,n2,n3))
-           allocate (micro%vapicet(n1,n2,n3))
-           allocate (micro%evapliqt(n1,n2,n3))
-           allocate (micro%evapicet(n1,n2,n3))
-           allocate (micro%freezingt(n1,n2,n3))
-           allocate (micro%meltingt(n1,n2,n3))
-           allocate (micro%melticet(n1,n2,n3))
-           allocate (micro%rimecldt(n1,n2,n3))
-           allocate (micro%rain2icet(n1,n2,n3))
-           allocate (micro%aggregatet(n1,n2,n3))
-           allocate (micro%latheatvapt(n1,n2,n3))
-           allocate (micro%latheatfrzt(n1,n2,n3))
+           allocate (micro%accnuccldr(n1,n2,n3))
+           allocate (micro%acccld2rain(n1,n2,n3))
+           allocate (micro%accice2rain(n1,n2,n3))
+           allocate (micro%accnucicer(n1,n2,n3))
+           allocate (micro%accvapliq(n1,n2,n3))
+           allocate (micro%accvapice(n1,n2,n3))
+           allocate (micro%accevapliq(n1,n2,n3))
+           allocate (micro%accevapice(n1,n2,n3))
+           allocate (micro%accfreezing(n1,n2,n3))
+           allocate (micro%accmelting(n1,n2,n3))
+           allocate (micro%accmeltice(n1,n2,n3))
+           allocate (micro%accrimecld(n1,n2,n3))
+           allocate (micro%accrain2ice(n1,n2,n3))
+           allocate (micro%accaggregate(n1,n2,n3))
+           allocate (micro%acclatheatvap(n1,n2,n3))
+           allocate (micro%acclatheatfrz(n1,n2,n3))
          endif
          if(imbudget>=2) then
-           allocate (micro%inuchomrt(n1,n2,n3))
-           allocate (micro%inuccontrt(n1,n2,n3))
-           allocate (micro%inucifnrt(n1,n2,n3))
-           allocate (micro%inuchazrt(n1,n2,n3))
-           allocate (micro%vapcldt(n1,n2,n3))
-           allocate (micro%vapraint(n1,n2,n3))
-           allocate (micro%vapprist(n1,n2,n3))
-           allocate (micro%vapsnowt(n1,n2,n3))
-           allocate (micro%vapaggrt(n1,n2,n3))
-           allocate (micro%vapgraut(n1,n2,n3))
-           allocate (micro%vaphailt(n1,n2,n3))
-           allocate (micro%vapdrizt(n1,n2,n3))
-           allocate (micro%evapcldt(n1,n2,n3))
-           allocate (micro%evapraint(n1,n2,n3))
-           allocate (micro%evapprist(n1,n2,n3))
-           allocate (micro%evapsnowt(n1,n2,n3))
-           allocate (micro%evapaggrt(n1,n2,n3))
-           allocate (micro%evapgraut(n1,n2,n3))
-           allocate (micro%evaphailt(n1,n2,n3))
-           allocate (micro%evapdrizt(n1,n2,n3))
-           allocate (micro%meltprist(n1,n2,n3))
-           allocate (micro%meltsnowt(n1,n2,n3))
-           allocate (micro%meltaggrt(n1,n2,n3))
-           allocate (micro%meltgraut(n1,n2,n3))
-           allocate (micro%melthailt(n1,n2,n3))
-           allocate (micro%rimecldsnowt(n1,n2,n3))
-           allocate (micro%rimecldaggrt(n1,n2,n3))
-           allocate (micro%rimecldgraut(n1,n2,n3))
-           allocate (micro%rimecldhailt(n1,n2,n3))
-           allocate (micro%rain2prt(n1,n2,n3))
-           allocate (micro%rain2snt(n1,n2,n3))
-           allocate (micro%rain2agt(n1,n2,n3))
-           allocate (micro%rain2grt(n1,n2,n3))
-           allocate (micro%rain2hat(n1,n2,n3))
-           allocate (micro%aggrselfprist(n1,n2,n3))
-           allocate (micro%aggrselfsnowt(n1,n2,n3))
-           allocate (micro%aggrprissnowt(n1,n2,n3))
+           allocate (micro%accinuchomr(n1,n2,n3))
+           allocate (micro%accinuccontr(n1,n2,n3))
+           allocate (micro%accinucifnr(n1,n2,n3))
+           allocate (micro%accinuchazr(n1,n2,n3))
+           allocate (micro%accvapcld(n1,n2,n3))
+           allocate (micro%accvaprain(n1,n2,n3))
+           allocate (micro%accvappris(n1,n2,n3))
+           allocate (micro%accvapsnow(n1,n2,n3))
+           allocate (micro%accvapaggr(n1,n2,n3))
+           allocate (micro%accvapgrau(n1,n2,n3))
+           allocate (micro%accvaphail(n1,n2,n3))
+           allocate (micro%accvapdriz(n1,n2,n3))
+           allocate (micro%accevapcld(n1,n2,n3))
+           allocate (micro%accevaprain(n1,n2,n3))
+           allocate (micro%accevappris(n1,n2,n3))
+           allocate (micro%accevapsnow(n1,n2,n3))
+           allocate (micro%accevapaggr(n1,n2,n3))
+           allocate (micro%accevapgrau(n1,n2,n3))
+           allocate (micro%accevaphail(n1,n2,n3))
+           allocate (micro%accevapdriz(n1,n2,n3))
+           allocate (micro%accmeltpris(n1,n2,n3))
+           allocate (micro%accmeltsnow(n1,n2,n3))
+           allocate (micro%accmeltaggr(n1,n2,n3))
+           allocate (micro%accmeltgrau(n1,n2,n3))
+           allocate (micro%accmelthail(n1,n2,n3))
+           allocate (micro%accrimecldsnow(n1,n2,n3))
+           allocate (micro%accrimecldaggr(n1,n2,n3))
+           allocate (micro%accrimecldgrau(n1,n2,n3))
+           allocate (micro%accrimecldhail(n1,n2,n3))
+           allocate (micro%accrain2pr(n1,n2,n3))
+           allocate (micro%accrain2sn(n1,n2,n3))
+           allocate (micro%accrain2ag(n1,n2,n3))
+           allocate (micro%accrain2gr(n1,n2,n3))
+           allocate (micro%accrain2ha(n1,n2,n3))
+           allocate (micro%accaggrselfpris(n1,n2,n3))
+           allocate (micro%accaggrselfsnow(n1,n2,n3))
+           allocate (micro%accaggrprissnow(n1,n2,n3))
          endif
          if(imbudget==3 .and. idust>0) then
-           allocate (micro%dust1cldrt(n1,n2,n3))
-           allocate (micro%dust2cldrt(n1,n2,n3))
-           allocate (micro%dust1drzrt(n1,n2,n3))
-           allocate (micro%dust2drzrt(n1,n2,n3))
+           allocate (micro%accdust1cldr(n1,n2,n3))
+           allocate (micro%accdust2cldr(n1,n2,n3))
+           allocate (micro%accdust1drzr(n1,n2,n3))
+           allocate (micro%accdust2drzr(n1,n2,n3))
          endif
          if(imbudget==3 .and. iccnlev>=2) then
-           allocate (micro%regen1cldrt(n1,n2,n3))
-           allocate (micro%regen2cldrt(n1,n2,n3))
-           allocate (micro%regen1drzrt(n1,n2,n3))
-           allocate (micro%regen2drzrt(n1,n2,n3))
+           allocate (micro%accregen1cldr(n1,n2,n3))
+           allocate (micro%accregen2cldr(n1,n2,n3))
+           allocate (micro%accregen1drzr(n1,n2,n3))
+           allocate (micro%accregen2drzr(n1,n2,n3))
          endif
       endif
       if (level == 4) then
@@ -468,62 +468,62 @@ implicit none
 
          if(imbudget>=1) then
             allocate (micro%latheatvap(n1,n2,n3))
-            allocate (micro%latheatvapt(n1,n2,n3))
-            allocate (micro%nuccldrt(n1,n2,n3))
-            allocate (micro%nuccldct(n1,n2,n3))
-            allocate (micro%cld2raint(n1,n2,n3))
-            allocate (micro%vapliqt(n1,n2,n3))
+            allocate (micro%acclatheatvap(n1,n2,n3))
+            allocate (micro%accnuccldr(n1,n2,n3))
+            allocate (micro%accnuccldc(n1,n2,n3))
+            allocate (micro%acccld2rain(n1,n2,n3))
+            allocate (micro%accvapliq(n1,n2,n3))
 
             if(iceprocs==1) then
                allocate (micro%latheatfrz(n1,n2,n3))
-              ! allocate (micro%ice2raint(n1,n2,n3))
-               allocate (micro%nucicert(n1,n2,n3))
-               allocate (micro%nucicect(n1,n2,n3))
-               allocate (micro%vapicet(n1,n2,n3))
-               allocate (micro%melticet(n1,n2,n3))
-               allocate (micro%rimecldt(n1,n2,n3))
-               allocate (micro%rain2icet(n1,n2,n3))
-               allocate (micro%aggregatet(n1,n2,n3))
-               allocate (micro%latheatfrzt(n1,n2,n3))
+              ! allocate (micro%accice2rain(n1,n2,n3))
+               allocate (micro%accnucicer(n1,n2,n3))
+               allocate (micro%accnucicec(n1,n2,n3))
+               allocate (micro%accvapice(n1,n2,n3))
+               allocate (micro%accmeltice(n1,n2,n3))
+               allocate (micro%accrimecld(n1,n2,n3))
+               allocate (micro%accrain2ice(n1,n2,n3))
+               allocate (micro%accaggregate(n1,n2,n3))
+               allocate (micro%acclatheatfrz(n1,n2,n3))
             endif
          endif
          if(imbudget>=2) then
-            allocate (micro%vapcldt(n1,n2,n3))
-            allocate (micro%vapraint(n1,n2,n3))
+            allocate (micro%accvapcld(n1,n2,n3))
+            allocate (micro%accvaprain(n1,n2,n3))
             if(iceprocs==1) then
               !Budget variables are the same as for the bulk
               !microphysics scheme. Those that are commented 
               !out have not been added to the bin microphysics.
-               allocate (micro%inuchomrt(n1,n2,n3))
-               allocate (micro%inuchomct(n1,n2,n3))
-              ! allocate (micro%inuccontrt(n1,n2,n3))
-              ! allocate (micro%inuccontct(n1,n2,n3))
-               allocate (micro%inucifnrt(n1,n2,n3))
-               allocate (micro%inucifnct(n1,n2,n3))
-              ! allocate (micro%inuchazrt(n1,n2,n3))
-              ! allocate (micro%inuchazct(n1,n2,n3))
-               if (ipris > 0) allocate (micro%vapprist(n1,n2,n3))
-               if (ipris > 0) allocate (micro%vapsnowt(n1,n2,n3))
-               allocate (micro%vapaggrt(n1,n2,n3))
-               if (igraup > 0) allocate (micro%vapgraut(n1,n2,n3))
-               if (ihail > 0) allocate (micro%vaphailt(n1,n2,n3))
-               if (ipris > 0) allocate (micro%meltprist(n1,n2,n3))
-               if (ipris > 0) allocate (micro%meltsnowt(n1,n2,n3))
-               allocate (micro%meltaggrt(n1,n2,n3))
-               if (igraup > 0) allocate (micro%meltgraut(n1,n2,n3))
-               if (ihail > 0) allocate (micro%melthailt(n1,n2,n3))
-               if (ipris > 0) allocate (micro%rimecldsnowt(n1,n2,n3))
-               allocate (micro%rimecldaggrt(n1,n2,n3))
-               if (igraup > 0) allocate (micro%rimecldgraut(n1,n2,n3))
-               if (ihail > 0) allocate (micro%rimecldhailt(n1,n2,n3))
-              ! allocate (micro%rain2prt(n1,n2,n3))
-               if (ipris > 0) allocate (micro%rain2snt(n1,n2,n3))
-               allocate (micro%rain2agt(n1,n2,n3))
-               if (igraup > 0) allocate (micro%rain2grt(n1,n2,n3))
-               if (ihail > 0) allocate (micro%rain2hat(n1,n2,n3))
-              ! allocate (micro%aggrselfprist(n1,n2,n3))
-              ! allocate (micro%aggrselfsnowt(n1,n2,n3))
-              ! allocate (micro%aggrprissnowt(n1,n2,n3))
+               allocate (micro%accinuchomr(n1,n2,n3))
+               allocate (micro%accinuchomc(n1,n2,n3))
+              ! allocate (micro%accinuccontr(n1,n2,n3))
+              ! allocate (micro%accinuccontc(n1,n2,n3))
+               allocate (micro%accinucifnr(n1,n2,n3))
+               allocate (micro%accinucifnc(n1,n2,n3))
+              ! allocate (micro%accinuchazr(n1,n2,n3))
+              ! allocate (micro%accinuchazc(n1,n2,n3))
+               if (ipris > 0) allocate (micro%accvappris(n1,n2,n3))
+               if (ipris > 0) allocate (micro%accvapsnow(n1,n2,n3))
+               allocate (micro%accvapaggr(n1,n2,n3))
+               if (igraup > 0) allocate (micro%accvapgrau(n1,n2,n3))
+               if (ihail > 0) allocate (micro%accvaphail(n1,n2,n3))
+               if (ipris > 0) allocate (micro%accmeltpris(n1,n2,n3))
+               if (ipris > 0) allocate (micro%accmeltsnow(n1,n2,n3))
+               allocate (micro%accmeltaggr(n1,n2,n3))
+               if (igraup > 0) allocate (micro%accmeltgrau(n1,n2,n3))
+               if (ihail > 0) allocate (micro%accmelthail(n1,n2,n3))
+               if (ipris > 0) allocate (micro%accrimecldsnow(n1,n2,n3))
+               allocate (micro%accrimecldaggr(n1,n2,n3))
+               if (igraup > 0) allocate (micro%accrimecldgrau(n1,n2,n3))
+               if (ihail > 0) allocate (micro%accrimecldhail(n1,n2,n3))
+              ! allocate (micro%accrain2pr(n1,n2,n3))
+               if (ipris > 0) allocate (micro%accrain2sn(n1,n2,n3))
+               allocate (micro%accrain2ag(n1,n2,n3))
+               if (igraup > 0) allocate (micro%accrain2gr(n1,n2,n3))
+               if (ihail > 0) allocate (micro%accrain2ha(n1,n2,n3))
+              ! allocate (micro%accaggrselfpris(n1,n2,n3))
+              ! allocate (micro%accaggrselfsnow(n1,n2,n3))
+              ! allocate (micro%accaggrprissnow(n1,n2,n3))
             endif
          endif
       endif
@@ -682,69 +682,69 @@ implicit none
     !COMPUTE AND OUTPUT MICRO BUDGET PROCESSES
     if (allocated(micro%latheatvap))    deallocate (micro%latheatvap)
     if (allocated(micro%latheatfrz))    deallocate (micro%latheatfrz)
-    if (allocated(micro%nuccldrt))      deallocate (micro%nuccldrt)
-    if (allocated(micro%cld2raint))     deallocate (micro%cld2raint)
-    if (allocated(micro%ice2raint))     deallocate (micro%ice2raint)
-    if (allocated(micro%nucicert))      deallocate (micro%nucicert)
-    if (allocated(micro%vapliqt))       deallocate (micro%vapliqt)
-    if (allocated(micro%vapicet))       deallocate (micro%vapicet)
-    if (allocated(micro%evapliqt))      deallocate (micro%evapliqt)
-    if (allocated(micro%evapicet))      deallocate (micro%evapicet)
-    if (allocated(micro%freezingt))     deallocate (micro%freezingt)
-    if (allocated(micro%meltingt))      deallocate (micro%meltingt)
-    if (allocated(micro%melticet))      deallocate (micro%melticet)
-    if (allocated(micro%rimecldt))      deallocate (micro%rimecldt)
-    if (allocated(micro%rain2icet))     deallocate (micro%rain2icet)
-    if (allocated(micro%aggregatet))    deallocate (micro%aggregatet)
-    if (allocated(micro%latheatvapt))   deallocate (micro%latheatvapt)
-    if (allocated(micro%latheatfrzt))   deallocate (micro%latheatfrzt)
+    if (allocated(micro%accnuccldr))      deallocate (micro%accnuccldr)
+    if (allocated(micro%acccld2rain))     deallocate (micro%acccld2rain)
+    if (allocated(micro%accice2rain))     deallocate (micro%accice2rain)
+    if (allocated(micro%accnucicer))      deallocate (micro%accnucicer)
+    if (allocated(micro%accvapliq))       deallocate (micro%accvapliq)
+    if (allocated(micro%accvapice))       deallocate (micro%accvapice)
+    if (allocated(micro%accevapliq))      deallocate (micro%accevapliq)
+    if (allocated(micro%accevapice))      deallocate (micro%accevapice)
+    if (allocated(micro%accfreezing))     deallocate (micro%accfreezing)
+    if (allocated(micro%accmelting))      deallocate (micro%accmelting)
+    if (allocated(micro%accmeltice))      deallocate (micro%accmeltice)
+    if (allocated(micro%accrimecld))      deallocate (micro%accrimecld)
+    if (allocated(micro%accrain2ice))     deallocate (micro%accrain2ice)
+    if (allocated(micro%accaggregate))    deallocate (micro%accaggregate)
+    if (allocated(micro%acclatheatvap))   deallocate (micro%acclatheatvap)
+    if (allocated(micro%acclatheatfrz))   deallocate (micro%acclatheatfrz)
 
-    if (allocated(micro%inuchomrt))     deallocate (micro%inuchomrt)
-    if (allocated(micro%inuccontrt))    deallocate (micro%inuccontrt)
-    if (allocated(micro%inucifnrt))     deallocate (micro%inucifnrt)
-    if (allocated(micro%inuchazrt))     deallocate (micro%inuchazrt)
-    if (allocated(micro%vapcldt))       deallocate (micro%vapcldt)
-    if (allocated(micro%vapraint))      deallocate (micro%vapraint)
-    if (allocated(micro%vapprist))      deallocate (micro%vapprist)
-    if (allocated(micro%vapsnowt))      deallocate (micro%vapsnowt)
-    if (allocated(micro%vapaggrt))      deallocate (micro%vapaggrt)
-    if (allocated(micro%vapgraut))      deallocate (micro%vapgraut)
-    if (allocated(micro%vaphailt))      deallocate (micro%vaphailt)
-    if (allocated(micro%vapdrizt))      deallocate (micro%vapdrizt)
-    if (allocated(micro%evapcldt))      deallocate (micro%evapcldt)
-    if (allocated(micro%evapraint))     deallocate (micro%evapraint)
-    if (allocated(micro%evapprist))     deallocate (micro%evapprist)
-    if (allocated(micro%evapsnowt))     deallocate (micro%evapsnowt)
-    if (allocated(micro%evapaggrt))     deallocate (micro%evapaggrt)
-    if (allocated(micro%evapgraut))     deallocate (micro%evapgraut)
-    if (allocated(micro%evaphailt))     deallocate (micro%evaphailt)
-    if (allocated(micro%evapdrizt))     deallocate (micro%evapdrizt)
-    if (allocated(micro%meltprist))     deallocate (micro%meltprist)
-    if (allocated(micro%meltsnowt))     deallocate (micro%meltsnowt)
-    if (allocated(micro%meltaggrt))     deallocate (micro%meltaggrt)
-    if (allocated(micro%meltgraut))     deallocate (micro%meltgraut)
-    if (allocated(micro%melthailt))     deallocate (micro%melthailt)
-    if (allocated(micro%rimecldsnowt))  deallocate (micro%rimecldsnowt)
-    if (allocated(micro%rimecldaggrt))  deallocate (micro%rimecldaggrt)
-    if (allocated(micro%rimecldgraut))  deallocate (micro%rimecldgraut)
-    if (allocated(micro%rimecldhailt))  deallocate (micro%rimecldhailt)
-    if (allocated(micro%rain2prt))      deallocate (micro%rain2prt)
-    if (allocated(micro%rain2snt))      deallocate (micro%rain2snt)
-    if (allocated(micro%rain2agt))      deallocate (micro%rain2agt)
-    if (allocated(micro%rain2grt))      deallocate (micro%rain2grt)
-    if (allocated(micro%rain2hat))      deallocate (micro%rain2hat)
-    if (allocated(micro%aggrselfprist)) deallocate (micro%aggrselfprist)
-    if (allocated(micro%aggrselfsnowt)) deallocate (micro%aggrselfsnowt)
-    if (allocated(micro%aggrprissnowt)) deallocate (micro%aggrprissnowt)
+    if (allocated(micro%accinuchomr))     deallocate (micro%accinuchomr)
+    if (allocated(micro%accinuccontr))    deallocate (micro%accinuccontr)
+    if (allocated(micro%accinucifnr))     deallocate (micro%accinucifnr)
+    if (allocated(micro%accinuchazr))     deallocate (micro%accinuchazr)
+    if (allocated(micro%accvapcld))       deallocate (micro%accvapcld)
+    if (allocated(micro%accvaprain))      deallocate (micro%accvaprain)
+    if (allocated(micro%accvappris))      deallocate (micro%accvappris)
+    if (allocated(micro%accvapsnow))      deallocate (micro%accvapsnow)
+    if (allocated(micro%accvapaggr))      deallocate (micro%accvapaggr)
+    if (allocated(micro%accvapgrau))      deallocate (micro%accvapgrau)
+    if (allocated(micro%accvaphail))      deallocate (micro%accvaphail)
+    if (allocated(micro%accvapdriz))      deallocate (micro%accvapdriz)
+    if (allocated(micro%accevapcld))      deallocate (micro%accevapcld)
+    if (allocated(micro%accevaprain))     deallocate (micro%accevaprain)
+    if (allocated(micro%accevappris))     deallocate (micro%accevappris)
+    if (allocated(micro%accevapsnow))     deallocate (micro%accevapsnow)
+    if (allocated(micro%accevapaggr))     deallocate (micro%accevapaggr)
+    if (allocated(micro%accevapgrau))     deallocate (micro%accevapgrau)
+    if (allocated(micro%accevaphail))     deallocate (micro%accevaphail)
+    if (allocated(micro%accevapdriz))     deallocate (micro%accevapdriz)
+    if (allocated(micro%accmeltpris))     deallocate (micro%accmeltpris)
+    if (allocated(micro%accmeltsnow))     deallocate (micro%accmeltsnow)
+    if (allocated(micro%accmeltaggr))     deallocate (micro%accmeltaggr)
+    if (allocated(micro%accmeltgrau))     deallocate (micro%accmeltgrau)
+    if (allocated(micro%accmelthail))     deallocate (micro%accmelthail)
+    if (allocated(micro%accrimecldsnow))  deallocate (micro%accrimecldsnow)
+    if (allocated(micro%accrimecldaggr))  deallocate (micro%accrimecldaggr)
+    if (allocated(micro%accrimecldgrau))  deallocate (micro%accrimecldgrau)
+    if (allocated(micro%accrimecldhail))  deallocate (micro%accrimecldhail)
+    if (allocated(micro%accrain2pr))      deallocate (micro%accrain2pr)
+    if (allocated(micro%accrain2sn))      deallocate (micro%accrain2sn)
+    if (allocated(micro%accrain2ag))      deallocate (micro%accrain2ag)
+    if (allocated(micro%accrain2gr))      deallocate (micro%accrain2gr)
+    if (allocated(micro%accrain2ha))      deallocate (micro%accrain2ha)
+    if (allocated(micro%accaggrselfpris)) deallocate (micro%accaggrselfpris)
+    if (allocated(micro%accaggrselfsnow)) deallocate (micro%accaggrselfsnow)
+    if (allocated(micro%accaggrprissnow)) deallocate (micro%accaggrprissnow)
 
-    if (allocated(micro%dust1cldrt))        deallocate (micro%dust1cldrt)
-    if (allocated(micro%dust2cldrt))        deallocate (micro%dust2cldrt)
-    if (allocated(micro%dust1drzrt))        deallocate (micro%dust1drzrt)
-    if (allocated(micro%dust2drzrt))        deallocate (micro%dust2drzrt)
-    if (allocated(micro%regen1cldrt))       deallocate (micro%regen1cldrt)
-    if (allocated(micro%regen2cldrt))       deallocate (micro%regen2cldrt)
-    if (allocated(micro%regen1drzrt))       deallocate (micro%regen1drzrt)
-    if (allocated(micro%regen2drzrt))       deallocate (micro%regen2drzrt)
+    if (allocated(micro%accdust1cldr))        deallocate (micro%accdust1cldr)
+    if (allocated(micro%accdust2cldr))        deallocate (micro%accdust2cldr)
+    if (allocated(micro%accdust1drzr))        deallocate (micro%accdust1drzr)
+    if (allocated(micro%accdust2drzr))        deallocate (micro%accdust2drzr)
+    if (allocated(micro%accregen1cldr))       deallocate (micro%accregen1cldr)
+    if (allocated(micro%accregen2cldr))       deallocate (micro%accregen2cldr)
+    if (allocated(micro%accregen1drzr))       deallocate (micro%accregen1drzr)
+    if (allocated(micro%accregen2drzr))       deallocate (micro%accregen2drzr)
 
     !Bin microphysics variables
     if (allocated(micro%pcpvip))       deallocate (micro%pcpvip)
@@ -753,10 +753,10 @@ implicit none
     if (allocated(micro%pcprip))       deallocate (micro%pcprip)
     if (allocated(micro%pcpric))       deallocate (micro%pcpric)
     if (allocated(micro%pcprid))       deallocate (micro%pcprid)
-    if (allocated(micro%nuccldct))     deallocate (micro%nuccldct)
-    if (allocated(micro%nucicect))     deallocate (micro%nucicect)
-    if (allocated(micro%inuchomct))    deallocate (micro%inuchomct)
-    if (allocated(micro%inucifnct))    deallocate (micro%inucifnct)
+    if (allocated(micro%accnuccldc))     deallocate (micro%accnuccldc)
+    if (allocated(micro%accnucicec))     deallocate (micro%accnucicec)
+    if (allocated(micro%accinuchomc))    deallocate (micro%accinuchomc)
+    if (allocated(micro%accinucifnc))    deallocate (micro%accinucifnc)
     if (allocated(micro%accpic))       deallocate (micro%accpic)
     if (allocated(micro%accpip))       deallocate (micro%accpip)
     if (allocated(micro%accpid))       deallocate (micro%accpid)
@@ -1247,252 +1247,252 @@ implicit none
       CALL vtables2 (micro%latheatfrz(1,1,1),microm%latheatfrz(1,1,1)  &
                  ,ng, npts, imean,  &
                  'LATHEATFRZ :3:anal')
-   if (allocated(micro%nuccldrt)) &
-      CALL vtables2 (micro%nuccldrt(1,1,1),microm%nuccldrt(1,1,1)  &
+   if (allocated(micro%accnuccldr)) &
+      CALL vtables2 (micro%accnuccldr(1,1,1),microm%accnuccldr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'NUCCLDRT :3:anal:mpti')
-   if (allocated(micro%cld2raint)) &
-      CALL vtables2 (micro%cld2raint(1,1,1),microm%cld2raint(1,1,1)  &
+                 'ACCNUCCLDR :3:anal:mpti')
+   if (allocated(micro%acccld2rain)) &
+      CALL vtables2 (micro%acccld2rain(1,1,1),microm%acccld2rain(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'CLD2RAINT :3:anal:mpti')
-   if (allocated(micro%ice2raint)) &
-      CALL vtables2 (micro%ice2raint(1,1,1),microm%ice2raint(1,1,1)  &
+                 'ACCCLD2RAIN :3:anal:mpti')
+   if (allocated(micro%accice2rain)) &
+      CALL vtables2 (micro%accice2rain(1,1,1),microm%accice2rain(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'ICE2RAINT :3:anal:mpti')
-   if (allocated(micro%nucicert)) &
-      CALL vtables2 (micro%nucicert(1,1,1),microm%nucicert(1,1,1)  &
+                 'ACCICE2RAIN :3:anal:mpti')
+   if (allocated(micro%accnucicer)) &
+      CALL vtables2 (micro%accnucicer(1,1,1),microm%accnucicer(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'NUCICERT :3:anal:mpti')
-   if (allocated(micro%vapliqt)) &
-      CALL vtables2 (micro%vapliqt(1,1,1),microm%vapliqt(1,1,1)  &
+                 'ACCNUCICER :3:anal:mpti')
+   if (allocated(micro%accvapliq)) &
+      CALL vtables2 (micro%accvapliq(1,1,1),microm%accvapliq(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPLIQT :3:anal:mpti')
-   if (allocated(micro%vapicet)) &
-      CALL vtables2 (micro%vapicet(1,1,1),microm%vapicet(1,1,1)  &
+                 'ACCVAPLIQ :3:anal:mpti')
+   if (allocated(micro%accvapice)) &
+      CALL vtables2 (micro%accvapice(1,1,1),microm%accvapice(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPICET :3:anal:mpti')
-   if (allocated(micro%evapliqt)) &
-      CALL vtables2 (micro%evapliqt(1,1,1),microm%evapliqt(1,1,1)  &
+                 'ACCVAPICE :3:anal:mpti')
+   if (allocated(micro%accevapliq)) &
+      CALL vtables2 (micro%accevapliq(1,1,1),microm%accevapliq(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPLIQT :3:anal:mpti')
-   if (allocated(micro%evapicet)) &
-      CALL vtables2 (micro%evapicet(1,1,1),microm%evapicet(1,1,1)  &
+                 'ACCEVAPLIQ :3:anal:mpti')
+   if (allocated(micro%accevapice)) &
+      CALL vtables2 (micro%accevapice(1,1,1),microm%accevapice(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPICET :3:anal:mpti')
-  if (allocated(micro%freezingt)) &
-      CALL vtables2 (micro%freezingt(1,1,1),microm%freezingt(1,1,1)  &
+                 'ACCEVAPICE :3:anal:mpti')
+  if (allocated(micro%accfreezing)) &
+      CALL vtables2 (micro%accfreezing(1,1,1),microm%accfreezing(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'FREEZINGT :3:anal:mpti')
-  if (allocated(micro%meltingt)) &
-      CALL vtables2 (micro%meltingt(1,1,1),microm%meltingt(1,1,1)  &
+                 'ACCFREEZING :3:anal:mpti')
+  if (allocated(micro%accmelting)) &
+      CALL vtables2 (micro%accmelting(1,1,1),microm%accmelting(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTINGT :3:anal:mpti')
-   if (allocated(micro%melticet)) &
-      CALL vtables2 (micro%melticet(1,1,1),microm%melticet(1,1,1)  &
+                 'ACCMELTING :3:anal:mpti')
+   if (allocated(micro%accmeltice)) &
+      CALL vtables2 (micro%accmeltice(1,1,1),microm%accmeltice(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTICET :3:anal:mpti')
-   if (allocated(micro%rimecldt)) &
-      CALL vtables2 (micro%rimecldt(1,1,1),microm%rimecldt(1,1,1)  &
+                 'ACCMELTICE :3:anal:mpti')
+   if (allocated(micro%accrimecld)) &
+      CALL vtables2 (micro%accrimecld(1,1,1),microm%accrimecld(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RIMECLDT :3:anal:mpti')
-   if (allocated(micro%rain2icet)) &
-      CALL vtables2 (micro%rain2icet(1,1,1),microm%rain2icet(1,1,1)  &
+                 'ACCRIMECLD :3:anal:mpti')
+   if (allocated(micro%accrain2ice)) &
+      CALL vtables2 (micro%accrain2ice(1,1,1),microm%accrain2ice(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RAIN2ICET :3:anal:mpti')
-   if (allocated(micro%aggregatet)) &
-      CALL vtables2 (micro%aggregatet(1,1,1),microm%aggregatet(1,1,1)  &
+                 'ACCRAIN2ICE :3:anal:mpti')
+   if (allocated(micro%accaggregate)) &
+      CALL vtables2 (micro%accaggregate(1,1,1),microm%accaggregate(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'AGGREGATET :3:anal:mpti')
-   if (allocated(micro%latheatvapt)) &
-      CALL vtables2 (micro%latheatvapt(1,1,1),microm%latheatvapt(1,1,1)  &
+                 'ACCAGGREGATE :3:anal:mpti')
+   if (allocated(micro%acclatheatvap)) &
+      CALL vtables2 (micro%acclatheatvap(1,1,1),microm%acclatheatvap(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'LATHEATVAPT :3:anal:mpti')
-   if (allocated(micro%latheatfrzt)) &
-      CALL vtables2 (micro%latheatfrzt(1,1,1),microm%latheatfrzt(1,1,1)  &
+                 'ACCLATHEATVAP :3:anal:mpti')
+   if (allocated(micro%acclatheatfrz)) &
+      CALL vtables2 (micro%acclatheatfrz(1,1,1),microm%acclatheatfrz(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'LATHEATFRZT :3:anal:mpti')
+                 'ACCLATHEATFRZ :3:anal:mpti')
 
-   if (allocated(micro%inuchomrt)) &
-      CALL vtables2 (micro%inuchomrt(1,1,1),microm%inuchomrt(1,1,1)  &
+   if (allocated(micro%accinuchomr)) &
+      CALL vtables2 (micro%accinuchomr(1,1,1),microm%accinuchomr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'INUCHOMRT :3:anal:mpti')
-   if (allocated(micro%inuccontrt)) &
-      CALL vtables2 (micro%inuccontrt(1,1,1),microm%inuccontrt(1,1,1)  &
+                 'ACCINUCHOMR :3:anal:mpti')
+   if (allocated(micro%accinuccontr)) &
+      CALL vtables2 (micro%accinuccontr(1,1,1),microm%accinuccontr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'INUCCONTRT :3:anal:mpti')
-   if (allocated(micro%inucifnrt)) &
-      CALL vtables2 (micro%inucifnrt(1,1,1),microm%inucifnrt(1,1,1)  &
+                 'ACCINUCCONTR :3:anal:mpti')
+   if (allocated(micro%accinucifnr)) &
+      CALL vtables2 (micro%accinucifnr(1,1,1),microm%accinucifnr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'INUCIFNRT :3:anal:mpti')
-   if (allocated(micro%inuchazrt)) &
-      CALL vtables2 (micro%inuchazrt(1,1,1),microm%inuchazrt(1,1,1)  &
+                 'ACCINUCIFNR :3:anal:mpti')
+   if (allocated(micro%accinuchazr)) &
+      CALL vtables2 (micro%accinuchazr(1,1,1),microm%accinuchazr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'INUCHAZRT :3:anal:mpti')
-   if (allocated(micro%vapcldt)) &
-      CALL vtables2 (micro%vapcldt(1,1,1),microm%vapcldt(1,1,1)  &
+                 'ACCINUCHAZR :3:anal:mpti')
+   if (allocated(micro%accvapcld)) &
+      CALL vtables2 (micro%accvapcld(1,1,1),microm%accvapcld(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPCLDT :3:anal:mpti')
-   if (allocated(micro%vapraint)) &
-      CALL vtables2 (micro%vapraint(1,1,1),microm%vapraint(1,1,1)  &
+                 'ACCVAPCLD :3:anal:mpti')
+   if (allocated(micro%accvaprain)) &
+      CALL vtables2 (micro%accvaprain(1,1,1),microm%accvaprain(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPRAINT :3:anal:mpti')
-   if (allocated(micro%vapprist)) &
-      CALL vtables2 (micro%vapprist(1,1,1),microm%vapprist(1,1,1)  &
+                 'ACCVAPRAIN :3:anal:mpti')
+   if (allocated(micro%accvappris)) &
+      CALL vtables2 (micro%accvappris(1,1,1),microm%accvappris(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPPRIST :3:anal:mpti')
-   if (allocated(micro%vapsnowt)) &
-      CALL vtables2 (micro%vapsnowt(1,1,1),microm%vapsnowt(1,1,1)  &
+                 'ACCVAPPRIS :3:anal:mpti')
+   if (allocated(micro%accvapsnow)) &
+      CALL vtables2 (micro%accvapsnow(1,1,1),microm%accvapsnow(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPSNOWT :3:anal:mpti')
-   if (allocated(micro%vapaggrt)) &
-      CALL vtables2 (micro%vapaggrt(1,1,1),microm%vapaggrt(1,1,1)  &
+                 'ACCVAPSNOW :3:anal:mpti')
+   if (allocated(micro%accvapaggr)) &
+      CALL vtables2 (micro%accvapaggr(1,1,1),microm%accvapaggr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPAGGRT :3:anal:mpti')
-   if (allocated(micro%vapgraut)) &
-      CALL vtables2 (micro%vapgraut(1,1,1),microm%vapgraut(1,1,1)  &
+                 'ACCVAPAGGR :3:anal:mpti')
+   if (allocated(micro%accvapgrau)) &
+      CALL vtables2 (micro%accvapgrau(1,1,1),microm%accvapgrau(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPGRAUT :3:anal:mpti')
-   if (allocated(micro%vaphailt)) &
-      CALL vtables2 (micro%vaphailt(1,1,1),microm%vaphailt(1,1,1)  &
+                 'ACCVAPGRAU :3:anal:mpti')
+   if (allocated(micro%accvaphail)) &
+      CALL vtables2 (micro%accvaphail(1,1,1),microm%accvaphail(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPHAILT :3:anal:mpti')
-   if (allocated(micro%vapdrizt)) &
-      CALL vtables2 (micro%vapdrizt(1,1,1),microm%vapdrizt(1,1,1)  &
+                 'ACCVAPHAIL :3:anal:mpti')
+   if (allocated(micro%accvapdriz)) &
+      CALL vtables2 (micro%accvapdriz(1,1,1),microm%accvapdriz(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'VAPDRIZT :3:anal:mpti')
-   if (allocated(micro%evapcldt)) &
-      CALL vtables2 (micro%evapcldt(1,1,1),microm%evapcldt(1,1,1)  &
+                 'ACCVAPDRIZ :3:anal:mpti')
+   if (allocated(micro%accevapcld)) &
+      CALL vtables2 (micro%accevapcld(1,1,1),microm%accevapcld(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPCLDT :3:anal:mpti')
-   if (allocated(micro%evapraint)) &
-      CALL vtables2 (micro%evapraint(1,1,1),microm%evapraint(1,1,1)  &
+                 'ACCEVAPCLD :3:anal:mpti')
+   if (allocated(micro%accevaprain)) &
+      CALL vtables2 (micro%accevaprain(1,1,1),microm%accevaprain(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPRAINT :3:anal:mpti')
-   if (allocated(micro%evapprist)) &
-      CALL vtables2 (micro%evapprist(1,1,1),microm%evapprist(1,1,1)  &
+                 'ACCEVAPRAIN :3:anal:mpti')
+   if (allocated(micro%accevappris)) &
+      CALL vtables2 (micro%accevappris(1,1,1),microm%accevappris(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPPRIST :3:anal:mpti')
-   if (allocated(micro%evapsnowt)) &
-      CALL vtables2 (micro%evapsnowt(1,1,1),microm%evapsnowt(1,1,1)  &
+                 'ACCEVAPPRIS :3:anal:mpti')
+   if (allocated(micro%accevapsnow)) &
+      CALL vtables2 (micro%accevapsnow(1,1,1),microm%accevapsnow(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPSNOWT :3:anal:mpti')
-   if (allocated(micro%evapaggrt)) &
-      CALL vtables2 (micro%evapaggrt(1,1,1),microm%evapaggrt(1,1,1)  &
+                 'ACCEVAPSNOW :3:anal:mpti')
+   if (allocated(micro%accevapaggr)) &
+      CALL vtables2 (micro%accevapaggr(1,1,1),microm%accevapaggr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPAGGRT :3:anal:mpti')
-   if (allocated(micro%evapgraut)) &
-      CALL vtables2 (micro%evapgraut(1,1,1),microm%evapgraut(1,1,1)  &
+                 'ACCEVAPAGGR :3:anal:mpti')
+   if (allocated(micro%accevapgrau)) &
+      CALL vtables2 (micro%accevapgrau(1,1,1),microm%accevapgrau(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPGRAUT :3:anal:mpti')
-   if (allocated(micro%evaphailt)) &
-      CALL vtables2 (micro%evaphailt(1,1,1),microm%evaphailt(1,1,1)  &
+                 'ACCEVAPGRAU :3:anal:mpti')
+   if (allocated(micro%accevaphail)) &
+      CALL vtables2 (micro%accevaphail(1,1,1),microm%accevaphail(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPHAILT :3:anal:mpti')
-   if (allocated(micro%evapdrizt)) &
-      CALL vtables2 (micro%evapdrizt(1,1,1),microm%evapdrizt(1,1,1)  &
+                 'ACCEVAPHAIL :3:anal:mpti')
+   if (allocated(micro%accevapdriz)) &
+      CALL vtables2 (micro%accevapdriz(1,1,1),microm%accevapdriz(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'EVAPDRIZT :3:anal:mpti')
-   if (allocated(micro%meltprist)) &
-      CALL vtables2 (micro%meltprist(1,1,1),microm%meltprist(1,1,1)  &
+                 'ACCEVAPDRIZ :3:anal:mpti')
+   if (allocated(micro%accmeltpris)) &
+      CALL vtables2 (micro%accmeltpris(1,1,1),microm%accmeltpris(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTPRIST :3:anal:mpti')
-   if (allocated(micro%meltsnowt)) &
-      CALL vtables2 (micro%meltsnowt(1,1,1),microm%meltsnowt(1,1,1)  &
+                 'ACCMELTPRIS :3:anal:mpti')
+   if (allocated(micro%accmeltsnow)) &
+      CALL vtables2 (micro%accmeltsnow(1,1,1),microm%accmeltsnow(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTSNOWT :3:anal:mpti')
-   if (allocated(micro%meltaggrt)) &
-      CALL vtables2 (micro%meltaggrt(1,1,1),microm%meltaggrt(1,1,1)  &
+                 'ACCMELTSNOW :3:anal:mpti')
+   if (allocated(micro%accmeltaggr)) &
+      CALL vtables2 (micro%accmeltaggr(1,1,1),microm%accmeltaggr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTAGGRT :3:anal:mpti')
-   if (allocated(micro%meltgraut)) &
-      CALL vtables2 (micro%meltgraut(1,1,1),microm%meltgraut(1,1,1)  &
+                 'ACCMELTAGGR :3:anal:mpti')
+   if (allocated(micro%accmeltgrau)) &
+      CALL vtables2 (micro%accmeltgrau(1,1,1),microm%accmeltgrau(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTGRAUT :3:anal:mpti')
-   if (allocated(micro%melthailt)) &
-      CALL vtables2 (micro%melthailt(1,1,1),microm%melthailt(1,1,1)  &
+                 'ACCMELTGRAU :3:anal:mpti')
+   if (allocated(micro%accmelthail)) &
+      CALL vtables2 (micro%accmelthail(1,1,1),microm%accmelthail(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'MELTHAILT :3:anal:mpti')
-   if (allocated(micro%rimecldsnowt)) &
-      CALL vtables2 (micro%rimecldsnowt(1,1,1),microm%rimecldsnowt(1,1,1)  &
+                 'ACCMELTHAIL :3:anal:mpti')
+   if (allocated(micro%accrimecldsnow)) &
+      CALL vtables2 (micro%accrimecldsnow(1,1,1),microm%accrimecldsnow(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RIMECLDSNOWT :3:anal:mpti')
-   if (allocated(micro%rimecldaggrt)) &
-      CALL vtables2 (micro%rimecldaggrt(1,1,1),microm%rimecldaggrt(1,1,1)  &
+                 'ACCRIMECLDSNOW :3:anal:mpti')
+   if (allocated(micro%accrimecldaggr)) &
+      CALL vtables2 (micro%accrimecldaggr(1,1,1),microm%accrimecldaggr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RIMECLDAGGRT :3:anal:mpti')
-   if (allocated(micro%rimecldgraut)) &
-      CALL vtables2 (micro%rimecldgraut(1,1,1),microm%rimecldgraut(1,1,1)  &
+                 'ACCRIMECLDAGGR :3:anal:mpti')
+   if (allocated(micro%accrimecldgrau)) &
+      CALL vtables2 (micro%accrimecldgrau(1,1,1),microm%accrimecldgrau(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RIMECLDGRAUT :3:anal:mpti')
-   if (allocated(micro%rimecldhailt)) &
-      CALL vtables2 (micro%rimecldhailt(1,1,1),microm%rimecldhailt(1,1,1)  &
+                 'ACCRIMECLDGRAU :3:anal:mpti')
+   if (allocated(micro%accrimecldhail)) &
+      CALL vtables2 (micro%accrimecldhail(1,1,1),microm%accrimecldhail(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RIMECLDHAILT :3:anal:mpti')
-   if (allocated(micro%rain2prt)) &
-      CALL vtables2 (micro%rain2prt(1,1,1),microm%rain2prt(1,1,1)  &
+                 'ACCRIMECLDHAIL :3:anal:mpti')
+   if (allocated(micro%accrain2pr)) &
+      CALL vtables2 (micro%accrain2pr(1,1,1),microm%accrain2pr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RAIN2PRT :3:anal:mpti')
-   if (allocated(micro%rain2snt)) &
-      CALL vtables2 (micro%rain2snt(1,1,1),microm%rain2snt(1,1,1)  &
+                 'ACCRAIN2PR :3:anal:mpti')
+   if (allocated(micro%accrain2sn)) &
+      CALL vtables2 (micro%accrain2sn(1,1,1),microm%accrain2sn(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RAIN2SNT :3:anal:mpti')
-   if (allocated(micro%rain2agt)) &
-      CALL vtables2 (micro%rain2agt(1,1,1),microm%rain2agt(1,1,1)  &
+                 'ACCRAIN2SN :3:anal:mpti')
+   if (allocated(micro%accrain2ag)) &
+      CALL vtables2 (micro%accrain2ag(1,1,1),microm%accrain2ag(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RAIN2AGT :3:anal:mpti')
-   if (allocated(micro%rain2grt)) &
-      CALL vtables2 (micro%rain2grt(1,1,1),microm%rain2grt(1,1,1)  &
+                 'ACCRAIN2AG :3:anal:mpti')
+   if (allocated(micro%accrain2gr)) &
+      CALL vtables2 (micro%accrain2gr(1,1,1),microm%accrain2gr(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RAIN2GRT :3:anal:mpti')
-   if (allocated(micro%rain2hat)) &
-      CALL vtables2 (micro%rain2hat(1,1,1),microm%rain2hat(1,1,1)  &
+                 'ACCRAIN2GR :3:anal:mpti')
+   if (allocated(micro%accrain2ha)) &
+      CALL vtables2 (micro%accrain2ha(1,1,1),microm%accrain2ha(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'RAIN2HAT :3:anal:mpti')
-   if (allocated(micro%aggrselfprist)) &
-      CALL vtables2 (micro%aggrselfprist(1,1,1),microm%aggrselfprist(1,1,1)  &
+                 'ACCRAIN2HA :3:anal:mpti')
+   if (allocated(micro%accaggrselfpris)) &
+      CALL vtables2 (micro%accaggrselfpris(1,1,1),microm%accaggrselfpris(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'AGGRSELFPRIST :3:anal:mpti')
-   if (allocated(micro%aggrselfsnowt)) &
-      CALL vtables2 (micro%aggrselfsnowt(1,1,1),microm%aggrselfsnowt(1,1,1)  &
+                 'ACCAGGRSELFPRIS :3:anal:mpti')
+   if (allocated(micro%accaggrselfsnow)) &
+      CALL vtables2 (micro%accaggrselfsnow(1,1,1),microm%accaggrselfsnow(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'AGGRSELFSNOWT :3:anal:mpti')
-   if (allocated(micro%aggrprissnowt)) &
-      CALL vtables2 (micro%aggrprissnowt(1,1,1),microm%aggrprissnowt(1,1,1)  &
+                 'ACCAGGRSELFSNOW :3:anal:mpti')
+   if (allocated(micro%accaggrprissnow)) &
+      CALL vtables2 (micro%accaggrprissnow(1,1,1),microm%accaggrprissnow(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'AGGRPRISSNOWT :3:anal:mpti')
+                 'ACCAGGRPRISSNOW :3:anal:mpti')
 
-   if (allocated(micro%dust1cldrt)) &
-        CALL vtables2 (micro%dust1cldrt(1,1,1),microm%dust1cldrt(1,1,1)  &
+   if (allocated(micro%accdust1cldr)) &
+        CALL vtables2 (micro%accdust1cldr(1,1,1),microm%accdust1cldr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'DUST1CLDRT :3:anal:mpti')
-   if (allocated(micro%dust2cldrt)) &
-        CALL vtables2 (micro%dust2cldrt(1,1,1),microm%dust2cldrt(1,1,1)  &
+                       'ACCDUST1CLDR :3:anal:mpti')
+   if (allocated(micro%accdust2cldr)) &
+        CALL vtables2 (micro%accdust2cldr(1,1,1),microm%accdust2cldr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'DUST2CLDRT :3:anal:mpti')
-   if (allocated(micro%dust1drzrt)) &
-        CALL vtables2 (micro%dust1drzrt(1,1,1),microm%dust1drzrt(1,1,1)  &
+                       'ACCDUST2CLDR :3:anal:mpti')
+   if (allocated(micro%accdust1drzr)) &
+        CALL vtables2 (micro%accdust1drzr(1,1,1),microm%accdust1drzr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'DUST1DRZRT :3:anal:mpti')
-   if (allocated(micro%dust2drzrt)) &
-        CALL vtables2 (micro%dust2drzrt(1,1,1),microm%dust2drzrt(1,1,1)  &
+                       'ACCDUST1DRZR :3:anal:mpti')
+   if (allocated(micro%accdust2drzr)) &
+        CALL vtables2 (micro%accdust2drzr(1,1,1),microm%accdust2drzr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'DUST2DRZRT :3:anal:mpti')
-   if (allocated(micro%regen1cldrt)) &
-        CALL vtables2 (micro%regen1cldrt(1,1,1),microm%regen1cldrt(1,1,1)  &
+                       'ACCDUST2DRZR :3:anal:mpti')
+   if (allocated(micro%accregen1cldr)) &
+        CALL vtables2 (micro%accregen1cldr(1,1,1),microm%accregen1cldr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'REGEN1CLDRT :3:anal:mpti')
-   if (allocated(micro%regen2cldrt)) &
-        CALL vtables2 (micro%regen2cldrt(1,1,1),microm%regen2cldrt(1,1,1)  &
+                       'ACCREGEN1CLDR :3:anal:mpti')
+   if (allocated(micro%accregen2cldr)) &
+        CALL vtables2 (micro%accregen2cldr(1,1,1),microm%accregen2cldr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'REGEN2CLDRT :3:anal:mpti')
-   if (allocated(micro%regen1drzrt)) &
-        CALL vtables2 (micro%regen1drzrt(1,1,1),microm%regen1drzrt(1,1,1)  &
+                       'ACCREGEN2CLDR :3:anal:mpti')
+   if (allocated(micro%accregen1drzr)) &
+        CALL vtables2 (micro%accregen1drzr(1,1,1),microm%accregen1drzr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'REGEN1DRZRT :3:anal:mpti')
-   if (allocated(micro%regen2drzrt)) &
-        CALL vtables2 (micro%regen2drzrt(1,1,1),microm%regen2drzrt(1,1,1)  &
+                       'ACCREGEN1DRZR :3:anal:mpti')
+   if (allocated(micro%accregen2drzr)) &
+        CALL vtables2 (micro%accregen2drzr(1,1,1),microm%accregen2drzr(1,1,1)  &
                        ,ng, npts, imean,  &
-                       'REGEN2DRZRT :3:anal:mpti')
+                       'ACCREGEN2DRZR :3:anal:mpti')
 
    npts=n2*n3
    if (allocated(micro%accpr)) &
@@ -1640,22 +1640,22 @@ implicit none
       CALL vtables2 (micro%pcpvid(1,1,1),microm%pcpvid(1,1,1)  &
                  ,ng, npts, imean,  &
                  'PCPVID :3:anal:mpti')
-   if (allocated(micro%nuccldct)) &
-      CALL vtables2 (micro%nuccldct(1,1,1),microm%nuccldct(1,1,1)  &
+   if (allocated(micro%accnuccldc)) &
+      CALL vtables2 (micro%accnuccldc(1,1,1),microm%accnuccldc(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'NUCCLDCT :3:anal:mpti')
-   if (allocated(micro%nucicect)) &
-      CALL vtables2 (micro%nucicect(1,1,1),microm%nucicect(1,1,1)  &
+                 'ACCNUCCLDC :3:anal:mpti')
+   if (allocated(micro%accnucicec)) &
+      CALL vtables2 (micro%accnucicec(1,1,1),microm%accnucicec(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'NUCICECT :3:anal:mpti')
-   if (allocated(micro%inuchomct)) &
-      CALL vtables2 (micro%inuchomct(1,1,1),microm%inuchomct(1,1,1)  &
+                 'ACCNUCICEC :3:anal:mpti')
+   if (allocated(micro%accinuchomc)) &
+      CALL vtables2 (micro%accinuchomc(1,1,1),microm%accinuchomc(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'INUCHOMCT :3:anal:mpti')
-   if (allocated(micro%inucifnct)) &
-      CALL vtables2 (micro%inucifnct(1,1,1),microm%inucifnct(1,1,1)  &
+                 'ACCINUCHOMC :3:anal:mpti')
+   if (allocated(micro%accinucifnc)) &
+      CALL vtables2 (micro%accinucifnc(1,1,1),microm%accinucifnc(1,1,1)  &
                  ,ng, npts, imean,  &
-                 'INUCIFNCT :3:anal:mpti')
+                 'ACCINUCIFNC :3:anal:mpti')
 
    npts=n1*n2*n3*nkr
    if (allocated(micro%fncn)) &

@@ -354,7 +354,7 @@ do j=ja,jz
  patch=2
   if(string .eq. 'MICRO')then
    print 101, my_rams_num, kp, ip, jp, k, i, j, 'NUCCLD', string, time &
-     ,micro_g(ngrid)%nuccldrt(k,i,j)
+     ,micro_g(ngrid)%accnuccldr(k,i,j)
    !print 101, my_rams_num, kp, ip, jp, k, i, j, 'FFCD', string, time &
    !  ,micro_g(ngrid)%ffcd(k,i,j,bp)
  endif
@@ -374,7 +374,7 @@ if(ngrid==1000) then
 !   print 101, my_rams_num, kp, ip, jp, k, i, j, 'THP', string, time &
 !     ,basic_g(ngrid)%thp(k,i,j)
 !   print 101, my_rams_num, kp, ip, jp, k, i, j, 'NUCCLD', string, time &
-!     ,micro_g(ngrid)%nuccldrt(k,i,j)
+!     ,micro_g(ngrid)%accnuccldr(k,i,j)
 !   print 101, my_rams_num, kp, ip, jp, k, i, j, 'RTP', string, time &
 !     ,basic_g(ngrid)%rtp(k,i,j)
 !   print 101, my_rams_num, kp, ip, jp, k, i, j, 'RV', string, time &
@@ -413,8 +413,8 @@ endif
 
           !    , basic_g(ngrid)%up(1:mzp,ip,jp)
           !    , basic_g(ngrid)%pp(1:mzp,ip,jp)
-          !    , micro_g(ngrid)%inuchazrt(kp,ip,jp)         &
-          !    , micro_g(ngrid)%inucifnrt(kp,ip,jp)         &
+          !    , micro_g(ngrid)%accinuchazr(kp,ip,jp)         &
+          !    , micro_g(ngrid)%accinucifnr(kp,ip,jp)         &
           !    , radiate_g(ngrid)%rshort(ip,jp)             &
           !    , radiate_g(ngrid)%rlongup(ip,jp)            &
           !    , basic_g(ngrid)%wp_buoy_theta(kp,ip,jp)     &

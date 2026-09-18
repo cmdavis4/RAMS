@@ -51,7 +51,7 @@ if (level .eq. 0) return
 ! Zero the regeneration accumulators after an analysis write, then start
 ! accumulating again. Same condition range_check() uses for the other micro
 ! budget variables (mic_misc.f90:498), so REGEN_AERO*_D[NM] covers the same
-! window as VAPLIQT, EVAPLIQT, NUCCLDRT and the rest.
+! window as ACCVAPLIQ, ACCEVAPLIQ, ACCNUCCLDR and the rest.
 if(iccnlev>=2 .and. imbudget>=1) then
   if((mod(time+0.001,frqstate(ngr)).lt.dtlt .or. time.lt.0.001) .and. &
      regen_reset_time(ngr) /= time) then
