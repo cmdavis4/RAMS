@@ -63,7 +63,7 @@ return
 END SUBROUTINE each_call
 
 !##############################################################################
-Subroutine range_check (m1,k1,k2,k3,i,j,frq,ngr,dtlt,time,micro)
+Subroutine range_check (m1,k1,k2,k3,i,j,micro)
 
 use mem_micro
 use micphys
@@ -73,9 +73,8 @@ implicit none
 
 type (micro_vars) :: micro
 
-integer :: m1,i,j,k,lcat,l,jcat,ngr
+integer :: m1,i,j,k,lcat,l,jcat
 integer, dimension(11) :: k1,k2,k3
-real :: frq,time,dtlt
 
 !Zero out microphysics scratch arrays for the present i,j column
 do lcat = 1,ncat
@@ -432,178 +431,90 @@ k2(10) = max(k2(3),k2(4),k2(5),k2(6),k2(7))
 k1(11) = min(k1(9),k1(10))
 k2(11) = max(k2(9),k2(10))
 
-!Microphysics budget arrays
+!Microphysics budget work vectors
+!Each x<name> vector collects the amount one budget process adds to this
+!column during THIS model step only, so it starts every step at zero.
+!copyback() then turns it into the instantaneous rate (<name>r = amount/dtlt)
+!and, when IMBUDGETACC=1, adds it to the never-reset run total acc<name>.
+!Nothing here depends on an output frequency, so changing FRQSTATE or
+!FRQLITE cannot change the budget values.
 if(imbudget>=1) then
  do k = 1,m1
-   xlatheatvap(k)    = micro%latheatvap(k,i,j)
-   xlatheatfrz(k)    = micro%latheatfrz(k,i,j)
-   xnuccldrt(k)      = micro%accnuccldr(k,i,j)
-   xcld2raint(k)     = micro%acccld2rain(k,i,j)
-   xice2raint(k)     = micro%accice2rain(k,i,j)
-   xnucicert(k)      = micro%accnucicer(k,i,j)
-   xvapliqt(k)       = micro%accvapliq(k,i,j)
-   xvapicet(k)       = micro%accvapice(k,i,j)
-   xevapliqt(k)      = micro%accevapliq(k,i,j)
-   xevapicet(k)      = micro%accevapice(k,i,j)
-   xfreezingt(k)     = micro%accfreezing(k,i,j)
-   xmeltingt(k)      = micro%accmelting(k,i,j)
-   xmelticet(k)      = micro%accmeltice(k,i,j)
-   xrimecldt(k)      = micro%accrimecld(k,i,j)
-   xaggregatet(k)    = micro%accaggregate(k,i,j)
-   xrain2icet(k)     = micro%accrain2ice(k,i,j)
-   xlatheatvapt(k)   = micro%acclatheatvap(k,i,j)
-   xlatheatfrzt(k)   = micro%acclatheatfrz(k,i,j)
+   xlatheatvap(k) = 0.
+   xlatheatfrz(k) = 0.
+   xnuccldr(k) = 0.
+   xcld2rain(k) = 0.
+   xice2rain(k) = 0.
+   xnucicer(k) = 0.
+   xvapliq(k) = 0.
+   xvapice(k) = 0.
+   xevapliq(k) = 0.
+   xevapice(k) = 0.
+   xfreezing(k) = 0.
+   xmelting(k) = 0.
+   xmeltice(k) = 0.
+   xrimecld(k) = 0.
+   xrain2ice(k) = 0.
+   xaggregate(k) = 0.
  enddo
 endif
 if(imbudget>=2) then
  do k = 1,m1
-   xinuchomrt(k)     = micro%accinuchomr(k,i,j)
-   xinuccontrt(k)    = micro%accinuccontr(k,i,j)
-   xinucifnrt(k)     = micro%accinucifnr(k,i,j)
-   xinuchazrt(k)     = micro%accinuchazr(k,i,j)
-   xvapcldt(k)       = micro%accvapcld(k,i,j)
-   xvapraint(k)      = micro%accvaprain(k,i,j)
-   xvapprist(k)      = micro%accvappris(k,i,j)
-   xvapsnowt(k)      = micro%accvapsnow(k,i,j)
-   xvapaggrt(k)      = micro%accvapaggr(k,i,j)
-   xvapgraut(k)      = micro%accvapgrau(k,i,j)
-   xvaphailt(k)      = micro%accvaphail(k,i,j)
-   xvapdrizt(k)      = micro%accvapdriz(k,i,j)
-   xevapcldt(k)      = micro%accevapcld(k,i,j)
-   xevapraint(k)     = micro%accevaprain(k,i,j)
-   xevapprist(k)     = micro%accevappris(k,i,j)
-   xevapsnowt(k)     = micro%accevapsnow(k,i,j)
-   xevapaggrt(k)     = micro%accevapaggr(k,i,j)
-   xevapgraut(k)     = micro%accevapgrau(k,i,j)
-   xevaphailt(k)     = micro%accevaphail(k,i,j)
-   xevapdrizt(k)     = micro%accevapdriz(k,i,j)
-   xmeltprist(k)     = micro%accmeltpris(k,i,j)
-   xmeltsnowt(k)     = micro%accmeltsnow(k,i,j)
-   xmeltaggrt(k)     = micro%accmeltaggr(k,i,j)
-   xmeltgraut(k)     = micro%accmeltgrau(k,i,j)
-   xmelthailt(k)     = micro%accmelthail(k,i,j)
-   xrimecldsnowt(k)  = micro%accrimecldsnow(k,i,j)
-   xrimecldaggrt(k)  = micro%accrimecldaggr(k,i,j)
-   xrimecldgraut(k)  = micro%accrimecldgrau(k,i,j)
-   xrimecldhailt(k)  = micro%accrimecldhail(k,i,j)
-   xrain2prt(k)      = micro%accrain2pr(k,i,j)
-   xrain2snt(k)      = micro%accrain2sn(k,i,j)
-   xrain2agt(k)      = micro%accrain2ag(k,i,j)
-   xrain2grt(k)      = micro%accrain2gr(k,i,j)
-   xrain2hat(k)      = micro%accrain2ha(k,i,j)
-   xaggrselfprist(k) = micro%accaggrselfpris(k,i,j)
-   xaggrselfsnowt(k) = micro%accaggrselfsnow(k,i,j)
-   xaggrprissnowt(k) = micro%accaggrprissnow(k,i,j)
+   xinuchomr(k) = 0.
+   xinuccontr(k) = 0.
+   xinucifnr(k) = 0.
+   xinuchazr(k) = 0.
+   xvapcld(k) = 0.
+   xvaprain(k) = 0.
+   xvappris(k) = 0.
+   xvapsnow(k) = 0.
+   xvapaggr(k) = 0.
+   xvapgrau(k) = 0.
+   xvaphail(k) = 0.
+   xvapdriz(k) = 0.
+   xevapcld(k) = 0.
+   xevaprain(k) = 0.
+   xevappris(k) = 0.
+   xevapsnow(k) = 0.
+   xevapaggr(k) = 0.
+   xevapgrau(k) = 0.
+   xevaphail(k) = 0.
+   xevapdriz(k) = 0.
+   xmeltpris(k) = 0.
+   xmeltsnow(k) = 0.
+   xmeltaggr(k) = 0.
+   xmeltgrau(k) = 0.
+   xmelthail(k) = 0.
+   xrimecldsnow(k) = 0.
+   xrimecldaggr(k) = 0.
+   xrimecldgrau(k) = 0.
+   xrimecldhail(k) = 0.
+   xrain2pr(k) = 0.
+   xrain2sn(k) = 0.
+   xrain2ag(k) = 0.
+   xrain2gr(k) = 0.
+   xrain2ha(k) = 0.
+   xaggrselfpris(k) = 0.
+   xaggrselfsnow(k) = 0.
+   xaggrprissnow(k) = 0.
  enddo
 endif
 if(imbudget==3 .and. idust>=1) then
  do k = 1,m1
-   xdust1cldrt(k)    = micro%accdust1cldr(k,i,j)
-   xdust2cldrt(k)    = micro%accdust2cldr(k,i,j)
-   xdust1drzrt(k)    = micro%accdust1drzr(k,i,j)
-   xdust2drzrt(k)    = micro%accdust2drzr(k,i,j)
+   xdust1cldr(k) = 0.
+   xdust2cldr(k) = 0.
+   xdust1drzr(k) = 0.
+   xdust2drzr(k) = 0.
  enddo
 endif
 if(imbudget==3 .and. iccnlev>=2) then
  do k = 1,m1
-   xregen1cldrt(k)   = micro%accregen1cldr(k,i,j)
-   xregen2cldrt(k)   = micro%accregen2cldr(k,i,j)
-   xregen1drzrt(k)   = micro%accregen1drzr(k,i,j)
-   xregen2drzrt(k)   = micro%accregen2drzr(k,i,j)
+   xregen1cldr(k) = 0.
+   xregen2cldr(k) = 0.
+   xregen1drzr(k) = 0.
+   xregen2drzr(k) = 0.
  enddo
 endif
-
-!Microphysics budget arrays
-!ZERO OUT INSTANTANEOUS dT FROM LATENT HEATING 
-if(imbudget>=1) then
- do k = 1,m1
-  xlatheatvap(k) = 0.
-  xlatheatfrz(k) = 0.
- enddo
-endif
-!ZERO OUT MICRO BUDGET PROCESSES AFTER ANALYSIS WRITE
-!THEN BEGIN ACCUMULATING AGAIN
-if(mod(time+0.001,frq).lt.dtlt .or. time.lt.0.001)then
- if(iprntstmt>=1 .and. imbudget>=1.and.i==2.and.j==2 .and. print_msg) &
-   print*,'Resetting micro budgets',time,ngr
- if(imbudget>=1) then
-  do k = 1,m1
-   xnuccldrt(k)      = 0.
-   xcld2raint(k)     = 0.
-   xice2raint(k)     = 0.
-   xnucicert(k)      = 0.
-   xvapliqt(k)       = 0.
-   xvapicet(k)       = 0.
-   xevapliqt(k)      = 0.
-   xevapicet(k)      = 0.
-   xfreezingt(k)     = 0.
-   xmeltingt(k)      = 0.
-   xmelticet(k)      = 0.
-   xrimecldt(k)      = 0.
-   xaggregatet(k)    = 0.
-   xrain2icet(k)     = 0.
-   xlatheatvapt(k)   = 0.
-   xlatheatfrzt(k)   = 0.
-  enddo
- endif
- if(imbudget>=2) then
-  do k = 1,m1
-   xinuchomrt(k)     = 0.
-   xinuccontrt(k)    = 0.
-   xinucifnrt(k)     = 0.
-   xinuchazrt(k)     = 0.
-   xvapcldt(k)       = 0.
-   xvapraint(k)      = 0.
-   xvapprist(k)      = 0.
-   xvapsnowt(k)      = 0.
-   xvapaggrt(k)      = 0.
-   xvapgraut(k)      = 0.
-   xvaphailt(k)      = 0.
-   xvapdrizt(k)      = 0.
-   xevapcldt(k)      = 0.
-   xevapraint(k)     = 0.
-   xevapprist(k)     = 0.
-   xevapsnowt(k)     = 0.
-   xevapaggrt(k)     = 0.
-   xevapgraut(k)     = 0.
-   xevaphailt(k)     = 0.
-   xevapdrizt(k)     = 0.
-   xmeltprist(k)     = 0.
-   xmeltsnowt(k)     = 0.
-   xmeltaggrt(k)     = 0.
-   xmeltgraut(k)     = 0.
-   xmelthailt(k)     = 0.
-   xrimecldsnowt(k)  = 0.
-   xrimecldaggrt(k)  = 0.
-   xrimecldgraut(k)  = 0.
-   xrimecldhailt(k)  = 0.
-   xrain2prt(k)      = 0.
-   xrain2snt(k)      = 0.
-   xrain2agt(k)      = 0.
-   xrain2grt(k)      = 0.
-   xrain2hat(k)      = 0.
-   xaggrselfprist(k) = 0.
-   xaggrselfsnowt(k) = 0.
-   xaggrprissnowt(k) = 0.
-  enddo
- endif
- if(imbudget==3 .and. idust>=1) then
-  do k = 1,m1
-   xdust1cldrt(k)    = 0.
-   xdust2cldrt(k)    = 0.
-   xdust1drzrt(k)    = 0.
-   xdust2drzrt(k)    = 0.
-  enddo
- endif
- if(imbudget==3 .and. iccnlev>=2) then
-  do k = 1,m1
-   xregen1cldrt(k)   = 0.
-   xregen2cldrt(k)   = 0.
-   xregen1drzrt(k)   = 0.
-   xregen2drzrt(k)   = 0.
-  enddo
- endif
-endif !If time to reset at analysis write
 
 return
 END SUBROUTINE range_check
@@ -848,8 +759,8 @@ elseif (lcat == 3) then
       cx(k,lcat) = cx(k,lcat) - cmelt
       cx(k,1) = cx(k,1) + cmelt
 
-      if(imbudget >= 1) xmelticet(k)  = xmelticet(k)  + rmelt * budget_scalet
-      if(imbudget >= 2) xmeltprist(k) = xmeltprist(k) + rmelt * budget_scalet
+      if(imbudget >= 1) xmeltice(k)  = xmeltice(k)  + rmelt * budget_scalet
+      if(imbudget >= 2) xmeltpris(k) = xmeltpris(k) + rmelt * budget_scalet
 
       endif
 
@@ -919,12 +830,12 @@ elseif (lcat == 4 .or. lcat == 5) then
          cx(k,lcat) = cx(k,lcat) - closs
          cx(k,6) = cx(k,6) + closs
 
-!        if(imbudget >= 1) xmelticet used to track ice melting to rain. Do not include
+!        if(imbudget >= 1) xmeltice used to track ice melting to rain. Do not include
 !                          melting of snow and aggregates since they are transferred
 !                          to graupel, not rain
          if(imbudget >= 2) then
-           if(lcat==4) xmeltsnowt(k) = xmeltsnowt(k) + (rmelt + ricetor6) * budget_scalet
-           if(lcat==5) xmeltaggrt(k) = xmeltaggrt(k) + (rmelt + ricetor6) * budget_scalet
+           if(lcat==4) xmeltsnow(k) = xmeltsnow(k) + (rmelt + ricetor6) * budget_scalet
+           if(lcat==5) xmeltaggr(k) = xmeltaggr(k) + (rmelt + ricetor6) * budget_scalet
          endif
 
       endif
@@ -979,8 +890,8 @@ elseif (lcat == 6) then
             endif
          endif
 
-         if(imbudget >= 1) xmelticet(k)  = xmelticet(k) + rx(k,6) * budget_scalet
-         if(imbudget >= 2) xmeltgraut(k) = xmeltgraut(k) + rx(k,6) * budget_scalet
+         if(imbudget >= 1) xmeltice(k)  = xmeltice(k) + rx(k,6) * budget_scalet
+         if(imbudget >= 2) xmeltgrau(k) = xmeltgrau(k) + rx(k,6) * budget_scalet
 
          rx(k,6) = 0.
          qr(k,6) = 0.
@@ -1039,8 +950,8 @@ elseif (lcat == 7) then
             endif
          endif
 
-         if(imbudget >= 1) xmelticet(k)  = xmelticet(k) + rx(k,7) * budget_scalet
-         if(imbudget >= 2) xmelthailt(k) = xmelthailt(k) + rx(k,7) * budget_scalet
+         if(imbudget >= 1) xmeltice(k)  = xmeltice(k) + rx(k,7) * budget_scalet
+         if(imbudget >= 2) xmelthail(k) = xmelthail(k) + rx(k,7) * budget_scalet
 
          rx(k,7) = 0.
          qr(k,7) = 0.
@@ -1098,8 +1009,8 @@ elseif (lcat == 7) then
          qr(k,lcat) = qr(k,lcat) - qrmltshed
          qx(k,lcat) = qr(k,lcat) * (1./rx(k,lcat))
 
-         if(imbudget >= 1) xmelticet(k)  = xmelticet(k) + rmltshed * budget_scalet
-         if(imbudget >= 2) xmelthailt(k) = xmelthailt(k) + rmltshed * budget_scalet
+         if(imbudget >= 1) xmeltice(k)  = xmeltice(k) + rmltshed * budget_scalet
+         if(imbudget >= 2) xmelthail(k) = xmelthail(k) + rmltshed * budget_scalet
 
       endif
 

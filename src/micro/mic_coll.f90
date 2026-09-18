@@ -275,7 +275,7 @@ if(jnmb(8) .eq. 0) then
    enxfer(k,1,1) = enxfer(k,1,1) + un1 - un2cc
    enxfer(k,1,2) = enxfer(k,1,2) + un2cc
 
-   if(imbudget >= 1) xcld2raint(k) = xcld2raint(k) + um12 * budget_scalet
+   if(imbudget >= 1) xcld2rain(k) = xcld2rain(k) + um12 * budget_scalet
 endif
 
 if(jnmb(8) .ne. 0) then
@@ -311,7 +311,7 @@ if(jnmb(8) .ne. 0) then
    enxfer(k,8,8) = enxfer(k,8,8) + un8 - un3dd - un2cd
    enxfer(k,8,2) = enxfer(k,8,2) + un3dd + un2cd
 
-   if(imbudget >= 1) xcld2raint(k) = xcld2raint(k) + (um12 + um82) * budget_scalet
+   if(imbudget >= 1) xcld2rain(k) = xcld2rain(k) + (um12 + um82) * budget_scalet
 endif
 
 !USING CLOUD_2 TRANSFER TO TRANSFER CC2 COLLISION NUMBER TO
@@ -526,12 +526,12 @@ endif
  ytoz = rfinlz - xtoz
  ccat=mcatc(lcat)
 
- if(imbudget >= 1) xrimecldt(k) = xrimecldt(k) + umcld * budget_scalet
+ if(imbudget >= 1) xrimecld(k) = xrimecld(k) + umcld * budget_scalet
  if(imbudget >= 2) then
-    if(lcat.eq.4) xrimecldsnowt(k) = xrimecldsnowt(k) + umcld * budget_scalet
-    if(lcat.eq.5) xrimecldaggrt(k) = xrimecldaggrt(k) + umcld * budget_scalet
-    if(lcat.eq.6) xrimecldgraut(k) = xrimecldgraut(k) + umcld * budget_scalet
-    if(lcat.eq.7) xrimecldhailt(k) = xrimecldhailt(k) + umcld * budget_scalet
+    if(lcat.eq.4) xrimecldsnow(k) = xrimecldsnow(k) + umcld * budget_scalet
+    if(lcat.eq.5) xrimecldaggr(k) = xrimecldaggr(k) + umcld * budget_scalet
+    if(lcat.eq.6) xrimecldgrau(k) = xrimecldgrau(k) + umcld * budget_scalet
+    if(lcat.eq.7) xrimecldhail(k) = xrimecldhail(k) + umcld * budget_scalet
  endif
 
  rxfer(k,jcat,ccat)  =  rxfer(k,jcat,ccat) + xtoz
@@ -814,10 +814,10 @@ if(rx(k,mx) .ge. rxmin) then
    rxfer(k,mx,mz) = rxfer(k,mx,mz) + colamt
    qrxfer(k,mx,mz) = qrxfer(k,mx,mz) + colamt * qx(k,mx)
 
-   if(imbudget >= 1) xaggregatet(k) = xaggregatet(k) + colamt*budget_scalet
+   if(imbudget >= 1) xaggregate(k) = xaggregate(k) + colamt*budget_scalet
    if(imbudget >= 2) then
-    if(mx.eq.3) xaggrselfprist(k) = xaggrselfprist(k) + colamt*budget_scalet
-    if(mx.eq.4) xaggrselfsnowt(k) = xaggrselfsnowt(k) + colamt*budget_scalet
+    if(mx.eq.3) xaggrselfpris(k) = xaggrselfpris(k) + colamt*budget_scalet
+    if(mx.eq.4) xaggrselfsnow(k) = xaggrselfsnow(k) + colamt*budget_scalet
    endif
 
    if (jnmb(mz) >= 5) then
@@ -877,8 +877,8 @@ if(rx(k,mx) .ge. rxmin .and. rx(k,my) .ge. rxmin) then
    rxfer(k,my,mz) = rxfer(k,my,mz) + rcy
    qrxfer(k,my,mz) = qrxfer(k,my,mz) + rcy * qx(k,my)
 
-   if(imbudget >= 1) xaggregatet(k) = xaggregatet(k) + (rcx + rcy)*budget_scalet
-   if(imbudget >= 2) xaggrprissnowt(k) = xaggrprissnowt(k) + (rcx + rcy)*budget_scalet
+   if(imbudget >= 1) xaggregate(k) = xaggregate(k) + (rcx + rcy)*budget_scalet
+   if(imbudget >= 2) xaggrprissnow(k) = xaggrprissnow(k) + (rcx + rcy)*budget_scalet
 
    tabvaln  &
        = wct1(k,mx) * wct1(k,my) * coltabc (ict1(k,mx),ict1(k,my),ipc)  &
@@ -1068,12 +1068,12 @@ if(rx(k,mx) .ge. rxmin .and. rx(k,my) .ge. rxmin) then
 
    xtoz = min(rcx,rfinlz)
 
-   if(imbudget >= 1) xrimecldt(k) = xrimecldt(k) + rcx * budget_scalet
+   if(imbudget >= 1) xrimecld(k) = xrimecld(k) + rcx * budget_scalet
    if(imbudget >= 2) then
-    if(my.eq.4) xrimecldsnowt(k) = xrimecldsnowt(k) + rcx * budget_scalet
-    if(my.eq.5) xrimecldaggrt(k) = xrimecldaggrt(k) + rcx * budget_scalet
-    if(my.eq.6) xrimecldgraut(k) = xrimecldgraut(k) + rcx * budget_scalet
-    if(my.eq.7) xrimecldhailt(k) = xrimecldhailt(k) + rcx * budget_scalet
+    if(my.eq.4) xrimecldsnow(k) = xrimecldsnow(k) + rcx * budget_scalet
+    if(my.eq.5) xrimecldaggr(k) = xrimecldaggr(k) + rcx * budget_scalet
+    if(my.eq.6) xrimecldgrau(k) = xrimecldgrau(k) + rcx * budget_scalet
+    if(my.eq.7) xrimecldhail(k) = xrimecldhail(k) + rcx * budget_scalet
    endif
 
    rxfer(k,mx,mz) = rxfer(k,mx,mz) + xtoz
@@ -1203,7 +1203,7 @@ do k = k1,k2
       if (jnmb(mx) >= 5)  &
          enxfer(k,my,my) = enxfer(k,my,my) + colnumy
 
-      if(imbudget >= 1) xice2raint(k) = xice2raint(k) + rcy * budget_scalet
+      if(imbudget >= 1) xice2rain(k) = xice2rain(k) + rcy * budget_scalet
 
    else
 
@@ -1301,13 +1301,13 @@ do k = k1,k2
       endif !end of my >= 4 and my < 7
       33 continue
 
-      if(imbudget >= 1) xrain2icet(k) = xrain2icet(k) + rcx * budget_scalet
+      if(imbudget >= 1) xrain2ice(k) = xrain2ice(k) + rcx * budget_scalet
       if(imbudget >= 2) then
-        if(my==3) xrain2prt(k) = xrain2prt(k) + rcx * budget_scalet
-        if(my==4) xrain2snt(k) = xrain2snt(k) + rcx * budget_scalet
-        if(my==5) xrain2agt(k) = xrain2agt(k) + rcx * budget_scalet
-        if(my==6) xrain2grt(k) = xrain2grt(k) + rcx * budget_scalet
-        if(my==7) xrain2hat(k) = xrain2hat(k) + rcx * budget_scalet
+        if(my==3) xrain2pr(k) = xrain2pr(k) + rcx * budget_scalet
+        if(my==4) xrain2sn(k) = xrain2sn(k) + rcx * budget_scalet
+        if(my==5) xrain2ag(k) = xrain2ag(k) + rcx * budget_scalet
+        if(my==6) xrain2gr(k) = xrain2gr(k) + rcx * budget_scalet
+        if(my==7) xrain2ha(k) = xrain2ha(k) + rcx * budget_scalet
       endif
 
       rxfer(k,mx,mz) = rxfer(k,mx,mz) + xtoz !from rain to cat z

@@ -1122,8 +1122,8 @@ implicit none
 
 !-------Zero out micro budgets-----------------------
 if (imbudget >= 1) then
-   micro_g(ngrid)%latheatvap = 0.
-   if (iceprocs == 1) micro_g(ngrid)%latheatfrz = 0.
+   micro_g(ngrid)%latheatvapr = 0.
+   if (iceprocs == 1) micro_g(ngrid)%latheatfrzr = 0.
 endif
 
 if (mod(time+0.001,frqstate(ngrid)) < dtlt .or. istp == 1) then
@@ -1408,18 +1408,18 @@ else
 endif
 
 if (imbudget >= 1) then
-   micro_g(ngrid)%latheatvap(k,i,j) = micro_g(ngrid)%latheatvap(k,i,j) + &
+   micro_g(ngrid)%latheatvapr(k,i,j) = micro_g(ngrid)%latheatvapr(k,i,j) + &
       plusminus * alvl * fac * sum_mass(ff1r,xl(:),dens,1,nkr) 
 
    if(iceprocs.eq.1) &
-      micro_g(ngrid)%latheatvap(k,i,j) = micro_g(ngrid)%latheatvap(k,i,j) + &
+      micro_g(ngrid)%latheatvapr(k,i,j) = micro_g(ngrid)%latheatvapr(k,i,j) + &
          plusminus * alvi * fac * &
          sum_mass(ff2r(:,1)+ff2r(:,2)+ff2r(:,3)+ff3r+ff4r+ff5r,xs,dens,1,nkr) 
 endif
 
 if (imbudget >=1 .and. plusminus .eq. 1) then
    micro_g(ngrid)%acclatheatvap(k,i,j) = micro_g(ngrid)%acclatheatvap(k,i,j) + &
-                                       micro_g(ngrid)%latheatvap(k,i,j)
+                                       micro_g(ngrid)%latheatvapr(k,i,j)
 endif
 
 return
@@ -1459,13 +1459,13 @@ else
 endif
 
 if (imbudget >= 1 .and. iceprocs == 1) then
-   micro_g(ngrid)%latheatfrz(k,i,j) = micro_g(ngrid)%latheatfrz(k,i,j) + &
+   micro_g(ngrid)%latheatfrzr(k,i,j) = micro_g(ngrid)%latheatfrzr(k,i,j) + &
       plusminus * (-1.) * alli * fac * sum_mass(ff1r,xl(:),dens,1,nkr) 
 endif
 
 if (imbudget >=1 .and. iceprocs == 1 .and. plusminus .eq. 1) then
    micro_g(ngrid)%acclatheatfrz(k,i,j) = micro_g(ngrid)%acclatheatfrz(k,i,j) + &
-                                       micro_g(ngrid)%latheatfrz(k,i,j)
+                                       micro_g(ngrid)%latheatfrzr(k,i,j)
 endif
 
 return

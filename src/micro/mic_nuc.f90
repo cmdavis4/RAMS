@@ -42,7 +42,7 @@ if (jnmb(1) == 1 .or. jnmb(1) == 4) then
          k2cnuc = k
          cx(k,1) = min(parm(1),rx(k,1) / emb0(1))
          if(imbudget >= 1) then
-           xnuccldrt(k) = xnuccldrt(k) + rcnew * budget_scalet
+           xnuccldr(k) = xnuccldr(k) + rcnew * budget_scalet
          endif
       elseif (k2cnuc == 1) then
          k1cnuc = k + 1
@@ -299,29 +299,29 @@ elseif (jnmb(1) >= 5) then
 
           !Nucleation budget diagnostics
           if(imbudget >= 1) then
-            xnuccldrt(k) = xnuccldrt(k) + vaprccn * budget_scalet
+            xnuccldr(k) = xnuccldr(k) + vaprccn * budget_scalet
           endif
           !Dust Budget diagnostics
           if(acat==3 .and. drop==1 .and. imbudget==3 .and. idust >= 1) &
-             xdust1cldrt(k) = xdust1cldrt(k) + vaprccn * budget_scalet
+             xdust1cldr(k) = xdust1cldr(k) + vaprccn * budget_scalet
           if(acat==3 .and. drop==8 .and. imbudget==3 .and. idust >= 1) &
-             xdust1drzrt(k) = xdust1drzrt(k) + vaprccn * budget_scalet
+             xdust1drzr(k) = xdust1drzr(k) + vaprccn * budget_scalet
           if(acat==4 .and. drop==1 .and. imbudget==3 .and. idust >= 1) &
-             xdust2cldrt(k) = xdust2cldrt(k) + vaprccn * budget_scalet
+             xdust2cldr(k) = xdust2cldr(k) + vaprccn * budget_scalet
           if(acat==4 .and. drop==8 .and. imbudget==3 .and. idust >= 1) &
-             xdust2drzrt(k) = xdust2drzrt(k) + vaprccn * budget_scalet
+             xdust2drzr(k) = xdust2drzr(k) + vaprccn * budget_scalet
           !Regenerated aerosol Budget diagnostics
           !acat==aerocat-1 -> small regenerated mode, acat==aerocat -> large
           !drop==1 -> cloud nucleation, drop==8 -> drizzle nucleation
           !No idust guard needed here: these modes exist whenever ICCNLEV>=2
           if(acat==aerocat-1 .and. drop==1 .and. imbudget==3) &
-             xregen1cldrt(k) = xregen1cldrt(k) + vaprccn * budget_scalet
+             xregen1cldr(k) = xregen1cldr(k) + vaprccn * budget_scalet
           if(acat==aerocat-1 .and. drop==8 .and. imbudget==3) &
-             xregen1drzrt(k) = xregen1drzrt(k) + vaprccn * budget_scalet
+             xregen1drzr(k) = xregen1drzr(k) + vaprccn * budget_scalet
           if(acat==aerocat   .and. drop==1 .and. imbudget==3) &
-             xregen2cldrt(k) = xregen2cldrt(k) + vaprccn * budget_scalet
+             xregen2cldr(k) = xregen2cldr(k) + vaprccn * budget_scalet
           if(acat==aerocat   .and. drop==8 .and. imbudget==3) &
-             xregen2drzrt(k) = xregen2drzrt(k) + vaprccn * budget_scalet
+             xregen2drzr(k) = xregen2drzr(k) + vaprccn * budget_scalet
 
           !Convert units for setting up lognormal distribution
           concen_tab(acat) = concen_tab(acat) * dn0(k) !Convert #/kg to #/m3
@@ -477,7 +477,7 @@ elseif (jnmb(1) >= 5) then
      rx(k,8) = rx(k,8) + total_drz_nucr
      !Nucleation budget diagnostics
      if(imbudget >= 1) then
-       xnuccldrt(k) = xnuccldrt(k) &
+       xnuccldr(k) = xnuccldr(k) &
              + (total_cld_nucr + total_drz_nucr) * budget_scalet
      endif
    endif
@@ -627,11 +627,11 @@ do k = kc1,kc2
    cx(k,1) = cx(k,1) - min(cx(k,1),cldnuc + ptotvi)
 
    if(imbudget >= 1) then
-     xnucicert(k) = xnucicert(k) + (cont_nuc + homo_nuc) * budget_scalet
+     xnucicer(k) = xnucicer(k) + (cont_nuc + homo_nuc) * budget_scalet
    endif
    if(imbudget >= 2) then
-     xinuchomrt(k)  = xinuchomrt(k)  + homo_nuc * budget_scalet
-     xinuccontrt(k) = xinuccontrt(k) + cont_nuc * budget_scalet
+     xinuchomr(k)  = xinuchomr(k)  + homo_nuc * budget_scalet
+     xinuccontr(k) = xinuccontr(k) + cont_nuc * budget_scalet
    endif
 
  endif
@@ -735,11 +735,11 @@ do k = kd1,kd2
    cx(k,8) = cx(k,8) - min(cx(k,8),cldnuc + ptotvi)
 
    if(imbudget >= 1) then
-     xnucicert(k) = xnucicert(k) + (cont_nuc + homo_nuc) * budget_scalet
+     xnucicer(k) = xnucicer(k) + (cont_nuc + homo_nuc) * budget_scalet
    endif
    if(imbudget >= 2) then
-     xinuchomrt(k)  = xinuchomrt(k)  + homo_nuc * budget_scalet
-     xinuccontrt(k) = xinuccontrt(k) + cont_nuc * budget_scalet
+     xinuchomr(k)  = xinuchomr(k)  + homo_nuc * budget_scalet
+     xinuccontr(k) = xinuccontr(k) + cont_nuc * budget_scalet
    endif
 
  endif
@@ -1027,11 +1027,11 @@ do k = 2,m1-1
    pcthaze = haznuc / max(1.0e-30,(haznuc + diagni + immerin))
 
    if(imbudget >= 1) then
-     xnucicert(k) = xnucicert(k) + vapnucr * budget_scalet
+     xnucicer(k) = xnucicer(k) + vapnucr * budget_scalet
    endif
    if(imbudget >= 2) then
-     xinucifnrt(k) = xinucifnrt(k) + vapnucr * (1.0 - pcthaze) * budget_scalet
-     xinuchazrt(k) = xinuchazrt(k) + vapnucr * pcthaze * budget_scalet
+     xinucifnr(k) = xinucifnr(k) + vapnucr * (1.0 - pcthaze) * budget_scalet
+     xinuchazr(k) = xinuchazr(k) + vapnucr * pcthaze * budget_scalet
    endif
 
    if (rx(k,3) .ge. rxmin) k2pnuc = k

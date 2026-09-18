@@ -108,7 +108,7 @@ endif
 do j = ja,jz
    do i = ia,iz
       !Do micro flag check and copy global variabes to local variables
-      CALL range_check (mzp,k1,k2,k3,i,j,frqstate(ngr),ngr,dtlt,time,micro_g(ngr))
+      CALL range_check (mzp,k1,k2,k3,i,j,micro_g(ngr))
       !Run the microphysics and Harrington radiation code 
       CALL mcphys (mzp,k1,k2,k3,i,j,ngr,maxnzp   &
          ,dtlt,dtlti,time,zm                     &
@@ -581,6 +581,7 @@ Subroutine copyback (m1,k2,k3,i,j,micro)
 
 use mem_micro
 use micphys
+use mem_grid, only:dtlt
 
 implicit none
 
@@ -799,154 +800,210 @@ if (jnmb(8) >= 1) then
    if (jnmb(8) >= 5) CALL ae1kmic (2,dtop,micro%cdp(1,i,j),cx(1,8))  
 endif
 
-!Copyback Microphysical Budget Variables
+!Store the microphysics budgets of this column
+!Each x<name> holds the amount the process added during this step (see
+!range_check). Store it as a rate per second, and add it to the run total
+!only when run totals are switched on.
 if(imbudget>=1) then
-  CALL ae1kmic (1,m1,micro%latheatvap(1,i,j),xlatheatvap(1))
-  CALL ae1kmic (1,m1,micro%latheatfrz(1,i,j),xlatheatfrz(1))
-  CALL ae1kmic (1,m1,micro%accnuccldr(1,i,j),xnuccldrt(1))
-  CALL ae1kmic (1,m1,micro%acccld2rain(1,i,j),xcld2raint(1))
-  CALL ae1kmic (1,m1,micro%accice2rain(1,i,j),xice2raint(1))
-  CALL ae1kmic (1,m1,micro%accnucicer(1,i,j),xnucicert(1))
-  CALL ae1kmic (1,m1,micro%accvapliq(1,i,j),xvapliqt(1))
-  CALL ae1kmic (1,m1,micro%accvapice(1,i,j),xvapicet(1))
-  CALL ae1kmic (1,m1,micro%accevapliq(1,i,j),xevapliqt(1))
-  CALL ae1kmic (1,m1,micro%accevapice(1,i,j),xevapicet(1))
-  CALL ae1kmic (1,m1,micro%accfreezing(1,i,j),xfreezingt(1))
-  CALL ae1kmic (1,m1,micro%accmelting(1,i,j),xmeltingt(1))
-  CALL ae1kmic (1,m1,micro%accmeltice(1,i,j),xmelticet(1))
-  CALL ae1kmic (1,m1,micro%accrimecld(1,i,j),xrimecldt(1))
-  CALL ae1kmic (1,m1,micro%accrain2ice(1,i,j),xrain2icet(1))
-  CALL ae1kmic (1,m1,micro%accaggregate(1,i,j),xaggregatet(1))
-  CALL ae1kmic (1,m1,micro%acclatheatvap(1,i,j),xlatheatvapt(1))
-  CALL ae1kmic (1,m1,micro%acclatheatfrz(1,i,j),xlatheatfrzt(1))
+  CALL store_budget_rate (m1,dtlt,xlatheatvap,micro%latheatvapr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xlatheatfrz,micro%latheatfrzr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xnuccldr,micro%nuccldrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xcld2rain,micro%cld2rainr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xice2rain,micro%ice2rainr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xnucicer,micro%nucicerr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapliq,micro%vapliqr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapice,micro%vapicer(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapliq,micro%evapliqr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapice,micro%evapicer(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xfreezing,micro%freezingr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmelting,micro%meltingr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmeltice,micro%melticer(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrimecld,micro%rimecldr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrain2ice,micro%rain2icer(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xaggregate,micro%aggregater(1,i,j))
+  if(imbudgetacc==1) then
+    CALL add_to_budget_total (m1,xlatheatvap,micro%acclatheatvap(1,i,j))
+    CALL add_to_budget_total (m1,xlatheatfrz,micro%acclatheatfrz(1,i,j))
+    CALL add_to_budget_total (m1,xnuccldr,micro%accnuccldr(1,i,j))
+    CALL add_to_budget_total (m1,xcld2rain,micro%acccld2rain(1,i,j))
+    CALL add_to_budget_total (m1,xice2rain,micro%accice2rain(1,i,j))
+    CALL add_to_budget_total (m1,xnucicer,micro%accnucicer(1,i,j))
+    CALL add_to_budget_total (m1,xvapliq,micro%accvapliq(1,i,j))
+    CALL add_to_budget_total (m1,xvapice,micro%accvapice(1,i,j))
+    CALL add_to_budget_total (m1,xevapliq,micro%accevapliq(1,i,j))
+    CALL add_to_budget_total (m1,xevapice,micro%accevapice(1,i,j))
+    CALL add_to_budget_total (m1,xfreezing,micro%accfreezing(1,i,j))
+    CALL add_to_budget_total (m1,xmelting,micro%accmelting(1,i,j))
+    CALL add_to_budget_total (m1,xmeltice,micro%accmeltice(1,i,j))
+    CALL add_to_budget_total (m1,xrimecld,micro%accrimecld(1,i,j))
+    CALL add_to_budget_total (m1,xrain2ice,micro%accrain2ice(1,i,j))
+    CALL add_to_budget_total (m1,xaggregate,micro%accaggregate(1,i,j))
+  endif
 endif
 if(imbudget>=2) then
-  CALL ae1kmic (1,m1,micro%accinuchomr(1,i,j),xinuchomrt(1))
-  CALL ae1kmic (1,m1,micro%accinuccontr(1,i,j),xinuccontrt(1))
-  CALL ae1kmic (1,m1,micro%accinucifnr(1,i,j),xinucifnrt(1))
-  CALL ae1kmic (1,m1,micro%accinuchazr(1,i,j),xinuchazrt(1))
-  CALL ae1kmic (1,m1,micro%accvapcld(1,i,j),xvapcldt(1))
-  CALL ae1kmic (1,m1,micro%accvaprain(1,i,j),xvapraint(1))
-  CALL ae1kmic (1,m1,micro%accvappris(1,i,j),xvapprist(1))
-  CALL ae1kmic (1,m1,micro%accvapsnow(1,i,j),xvapsnowt(1))
-  CALL ae1kmic (1,m1,micro%accvapaggr(1,i,j),xvapaggrt(1))
-  CALL ae1kmic (1,m1,micro%accvapgrau(1,i,j),xvapgraut(1))
-  CALL ae1kmic (1,m1,micro%accvaphail(1,i,j),xvaphailt(1))
-  CALL ae1kmic (1,m1,micro%accvapdriz(1,i,j),xvapdrizt(1))
-  CALL ae1kmic (1,m1,micro%accevapcld(1,i,j),xevapcldt(1))
-  CALL ae1kmic (1,m1,micro%accevaprain(1,i,j),xevapraint(1))
-  CALL ae1kmic (1,m1,micro%accevappris(1,i,j),xevapprist(1))
-  CALL ae1kmic (1,m1,micro%accevapsnow(1,i,j),xevapsnowt(1))
-  CALL ae1kmic (1,m1,micro%accevapaggr(1,i,j),xevapaggrt(1))
-  CALL ae1kmic (1,m1,micro%accevapgrau(1,i,j),xevapgraut(1))
-  CALL ae1kmic (1,m1,micro%accevaphail(1,i,j),xevaphailt(1))
-  CALL ae1kmic (1,m1,micro%accevapdriz(1,i,j),xevapdrizt(1))
-  CALL ae1kmic (1,m1,micro%accmeltpris(1,i,j),xmeltprist(1))
-  CALL ae1kmic (1,m1,micro%accmeltsnow(1,i,j),xmeltsnowt(1))
-  CALL ae1kmic (1,m1,micro%accmeltaggr(1,i,j),xmeltaggrt(1))
-  CALL ae1kmic (1,m1,micro%accmeltgrau(1,i,j),xmeltgraut(1))
-  CALL ae1kmic (1,m1,micro%accmelthail(1,i,j),xmelthailt(1))
-  CALL ae1kmic (1,m1,micro%accrimecldsnow(1,i,j),xrimecldsnowt(1))
-  CALL ae1kmic (1,m1,micro%accrimecldaggr(1,i,j),xrimecldaggrt(1))
-  CALL ae1kmic (1,m1,micro%accrimecldgrau(1,i,j),xrimecldgraut(1))
-  CALL ae1kmic (1,m1,micro%accrimecldhail(1,i,j),xrimecldhailt(1))
-  CALL ae1kmic (1,m1,micro%accrain2pr(1,i,j),xrain2prt(1))
-  CALL ae1kmic (1,m1,micro%accrain2sn(1,i,j),xrain2snt(1))
-  CALL ae1kmic (1,m1,micro%accrain2ag(1,i,j),xrain2agt(1))
-  CALL ae1kmic (1,m1,micro%accrain2gr(1,i,j),xrain2grt(1))
-  CALL ae1kmic (1,m1,micro%accrain2ha(1,i,j),xrain2hat(1))
-  CALL ae1kmic (1,m1,micro%accaggrselfpris(1,i,j),xaggrselfprist(1))
-  CALL ae1kmic (1,m1,micro%accaggrselfsnow(1,i,j),xaggrselfsnowt(1))
-  CALL ae1kmic (1,m1,micro%accaggrprissnow(1,i,j),xaggrprissnowt(1))
+  CALL store_budget_rate (m1,dtlt,xinuchomr,micro%inuchomrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xinuccontr,micro%inuccontrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xinucifnr,micro%inucifnrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xinuchazr,micro%inuchazrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapcld,micro%vapcldr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvaprain,micro%vaprainr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvappris,micro%vapprisr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapsnow,micro%vapsnowr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapaggr,micro%vapaggrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapgrau,micro%vapgraur(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvaphail,micro%vaphailr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xvapdriz,micro%vapdrizr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapcld,micro%evapcldr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevaprain,micro%evaprainr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevappris,micro%evapprisr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapsnow,micro%evapsnowr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapaggr,micro%evapaggrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapgrau,micro%evapgraur(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevaphail,micro%evaphailr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xevapdriz,micro%evapdrizr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmeltpris,micro%meltprisr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmeltsnow,micro%meltsnowr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmeltaggr,micro%meltaggrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmeltgrau,micro%meltgraur(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xmelthail,micro%melthailr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrimecldsnow,micro%rimecldsnowr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrimecldaggr,micro%rimecldaggrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrimecldgrau,micro%rimecldgraur(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrimecldhail,micro%rimecldhailr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrain2pr,micro%rain2prr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrain2sn,micro%rain2snr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrain2ag,micro%rain2agr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrain2gr,micro%rain2grr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xrain2ha,micro%rain2har(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xaggrselfpris,micro%aggrselfprisr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xaggrselfsnow,micro%aggrselfsnowr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xaggrprissnow,micro%aggrprissnowr(1,i,j))
+  if(imbudgetacc==1) then
+    CALL add_to_budget_total (m1,xinuchomr,micro%accinuchomr(1,i,j))
+    CALL add_to_budget_total (m1,xinuccontr,micro%accinuccontr(1,i,j))
+    CALL add_to_budget_total (m1,xinucifnr,micro%accinucifnr(1,i,j))
+    CALL add_to_budget_total (m1,xinuchazr,micro%accinuchazr(1,i,j))
+    CALL add_to_budget_total (m1,xvapcld,micro%accvapcld(1,i,j))
+    CALL add_to_budget_total (m1,xvaprain,micro%accvaprain(1,i,j))
+    CALL add_to_budget_total (m1,xvappris,micro%accvappris(1,i,j))
+    CALL add_to_budget_total (m1,xvapsnow,micro%accvapsnow(1,i,j))
+    CALL add_to_budget_total (m1,xvapaggr,micro%accvapaggr(1,i,j))
+    CALL add_to_budget_total (m1,xvapgrau,micro%accvapgrau(1,i,j))
+    CALL add_to_budget_total (m1,xvaphail,micro%accvaphail(1,i,j))
+    CALL add_to_budget_total (m1,xvapdriz,micro%accvapdriz(1,i,j))
+    CALL add_to_budget_total (m1,xevapcld,micro%accevapcld(1,i,j))
+    CALL add_to_budget_total (m1,xevaprain,micro%accevaprain(1,i,j))
+    CALL add_to_budget_total (m1,xevappris,micro%accevappris(1,i,j))
+    CALL add_to_budget_total (m1,xevapsnow,micro%accevapsnow(1,i,j))
+    CALL add_to_budget_total (m1,xevapaggr,micro%accevapaggr(1,i,j))
+    CALL add_to_budget_total (m1,xevapgrau,micro%accevapgrau(1,i,j))
+    CALL add_to_budget_total (m1,xevaphail,micro%accevaphail(1,i,j))
+    CALL add_to_budget_total (m1,xevapdriz,micro%accevapdriz(1,i,j))
+    CALL add_to_budget_total (m1,xmeltpris,micro%accmeltpris(1,i,j))
+    CALL add_to_budget_total (m1,xmeltsnow,micro%accmeltsnow(1,i,j))
+    CALL add_to_budget_total (m1,xmeltaggr,micro%accmeltaggr(1,i,j))
+    CALL add_to_budget_total (m1,xmeltgrau,micro%accmeltgrau(1,i,j))
+    CALL add_to_budget_total (m1,xmelthail,micro%accmelthail(1,i,j))
+    CALL add_to_budget_total (m1,xrimecldsnow,micro%accrimecldsnow(1,i,j))
+    CALL add_to_budget_total (m1,xrimecldaggr,micro%accrimecldaggr(1,i,j))
+    CALL add_to_budget_total (m1,xrimecldgrau,micro%accrimecldgrau(1,i,j))
+    CALL add_to_budget_total (m1,xrimecldhail,micro%accrimecldhail(1,i,j))
+    CALL add_to_budget_total (m1,xrain2pr,micro%accrain2pr(1,i,j))
+    CALL add_to_budget_total (m1,xrain2sn,micro%accrain2sn(1,i,j))
+    CALL add_to_budget_total (m1,xrain2ag,micro%accrain2ag(1,i,j))
+    CALL add_to_budget_total (m1,xrain2gr,micro%accrain2gr(1,i,j))
+    CALL add_to_budget_total (m1,xrain2ha,micro%accrain2ha(1,i,j))
+    CALL add_to_budget_total (m1,xaggrselfpris,micro%accaggrselfpris(1,i,j))
+    CALL add_to_budget_total (m1,xaggrselfsnow,micro%accaggrselfsnow(1,i,j))
+    CALL add_to_budget_total (m1,xaggrprissnow,micro%accaggrprissnow(1,i,j))
+  endif
 endif
 if(imbudget==3 .and. idust>=1) then
-  CALL ae1kmic (1,m1,micro%accdust1cldr(1,i,j),xdust1cldrt(1))
-  CALL ae1kmic (1,m1,micro%accdust2cldr(1,i,j),xdust2cldrt(1))
-  CALL ae1kmic (1,m1,micro%accdust1drzr(1,i,j),xdust1drzrt(1))
-  CALL ae1kmic (1,m1,micro%accdust2drzr(1,i,j),xdust2drzrt(1))
+  CALL store_budget_rate (m1,dtlt,xdust1cldr,micro%dust1cldrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xdust2cldr,micro%dust2cldrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xdust1drzr,micro%dust1drzrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xdust2drzr,micro%dust2drzrr(1,i,j))
+  if(imbudgetacc==1) then
+    CALL add_to_budget_total (m1,xdust1cldr,micro%accdust1cldr(1,i,j))
+    CALL add_to_budget_total (m1,xdust2cldr,micro%accdust2cldr(1,i,j))
+    CALL add_to_budget_total (m1,xdust1drzr,micro%accdust1drzr(1,i,j))
+    CALL add_to_budget_total (m1,xdust2drzr,micro%accdust2drzr(1,i,j))
+  endif
 endif
 if(imbudget==3 .and. iccnlev>=2) then
-  CALL ae1kmic (1,m1,micro%accregen1cldr(1,i,j),xregen1cldrt(1))
-  CALL ae1kmic (1,m1,micro%accregen2cldr(1,i,j),xregen2cldrt(1))
-  CALL ae1kmic (1,m1,micro%accregen1drzr(1,i,j),xregen1drzrt(1))
-  CALL ae1kmic (1,m1,micro%accregen2drzr(1,i,j),xregen2drzrt(1))
-endif
-
-!Set Micro Budgets bottom level with first level above ground
-if(imbudget>=1) then
-  micro%latheatvap(1,i,j)  = micro%latheatvap(2,i,j)
-  micro%latheatfrz(1,i,j)  = micro%latheatfrz(2,i,j)
-  micro%accnuccldr(1,i,j)    = micro%accnuccldr(2,i,j)
-  micro%acccld2rain(1,i,j)   = micro%acccld2rain(2,i,j)
-  micro%accice2rain(1,i,j)   = micro%accice2rain(2,i,j)
-  micro%accnucicer(1,i,j)    = micro%accnucicer(2,i,j)
-  micro%accvapliq(1,i,j)     = micro%accvapliq(2,i,j)
-  micro%accvapice(1,i,j)     = micro%accvapice(2,i,j)
-  micro%accevapliq(1,i,j)    = micro%accevapliq(2,i,j)
-  micro%accevapice(1,i,j)    = micro%accevapice(2,i,j)
-  micro%accfreezing(1,i,j)   = micro%accfreezing(2,i,j)
-  micro%accmelting(1,i,j)    = micro%accmelting(2,i,j)
-  micro%accmeltice(1,i,j)    = micro%accmeltice(2,i,j)
-  micro%accrimecld(1,i,j)    = micro%accrimecld(2,i,j)
-  micro%accrain2ice(1,i,j)   = micro%accrain2ice(2,i,j)
-  micro%accaggregate(1,i,j)  = micro%accaggregate(2,i,j)
-  micro%acclatheatvap(1,i,j) = micro%acclatheatvap(2,i,j)
-  micro%acclatheatfrz(1,i,j) = micro%acclatheatfrz(2,i,j)
-endif
-if(imbudget>=2) then
-  micro%accinuchomr(1,i,j)     = micro%accinuchomr(2,i,j)
-  micro%accinuccontr(1,i,j)    = micro%accinuccontr(2,i,j)
-  micro%accinucifnr(1,i,j)     = micro%accinucifnr(2,i,j)
-  micro%accinuchazr(1,i,j)     = micro%accinuchazr(2,i,j)
-  micro%accvapcld(1,i,j)       = micro%accvapcld(2,i,j)
-  micro%accvaprain(1,i,j)      = micro%accvaprain(2,i,j)
-  micro%accvappris(1,i,j)      = micro%accvappris(2,i,j)
-  micro%accvapsnow(1,i,j)      = micro%accvapsnow(2,i,j)
-  micro%accvapaggr(1,i,j)      = micro%accvapaggr(2,i,j)
-  micro%accvapgrau(1,i,j)      = micro%accvapgrau(2,i,j)
-  micro%accvaphail(1,i,j)      = micro%accvaphail(2,i,j)
-  micro%accvapdriz(1,i,j)      = micro%accvapdriz(2,i,j)
-  micro%accevapcld(1,i,j)      = micro%accevapcld(2,i,j)
-  micro%accevaprain(1,i,j)     = micro%accevaprain(2,i,j)
-  micro%accevappris(1,i,j)     = micro%accevappris(2,i,j)
-  micro%accevapsnow(1,i,j)     = micro%accevapsnow(2,i,j)
-  micro%accevapaggr(1,i,j)     = micro%accevapaggr(2,i,j)
-  micro%accevapgrau(1,i,j)     = micro%accevapgrau(2,i,j)
-  micro%accevaphail(1,i,j)     = micro%accevaphail(2,i,j)
-  micro%accevapdriz(1,i,j)     = micro%accevapdriz(2,i,j)
-  micro%accmeltpris(1,i,j)     = micro%accmeltpris(2,i,j)
-  micro%accmeltsnow(1,i,j)     = micro%accmeltsnow(2,i,j)
-  micro%accmeltaggr(1,i,j)     = micro%accmeltaggr(2,i,j)
-  micro%accmeltgrau(1,i,j)     = micro%accmeltgrau(2,i,j)
-  micro%accmelthail(1,i,j)     = micro%accmelthail(2,i,j)
-  micro%accrimecldsnow(1,i,j)  = micro%accrimecldsnow(2,i,j)
-  micro%accrimecldaggr(1,i,j)  = micro%accrimecldaggr(2,i,j)
-  micro%accrimecldgrau(1,i,j)  = micro%accrimecldgrau(2,i,j)
-  micro%accrimecldhail(1,i,j)  = micro%accrimecldhail(2,i,j)
-  micro%accrain2pr(1,i,j)      = micro%accrain2pr(2,i,j)
-  micro%accrain2sn(1,i,j)      = micro%accrain2sn(2,i,j)
-  micro%accrain2ag(1,i,j)      = micro%accrain2ag(2,i,j)
-  micro%accrain2gr(1,i,j)      = micro%accrain2gr(2,i,j)
-  micro%accrain2ha(1,i,j)      = micro%accrain2ha(2,i,j)
-  micro%accaggrselfpris(1,i,j) = micro%accaggrselfpris(2,i,j)
-  micro%accaggrselfsnow(1,i,j) = micro%accaggrselfsnow(2,i,j)
-  micro%accaggrprissnow(1,i,j) = micro%accaggrprissnow(2,i,j)
-endif
-if(imbudget==3 .and. idust>=1) then
-  micro%accdust1cldr(1,i,j)     = micro%accdust1cldr(2,i,j)
-  micro%accdust2cldr(1,i,j)     = micro%accdust2cldr(2,i,j)
-  micro%accdust1drzr(1,i,j)     = micro%accdust1drzr(2,i,j)
-  micro%accdust2drzr(1,i,j)     = micro%accdust2drzr(2,i,j)
-endif
-if(imbudget==3 .and. iccnlev>=2) then
-  micro%accregen1cldr(1,i,j)    = micro%accregen1cldr(2,i,j)
-  micro%accregen2cldr(1,i,j)    = micro%accregen2cldr(2,i,j)
-  micro%accregen1drzr(1,i,j)    = micro%accregen1drzr(2,i,j)
-  micro%accregen2drzr(1,i,j)    = micro%accregen2drzr(2,i,j)
+  CALL store_budget_rate (m1,dtlt,xregen1cldr,micro%regen1cldrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xregen2cldr,micro%regen2cldrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xregen1drzr,micro%regen1drzrr(1,i,j))
+  CALL store_budget_rate (m1,dtlt,xregen2drzr,micro%regen2drzrr(1,i,j))
+  if(imbudgetacc==1) then
+    CALL add_to_budget_total (m1,xregen1cldr,micro%accregen1cldr(1,i,j))
+    CALL add_to_budget_total (m1,xregen2cldr,micro%accregen2cldr(1,i,j))
+    CALL add_to_budget_total (m1,xregen1drzr,micro%accregen1drzr(1,i,j))
+    CALL add_to_budget_total (m1,xregen2drzr,micro%accregen2drzr(1,i,j))
+  endif
 endif
 
 return
 END SUBROUTINE copyback
+
+!##############################################################################
+Subroutine store_budget_rate (m1,dtlt,step_amount,budget_rate)
+
+! Store one column of a microphysics budget process as an instantaneous rate.
+!
+! step_amount is the per-column work vector x<name>. range_check() zeroes it
+! at the start of every model step and the microphysics adds each process
+! increment to it, so it holds the amount added during this single step.
+! Dividing by the step length dtlt gives the rate per second over the step,
+! which is the "instantaneous" rate written to the output.
+!
+! Level 1 lies below the ground surface. It takes the value of level 2, the
+! first level above ground, as the hydrometeor fields do.
+
+implicit none
+
+integer :: m1,k
+real :: dtlt
+real, dimension(m1) :: step_amount,budget_rate
+
+! Convert this step's amount into a rate per second
+do k = 1,m1
+   budget_rate(k) = step_amount(k) / dtlt
+enddo
+
+! Copy the first level above ground into the below-ground level
+budget_rate(1) = budget_rate(2)
+
+return
+END SUBROUTINE store_budget_rate
+
+!##############################################################################
+Subroutine add_to_budget_total (m1,step_amount,budget_total)
+
+! Add one column of a microphysics budget process to its run total.
+!
+! The run total (acc<name>, allocated only when IMBUDGETACC=1) starts at zero
+! and is never reset, in the same way ACCPR accumulates precipitation. Its
+! value therefore does not depend on how often output files are written.
+!
+! Level 1 lies below the ground surface. It takes the value of level 2, the
+! first level above ground, as the hydrometeor fields do.
+
+implicit none
+
+integer :: m1,k
+real, dimension(m1) :: step_amount,budget_total
+
+! Add this step's amount to the run total
+do k = 1,m1
+   budget_total(k) = budget_total(k) + step_amount(k)
+enddo
+
+! Copy the first level above ground into the below-ground level
+budget_total(1) = budget_total(2)
+
+return
+END SUBROUTINE add_to_budget_total
 
 !##############################################################################
 Subroutine calc_lhr_vap (k1,k2)
@@ -983,7 +1040,6 @@ if(imbudget>=1)then
             latheat = alvl * cpi * (rx(k,lcat)-rx_lhr(k,lcat))
         endif
         xlatheatvap(k) = xlatheatvap(k) + latheat
-        xlatheatvapt(k) = xlatheatvapt(k) + latheat
       endif
 
       ! Vapor to ice
@@ -994,7 +1050,6 @@ if(imbudget>=1)then
             latheat = alvi * cpi *(rx(k,lcat)-rx_lhr(k,lcat)) 
         endif
         xlatheatvap(k) = xlatheatvap(k) + latheat
-        xlatheatvapt(k) = xlatheatvapt(k) + latheat
       endif
 
       ! Account for fractional liquid in graupel and hail categories
@@ -1013,7 +1068,6 @@ if(imbudget>=1)then
               (rx(k,lcat)*(1.-fracliq1)-rx_lhr(k,lcat)*(1.-fracliq1))
         endif
         xlatheatvap(k) = xlatheatvap(k) + latheat 
-        xlatheatvapt(k) = xlatheatvapt(k) + latheat
 
         ! Now calculate melting
         if (lhrtheta) then
@@ -1024,14 +1078,13 @@ if(imbudget>=1)then
               (rx(k,lcat)*(1.-fracliq2)-rx(k,lcat)*(1.-fracliq1))
         endif
         xlatheatfrz(k) = xlatheatfrz(k) + latheat
-        xlatheatfrzt(k) = xlatheatfrzt(k) + latheat
 
         ! Compute total freezing or melting and enter as positive values 
         rxchange = (rx(k,lcat)*(1.-fracliq2)-rx(k,lcat)*(1.-fracliq1))
         if (rxchange >= 0.0) then
-          xfreezingt(k) = xfreezingt(k) + rxchange
+          xfreezing(k) = xfreezing(k) + rxchange
         else
-          xmeltingt(k)  = xmeltingt(k)  - rxchange
+          xmelting(k)  = xmelting(k)  - rxchange
         endif
       endif
 
@@ -1099,16 +1152,14 @@ if(imbudget>=1)then
  do k=2,m1
    if (lhrtheta) then
     xlatheatfrz(k) = xlatheatfrz(k) + (alli/pitot(k))*(rice2(k)-rice1(k))
-    xlatheatfrzt(k) = xlatheatfrzt(k) + (alli/pitot(k))*(rice2(k)-rice1(k))
    else
     xlatheatfrz(k) = xlatheatfrz(k) +  alli * cpi * (rice2(k)-rice1(k))
-    xlatheatfrzt(k) = xlatheatfrzt(k) +  alli * cpi * (rice2(k)-rice1(k))
    endif
    ! Compute total freezing or melting and enter as positive values
    if (rice2(k)-rice1(k) >= 0.0) then
-     xfreezingt(k) = xfreezingt(k) + (rice2(k)-rice1(k))
+     xfreezing(k) = xfreezing(k) + (rice2(k)-rice1(k))
    else
-     xmeltingt(k)  = xmeltingt(k)  - (rice2(k)-rice1(k))
+     xmelting(k)  = xmelting(k)  - (rice2(k)-rice1(k))
    endif
  enddo
 
@@ -1145,10 +1196,8 @@ if(imbudget>=1)then
   do k=k1(1),k2(1)
     if (lhrtheta) then
       xlatheatvap(k) = xlatheatvap(k) + (alvl/pitot(k))*(rx(k,1)-rx_lhr(k,1))
-      xlatheatvapt(k) = xlatheatvapt(k) + (alvl/pitot(k))*(rx(k,1)-rx_lhr(k,1))
     else
       xlatheatvap(k) = xlatheatvap(k) +  alvl * cpi * (rx(k,1)-rx_lhr(k,1))
-      xlatheatvapt(k) = xlatheatvapt(k) +  alvl * cpi * (rx(k,1)-rx_lhr(k,1))
     endif
   enddo
  endif
@@ -1156,10 +1205,8 @@ if(imbudget>=1)then
   do k=k1(8),k2(8)
     if (lhrtheta) then
       xlatheatvap(k) = xlatheatvap(k) + (alvl/pitot(k))*(rx(k,8)-rx_lhr(k,8))
-      xlatheatvapt(k) = xlatheatvapt(k) + (alvl/pitot(k))*(rx(k,8)-rx_lhr(k,8))
     else
       xlatheatvap(k) = xlatheatvap(k) +  alvl * cpi * (rx(k,8)-rx_lhr(k,8))
-      xlatheatvapt(k) = xlatheatvapt(k) +  alvl * cpi * (rx(k,8)-rx_lhr(k,8))
     endif
   enddo
  endif
@@ -1204,10 +1251,8 @@ if(imbudget>=1)then
     do k=k1(1),k2(1) ! Loss of cloud1
       if (lhrtheta) then
         xlatheatvap(k) = xlatheatvap(k) - (alli/pitot(k))*(rx(k,1)-rx_lhr(k,1))
-        xlatheatvapt(k) = xlatheatvapt(k) - (alli/pitot(k))*(rx(k,1)-rx_lhr(k,1))
       else
         xlatheatvap(k) = xlatheatvap(k) - alli * cpi * (rx(k,1)-rx_lhr(k,1))
-        xlatheatvapt(k) = xlatheatvapt(k) - alli * cpi * (rx(k,1)-rx_lhr(k,1))
       endif
     enddo
   endif
@@ -1215,10 +1260,8 @@ if(imbudget>=1)then
     do k=k1(8),k2(8) ! Loss of cloud2
       if (lhrtheta) then
         xlatheatvap(k) = xlatheatvap(k) - (alli/pitot(k))*(rx(k,8)-rx_lhr(k,8))
-        xlatheatvapt(k) = xlatheatvapt(k) - (alli/pitot(k))*(rx(k,8)-rx_lhr(k,8))
       else
         xlatheatvap(k) = xlatheatvap(k) - alli * cpi * (rx(k,8)-rx_lhr(k,8))
-        xlatheatvapt(k) = xlatheatvapt(k) - alli * cpi * (rx(k,8)-rx_lhr(k,8))
       endif
     enddo
   endif
@@ -1234,10 +1277,8 @@ if(imbudget>=1)then
     ! Finally, compute change to theta due to vapor deposition...
     if (lhrtheta) then
       xlatheatvap(k) = xlatheatvap(k) + (alvi/pitot(k)) * vapdep(k)
-      xlatheatvapt(k) = xlatheatvapt(k) + (alvi/pitot(k)) * vapdep(k)
     else
       xlatheatvap(k) = xlatheatvap(k) +  alvi * cpi * vapdep(k)
-      xlatheatvapt(k) = xlatheatvapt(k) +  alvi * cpi * vapdep(k)
     endif
   enddo
 

@@ -316,8 +316,8 @@ if(level == 3) then
   if(jnmb(2)>=5) CALL iofil ('immerrp.txt',micro_g(ng)%immerrp(:,i,j),m1,wf,fln)
  endif
  if(imbudget>=1) then !18
-  CALL iofil ('latheatvap.txt' ,micro_g(ng)%latheatvap (:,i,j),m1,wf,fln)
-  CALL iofil ('latheatfrz.txt' ,micro_g(ng)%latheatfrz (:,i,j),m1,wf,fln)
+  CALL iofil ('latheatvapr.txt' ,micro_g(ng)%latheatvapr (:,i,j),m1,wf,fln)
+  CALL iofil ('latheatfrzr.txt' ,micro_g(ng)%latheatfrzr (:,i,j),m1,wf,fln)
   CALL iofil ('accnuccldr.txt'   ,micro_g(ng)%accnuccldr   (:,i,j),m1,wf,fln)
   CALL iofil ('acccld2rain.txt'  ,micro_g(ng)%acccld2rain  (:,i,j),m1,wf,fln)
   CALL iofil ('accice2rain.txt'  ,micro_g(ng)%accice2rain  (:,i,j),m1,wf,fln)

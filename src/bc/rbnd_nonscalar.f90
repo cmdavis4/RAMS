@@ -299,73 +299,8 @@ if (iand(ibcon,1) .ne. 0) then
    if(iaggr  >= 1) micro%pcpva(k,1,j) = 0.
    if(igraup >= 1) micro%pcpvg(k,1,j) = 0.
    if(ihail  >= 1) micro%pcpvh(k,1,j) = 0.
-   if(level==3) then
-    if(imbudget>=1) then
-     micro%latheatvap(k,1,j) = 0.
-     micro%latheatfrz(k,1,j) = 0.
-     micro%accnuccldr(k,1,j) = 0.
-     micro%acccld2rain(k,1,j) = 0.
-     micro%accice2rain(k,1,j) = 0.
-     micro%accnucicer(k,1,j) = 0.
-     micro%accvapliq(k,1,j) = 0.
-     micro%accvapice(k,1,j) = 0.
-     micro%accevapliq(k,1,j) = 0.
-     micro%accevapice(k,1,j) = 0.
-     micro%accfreezing(k,1,j) = 0.
-     micro%accmelting(k,1,j) = 0.
-     micro%accmeltice(k,1,j) = 0.
-     micro%accrimecld(k,1,j) = 0.
-     micro%accrain2ice(k,1,j) = 0.
-     micro%accaggregate(k,1,j) = 0.
-     micro%acclatheatvap(k,1,j) = 0.
-     micro%acclatheatfrz(k,1,j) = 0.
-    endif
-    if(imbudget>=2) then
-     micro%accinuchomr(k,1,j) = 0.
-     micro%accinuccontr(k,1,j) = 0.
-     micro%accinucifnr(k,1,j) = 0.
-     micro%accinuchazr(k,1,j) = 0.
-     micro%accvapcld(k,1,j) = 0.
-     micro%accvaprain(k,1,j) = 0.
-     micro%accvappris(k,1,j) = 0.
-     micro%accvapsnow(k,1,j) = 0.
-     micro%accvapaggr(k,1,j) = 0.
-     micro%accvapgrau(k,1,j) = 0.
-     micro%accvaphail(k,1,j) = 0.
-     micro%accvapdriz(k,1,j) = 0.
-     micro%accevapcld(k,1,j) = 0.
-     micro%accevaprain(k,1,j) = 0.
-     micro%accevappris(k,1,j) = 0.
-     micro%accevapsnow(k,1,j) = 0.
-     micro%accevapaggr(k,1,j) = 0.
-     micro%accevapgrau(k,1,j) = 0.
-     micro%accevaphail(k,1,j) = 0.
-     micro%accevapdriz(k,1,j) = 0.
-     micro%accmeltpris(k,1,j) = 0.
-     micro%accmeltsnow(k,1,j) = 0.
-     micro%accmeltaggr(k,1,j) = 0.
-     micro%accmeltgrau(k,1,j) = 0.
-     micro%accmelthail(k,1,j) = 0.
-     micro%accrimecldsnow(k,1,j) = 0.
-     micro%accrimecldaggr(k,1,j) = 0.
-     micro%accrimecldgrau(k,1,j) = 0.
-     micro%accrimecldhail(k,1,j) = 0.
-     micro%accrain2pr(k,1,j) = 0.
-     micro%accrain2sn(k,1,j) = 0.
-     micro%accrain2ag(k,1,j) = 0.
-     micro%accrain2gr(k,1,j) = 0.
-     micro%accrain2ha(k,1,j) = 0.
-     micro%accaggrselfpris(k,1,j) = 0.
-     micro%accaggrselfsnow(k,1,j) = 0.
-     micro%accaggrprissnow(k,1,j) = 0.
-    endif
-    if(imbudget==3 .and. idust>=1) then
-     micro%accdust1cldr(k,1,j) = 0.
-     micro%accdust2cldr(k,1,j) = 0.
-     micro%accdust1drzr(k,1,j) = 0.
-     micro%accdust2drzr(k,1,j) = 0.
-    endif
-   endif
+   if(level==3 .and. imbudget>=1) &
+      CALL zero_micro_budget_point (micro,k,1,j)
   enddo
   if(level==3 .and. iccnlev>=2)then
    micro%accpaero(1,j) = 0.
@@ -399,73 +334,8 @@ if (iand(ibcon,2) .ne. 0) then
    if(iaggr  >= 1) micro%pcpva(k,m2,j) = 0.
    if(igraup >= 1) micro%pcpvg(k,m2,j) = 0.
    if(ihail  >= 1) micro%pcpvh(k,m2,j) = 0.
-   if(level==3) then
-    if(imbudget>=1) then
-     micro%latheatvap(k,m2,j) = 0.
-     micro%latheatfrz(k,m2,j) = 0.
-     micro%accnuccldr(k,m2,j) = 0.
-     micro%acccld2rain(k,m2,j) = 0.
-     micro%accice2rain(k,m2,j) = 0.
-     micro%accnucicer(k,m2,j) = 0.
-     micro%accvapliq(k,m2,j) = 0.
-     micro%accvapice(k,m2,j) = 0.
-     micro%accevapliq(k,m2,j) = 0.
-     micro%accevapice(k,m2,j) = 0.
-     micro%accfreezing(k,m2,j) = 0.
-     micro%accmelting(k,m2,j) = 0.
-     micro%accmeltice(k,m2,j) = 0.
-     micro%accrimecld(k,m2,j) = 0.
-     micro%accrain2ice(k,m2,j) = 0.
-     micro%accaggregate(k,m2,j) = 0.
-     micro%acclatheatvap(k,m2,j) = 0.
-     micro%acclatheatfrz(k,m2,j) = 0.
-    endif
-    if(imbudget>=2) then
-     micro%accinuchomr(k,m2,j) = 0.
-     micro%accinuccontr(k,m2,j) = 0.
-     micro%accinucifnr(k,m2,j) = 0.
-     micro%accinuchazr(k,m2,j) = 0.
-     micro%accvapcld(k,m2,j) = 0.
-     micro%accvaprain(k,m2,j) = 0.
-     micro%accvappris(k,m2,j) = 0.
-     micro%accvapsnow(k,m2,j) = 0.
-     micro%accvapaggr(k,m2,j) = 0.
-     micro%accvapgrau(k,m2,j) = 0.
-     micro%accvaphail(k,m2,j) = 0.
-     micro%accvapdriz(k,m2,j) = 0.
-     micro%accevapcld(k,m2,j) = 0.
-     micro%accevaprain(k,m2,j) = 0.
-     micro%accevappris(k,m2,j) = 0.
-     micro%accevapsnow(k,m2,j) = 0.
-     micro%accevapaggr(k,m2,j) = 0.
-     micro%accevapgrau(k,m2,j) = 0.
-     micro%accevaphail(k,m2,j) = 0.
-     micro%accevapdriz(k,m2,j) = 0.
-     micro%accmeltpris(k,m2,j) = 0.
-     micro%accmeltsnow(k,m2,j) = 0.
-     micro%accmeltaggr(k,m2,j) = 0.
-     micro%accmeltgrau(k,m2,j) = 0.
-     micro%accmelthail(k,m2,j) = 0.
-     micro%accrimecldsnow(k,m2,j) = 0.
-     micro%accrimecldaggr(k,m2,j) = 0.
-     micro%accrimecldgrau(k,m2,j) = 0.
-     micro%accrimecldhail(k,m2,j) = 0.
-     micro%accrain2pr(k,m2,j) = 0.
-     micro%accrain2sn(k,m2,j) = 0.
-     micro%accrain2ag(k,m2,j) = 0.
-     micro%accrain2gr(k,m2,j) = 0.
-     micro%accrain2ha(k,m2,j) = 0.
-     micro%accaggrselfpris(k,m2,j) = 0.
-     micro%accaggrselfsnow(k,m2,j) = 0.
-     micro%accaggrprissnow(k,m2,j) = 0.
-    endif
-    if(imbudget==3 .and. idust>=1) then
-     micro%accdust1cldr(k,m2,j) = 0.
-     micro%accdust2cldr(k,m2,j) = 0.
-     micro%accdust1drzr(k,m2,j) = 0.
-     micro%accdust2drzr(k,m2,j) = 0.
-    endif
-   endif
+   if(level==3 .and. imbudget>=1) &
+      CALL zero_micro_budget_point (micro,k,m2,j)
   enddo
   if(level==3 .and. iccnlev>=2)then
    micro%accpaero(m2,j) = 0.
@@ -499,73 +369,8 @@ if ((iand(ibcon,4) .ne. 0) .and. (jdim .eq. 1)) then
      if(iaggr  >= 1) micro%pcpva(k,i,1) = 0.
      if(igraup >= 1) micro%pcpvg(k,i,1) = 0.
      if(ihail  >= 1) micro%pcpvh(k,i,1) = 0.
-     if(level==3) then
-      if(imbudget>=1) then
-       micro%latheatvap(k,i,1) = 0.
-       micro%latheatfrz(k,i,1) = 0.
-       micro%accnuccldr(k,i,1) = 0.
-       micro%acccld2rain(k,i,1) = 0.
-       micro%accice2rain(k,i,1) = 0.
-       micro%accnucicer(k,i,1) = 0.
-       micro%accvapliq(k,i,1) = 0.
-       micro%accvapice(k,i,1) = 0.
-       micro%accevapliq(k,i,1) = 0.
-       micro%accevapice(k,i,1) = 0.
-       micro%accfreezing(k,i,1) = 0.
-       micro%accmelting(k,i,1) = 0.
-       micro%accmeltice(k,i,1) = 0.
-       micro%accrimecld(k,i,1) = 0.
-       micro%accrain2ice(k,i,1) = 0.
-       micro%accaggregate(k,i,1) = 0.
-       micro%acclatheatvap(k,i,1) = 0.
-       micro%acclatheatfrz(k,i,1) = 0.
-      endif
-      if(imbudget>=2) then
-       micro%accinuchomr(k,i,1) = 0.
-       micro%accinuccontr(k,i,1) = 0.
-       micro%accinucifnr(k,i,1) = 0.
-       micro%accinuchazr(k,i,1) = 0.
-       micro%accvapcld(k,i,1) = 0.
-       micro%accvaprain(k,i,1) = 0.
-       micro%accvappris(k,i,1) = 0.
-       micro%accvapsnow(k,i,1) = 0.
-       micro%accvapaggr(k,i,1) = 0.
-       micro%accvapgrau(k,i,1) = 0.
-       micro%accvaphail(k,i,1) = 0.
-       micro%accvapdriz(k,i,1) = 0.
-       micro%accevapcld(k,i,1) = 0.
-       micro%accevaprain(k,i,1) = 0.
-       micro%accevappris(k,i,1) = 0.
-       micro%accevapsnow(k,i,1) = 0.
-       micro%accevapaggr(k,i,1) = 0.
-       micro%accevapgrau(k,i,1) = 0.
-       micro%accevaphail(k,i,1) = 0.
-       micro%accevapdriz(k,i,1) = 0.
-       micro%accmeltpris(k,i,1) = 0.
-       micro%accmeltsnow(k,i,1) = 0.
-       micro%accmeltaggr(k,i,1) = 0.
-       micro%accmeltgrau(k,i,1) = 0.
-       micro%accmelthail(k,i,1) = 0.
-       micro%accrimecldsnow(k,i,1) = 0.
-       micro%accrimecldaggr(k,i,1) = 0.
-       micro%accrimecldgrau(k,i,1) = 0.
-       micro%accrimecldhail(k,i,1) = 0.
-       micro%accrain2pr(k,i,1) = 0.
-       micro%accrain2sn(k,i,1) = 0.
-       micro%accrain2ag(k,i,1) = 0.
-       micro%accrain2gr(k,i,1) = 0.
-       micro%accrain2ha(k,i,1) = 0.
-       micro%accaggrselfpris(k,i,1) = 0.
-       micro%accaggrselfsnow(k,i,1) = 0.
-       micro%accaggrprissnow(k,i,1) = 0.
-      endif
-      if(imbudget==3 .and. idust>=1) then
-       micro%accdust1cldr(k,i,1) = 0.
-       micro%accdust2cldr(k,i,1) = 0.
-       micro%accdust1drzr(k,i,1) = 0.
-       micro%accdust2drzr(k,i,1) = 0.
-      endif
-     endif
+     if(level==3 .and. imbudget>=1) &
+        CALL zero_micro_budget_point (micro,k,i,1)
     enddo
     if(level==3 .and. iccnlev>=2)then
      micro%accpaero(i,1) = 0.
@@ -599,73 +404,8 @@ if ((iand(ibcon,8) .ne. 0) .and. (jdim .eq. 1)) then
      if(iaggr  >= 1) micro%pcpva(k,i,m3) = 0.
      if(igraup >= 1) micro%pcpvg(k,i,m3) = 0.
      if(ihail  >= 1) micro%pcpvh(k,i,m3) = 0.
-     if(level==3) then
-      if(imbudget>=1) then
-       micro%latheatvap(k,i,m3) = 0.
-       micro%latheatfrz(k,i,m3) = 0.
-       micro%accnuccldr(k,i,m3) = 0.
-       micro%acccld2rain(k,i,m3) = 0.
-       micro%accice2rain(k,i,m3) = 0.
-       micro%accnucicer(k,i,m3) = 0.
-       micro%accvapliq(k,i,m3) = 0.
-       micro%accvapice(k,i,m3) = 0.
-       micro%accevapliq(k,i,m3) = 0.
-       micro%accevapice(k,i,m3) = 0.
-       micro%accfreezing(k,i,m3) = 0.
-       micro%accmelting(k,i,m3) = 0.
-       micro%accmeltice(k,i,m3) = 0.
-       micro%accrimecld(k,i,m3) = 0.
-       micro%accrain2ice(k,i,m3) = 0.
-       micro%accaggregate(k,i,m3) = 0.
-       micro%acclatheatvap(k,i,m3) = 0.
-       micro%acclatheatfrz(k,i,m3) = 0.
-      endif
-      if(imbudget>=2) then
-       micro%accinuchomr(k,i,m3) = 0.
-       micro%accinuccontr(k,i,m3) = 0.
-       micro%accinucifnr(k,i,m3) = 0.
-       micro%accinuchazr(k,i,m3) = 0.
-       micro%accvapcld(k,i,m3) = 0.
-       micro%accvaprain(k,i,m3) = 0.
-       micro%accvappris(k,i,m3) = 0.
-       micro%accvapsnow(k,i,m3) = 0.
-       micro%accvapaggr(k,i,m3) = 0.
-       micro%accvapgrau(k,i,m3) = 0.
-       micro%accvaphail(k,i,m3) = 0.
-       micro%accvapdriz(k,i,m3) = 0.
-       micro%accevapcld(k,i,m3) = 0.
-       micro%accevaprain(k,i,m3) = 0.
-       micro%accevappris(k,i,m3) = 0.
-       micro%accevapsnow(k,i,m3) = 0.
-       micro%accevapaggr(k,i,m3) = 0.
-       micro%accevapgrau(k,i,m3) = 0.
-       micro%accevaphail(k,i,m3) = 0.
-       micro%accevapdriz(k,i,m3) = 0.
-       micro%accmeltpris(k,i,m3) = 0.
-       micro%accmeltsnow(k,i,m3) = 0.
-       micro%accmeltaggr(k,i,m3) = 0.
-       micro%accmeltgrau(k,i,m3) = 0.
-       micro%accmelthail(k,i,m3) = 0.
-       micro%accrimecldsnow(k,i,m3) = 0.
-       micro%accrimecldaggr(k,i,m3) = 0.
-       micro%accrimecldgrau(k,i,m3) = 0.
-       micro%accrimecldhail(k,i,m3) = 0.
-       micro%accrain2pr(k,i,m3) = 0.
-       micro%accrain2sn(k,i,m3) = 0.
-       micro%accrain2ag(k,i,m3) = 0.
-       micro%accrain2gr(k,i,m3) = 0.
-       micro%accrain2ha(k,i,m3) = 0.
-       micro%accaggrselfpris(k,i,m3) = 0.
-       micro%accaggrselfsnow(k,i,m3) = 0.
-       micro%accaggrprissnow(k,i,m3) = 0.
-      endif
-      if(imbudget==3 .and. idust>=1) then
-       micro%accdust1cldr(k,i,m3) = 0.
-       micro%accdust2cldr(k,i,m3) = 0.
-       micro%accdust1drzr(k,i,m3) = 0.
-       micro%accdust2drzr(k,i,m3) = 0.
-      endif
-     endif
+     if(level==3 .and. imbudget>=1) &
+        CALL zero_micro_budget_point (micro,k,i,m3)
     enddo
     if(level==3 .and. iccnlev>=2)then
      micro%accpaero(i,m3) = 0.
@@ -690,6 +430,147 @@ endif
 
 return
 END SUBROUTINE micro_bcond
+
+!##############################################################################
+Subroutine zero_micro_budget_point (micro,k,i,j)
+
+! Zero every allocated microphysics budget array (rates and run totals) at
+! one grid point. micro_bcond() calls it for the lateral-boundary columns,
+! which the microphysics never visits. Checking allocated() keeps it correct
+! for any combination of IMBUDGET, IMBUDGETACC, IDUST and ICCNLEV.
+
+use mem_micro
+
+implicit none
+
+type (micro_vars) :: micro
+integer :: k,i,j
+
+if (allocated(micro%latheatvapr)) micro%latheatvapr(k,i,j) = 0.
+if (allocated(micro%acclatheatvap)) micro%acclatheatvap(k,i,j) = 0.
+if (allocated(micro%latheatfrzr)) micro%latheatfrzr(k,i,j) = 0.
+if (allocated(micro%acclatheatfrz)) micro%acclatheatfrz(k,i,j) = 0.
+if (allocated(micro%nuccldrr)) micro%nuccldrr(k,i,j) = 0.
+if (allocated(micro%accnuccldr)) micro%accnuccldr(k,i,j) = 0.
+if (allocated(micro%cld2rainr)) micro%cld2rainr(k,i,j) = 0.
+if (allocated(micro%acccld2rain)) micro%acccld2rain(k,i,j) = 0.
+if (allocated(micro%ice2rainr)) micro%ice2rainr(k,i,j) = 0.
+if (allocated(micro%accice2rain)) micro%accice2rain(k,i,j) = 0.
+if (allocated(micro%nucicerr)) micro%nucicerr(k,i,j) = 0.
+if (allocated(micro%accnucicer)) micro%accnucicer(k,i,j) = 0.
+if (allocated(micro%vapliqr)) micro%vapliqr(k,i,j) = 0.
+if (allocated(micro%accvapliq)) micro%accvapliq(k,i,j) = 0.
+if (allocated(micro%vapicer)) micro%vapicer(k,i,j) = 0.
+if (allocated(micro%accvapice)) micro%accvapice(k,i,j) = 0.
+if (allocated(micro%evapliqr)) micro%evapliqr(k,i,j) = 0.
+if (allocated(micro%accevapliq)) micro%accevapliq(k,i,j) = 0.
+if (allocated(micro%evapicer)) micro%evapicer(k,i,j) = 0.
+if (allocated(micro%accevapice)) micro%accevapice(k,i,j) = 0.
+if (allocated(micro%freezingr)) micro%freezingr(k,i,j) = 0.
+if (allocated(micro%accfreezing)) micro%accfreezing(k,i,j) = 0.
+if (allocated(micro%meltingr)) micro%meltingr(k,i,j) = 0.
+if (allocated(micro%accmelting)) micro%accmelting(k,i,j) = 0.
+if (allocated(micro%melticer)) micro%melticer(k,i,j) = 0.
+if (allocated(micro%accmeltice)) micro%accmeltice(k,i,j) = 0.
+if (allocated(micro%rimecldr)) micro%rimecldr(k,i,j) = 0.
+if (allocated(micro%accrimecld)) micro%accrimecld(k,i,j) = 0.
+if (allocated(micro%rain2icer)) micro%rain2icer(k,i,j) = 0.
+if (allocated(micro%accrain2ice)) micro%accrain2ice(k,i,j) = 0.
+if (allocated(micro%aggregater)) micro%aggregater(k,i,j) = 0.
+if (allocated(micro%accaggregate)) micro%accaggregate(k,i,j) = 0.
+if (allocated(micro%inuchomrr)) micro%inuchomrr(k,i,j) = 0.
+if (allocated(micro%accinuchomr)) micro%accinuchomr(k,i,j) = 0.
+if (allocated(micro%inuccontrr)) micro%inuccontrr(k,i,j) = 0.
+if (allocated(micro%accinuccontr)) micro%accinuccontr(k,i,j) = 0.
+if (allocated(micro%inucifnrr)) micro%inucifnrr(k,i,j) = 0.
+if (allocated(micro%accinucifnr)) micro%accinucifnr(k,i,j) = 0.
+if (allocated(micro%inuchazrr)) micro%inuchazrr(k,i,j) = 0.
+if (allocated(micro%accinuchazr)) micro%accinuchazr(k,i,j) = 0.
+if (allocated(micro%vapcldr)) micro%vapcldr(k,i,j) = 0.
+if (allocated(micro%accvapcld)) micro%accvapcld(k,i,j) = 0.
+if (allocated(micro%vaprainr)) micro%vaprainr(k,i,j) = 0.
+if (allocated(micro%accvaprain)) micro%accvaprain(k,i,j) = 0.
+if (allocated(micro%vapprisr)) micro%vapprisr(k,i,j) = 0.
+if (allocated(micro%accvappris)) micro%accvappris(k,i,j) = 0.
+if (allocated(micro%vapsnowr)) micro%vapsnowr(k,i,j) = 0.
+if (allocated(micro%accvapsnow)) micro%accvapsnow(k,i,j) = 0.
+if (allocated(micro%vapaggrr)) micro%vapaggrr(k,i,j) = 0.
+if (allocated(micro%accvapaggr)) micro%accvapaggr(k,i,j) = 0.
+if (allocated(micro%vapgraur)) micro%vapgraur(k,i,j) = 0.
+if (allocated(micro%accvapgrau)) micro%accvapgrau(k,i,j) = 0.
+if (allocated(micro%vaphailr)) micro%vaphailr(k,i,j) = 0.
+if (allocated(micro%accvaphail)) micro%accvaphail(k,i,j) = 0.
+if (allocated(micro%vapdrizr)) micro%vapdrizr(k,i,j) = 0.
+if (allocated(micro%accvapdriz)) micro%accvapdriz(k,i,j) = 0.
+if (allocated(micro%evapcldr)) micro%evapcldr(k,i,j) = 0.
+if (allocated(micro%accevapcld)) micro%accevapcld(k,i,j) = 0.
+if (allocated(micro%evaprainr)) micro%evaprainr(k,i,j) = 0.
+if (allocated(micro%accevaprain)) micro%accevaprain(k,i,j) = 0.
+if (allocated(micro%evapprisr)) micro%evapprisr(k,i,j) = 0.
+if (allocated(micro%accevappris)) micro%accevappris(k,i,j) = 0.
+if (allocated(micro%evapsnowr)) micro%evapsnowr(k,i,j) = 0.
+if (allocated(micro%accevapsnow)) micro%accevapsnow(k,i,j) = 0.
+if (allocated(micro%evapaggrr)) micro%evapaggrr(k,i,j) = 0.
+if (allocated(micro%accevapaggr)) micro%accevapaggr(k,i,j) = 0.
+if (allocated(micro%evapgraur)) micro%evapgraur(k,i,j) = 0.
+if (allocated(micro%accevapgrau)) micro%accevapgrau(k,i,j) = 0.
+if (allocated(micro%evaphailr)) micro%evaphailr(k,i,j) = 0.
+if (allocated(micro%accevaphail)) micro%accevaphail(k,i,j) = 0.
+if (allocated(micro%evapdrizr)) micro%evapdrizr(k,i,j) = 0.
+if (allocated(micro%accevapdriz)) micro%accevapdriz(k,i,j) = 0.
+if (allocated(micro%meltprisr)) micro%meltprisr(k,i,j) = 0.
+if (allocated(micro%accmeltpris)) micro%accmeltpris(k,i,j) = 0.
+if (allocated(micro%meltsnowr)) micro%meltsnowr(k,i,j) = 0.
+if (allocated(micro%accmeltsnow)) micro%accmeltsnow(k,i,j) = 0.
+if (allocated(micro%meltaggrr)) micro%meltaggrr(k,i,j) = 0.
+if (allocated(micro%accmeltaggr)) micro%accmeltaggr(k,i,j) = 0.
+if (allocated(micro%meltgraur)) micro%meltgraur(k,i,j) = 0.
+if (allocated(micro%accmeltgrau)) micro%accmeltgrau(k,i,j) = 0.
+if (allocated(micro%melthailr)) micro%melthailr(k,i,j) = 0.
+if (allocated(micro%accmelthail)) micro%accmelthail(k,i,j) = 0.
+if (allocated(micro%rimecldsnowr)) micro%rimecldsnowr(k,i,j) = 0.
+if (allocated(micro%accrimecldsnow)) micro%accrimecldsnow(k,i,j) = 0.
+if (allocated(micro%rimecldaggrr)) micro%rimecldaggrr(k,i,j) = 0.
+if (allocated(micro%accrimecldaggr)) micro%accrimecldaggr(k,i,j) = 0.
+if (allocated(micro%rimecldgraur)) micro%rimecldgraur(k,i,j) = 0.
+if (allocated(micro%accrimecldgrau)) micro%accrimecldgrau(k,i,j) = 0.
+if (allocated(micro%rimecldhailr)) micro%rimecldhailr(k,i,j) = 0.
+if (allocated(micro%accrimecldhail)) micro%accrimecldhail(k,i,j) = 0.
+if (allocated(micro%rain2prr)) micro%rain2prr(k,i,j) = 0.
+if (allocated(micro%accrain2pr)) micro%accrain2pr(k,i,j) = 0.
+if (allocated(micro%rain2snr)) micro%rain2snr(k,i,j) = 0.
+if (allocated(micro%accrain2sn)) micro%accrain2sn(k,i,j) = 0.
+if (allocated(micro%rain2agr)) micro%rain2agr(k,i,j) = 0.
+if (allocated(micro%accrain2ag)) micro%accrain2ag(k,i,j) = 0.
+if (allocated(micro%rain2grr)) micro%rain2grr(k,i,j) = 0.
+if (allocated(micro%accrain2gr)) micro%accrain2gr(k,i,j) = 0.
+if (allocated(micro%rain2har)) micro%rain2har(k,i,j) = 0.
+if (allocated(micro%accrain2ha)) micro%accrain2ha(k,i,j) = 0.
+if (allocated(micro%aggrselfprisr)) micro%aggrselfprisr(k,i,j) = 0.
+if (allocated(micro%accaggrselfpris)) micro%accaggrselfpris(k,i,j) = 0.
+if (allocated(micro%aggrselfsnowr)) micro%aggrselfsnowr(k,i,j) = 0.
+if (allocated(micro%accaggrselfsnow)) micro%accaggrselfsnow(k,i,j) = 0.
+if (allocated(micro%aggrprissnowr)) micro%aggrprissnowr(k,i,j) = 0.
+if (allocated(micro%accaggrprissnow)) micro%accaggrprissnow(k,i,j) = 0.
+if (allocated(micro%dust1cldrr)) micro%dust1cldrr(k,i,j) = 0.
+if (allocated(micro%accdust1cldr)) micro%accdust1cldr(k,i,j) = 0.
+if (allocated(micro%dust2cldrr)) micro%dust2cldrr(k,i,j) = 0.
+if (allocated(micro%accdust2cldr)) micro%accdust2cldr(k,i,j) = 0.
+if (allocated(micro%dust1drzrr)) micro%dust1drzrr(k,i,j) = 0.
+if (allocated(micro%accdust1drzr)) micro%accdust1drzr(k,i,j) = 0.
+if (allocated(micro%dust2drzrr)) micro%dust2drzrr(k,i,j) = 0.
+if (allocated(micro%accdust2drzr)) micro%accdust2drzr(k,i,j) = 0.
+if (allocated(micro%regen1cldrr)) micro%regen1cldrr(k,i,j) = 0.
+if (allocated(micro%accregen1cldr)) micro%accregen1cldr(k,i,j) = 0.
+if (allocated(micro%regen2cldrr)) micro%regen2cldrr(k,i,j) = 0.
+if (allocated(micro%accregen2cldr)) micro%accregen2cldr(k,i,j) = 0.
+if (allocated(micro%regen1drzrr)) micro%regen1drzrr(k,i,j) = 0.
+if (allocated(micro%accregen1drzr)) micro%accregen1drzr(k,i,j) = 0.
+if (allocated(micro%regen2drzrr)) micro%regen2drzrr(k,i,j) = 0.
+if (allocated(micro%accregen2drzr)) micro%accregen2drzr(k,i,j) = 0.
+
+return
+END SUBROUTINE zero_micro_budget_point
 
 !##############################################################################
 Subroutine leaf_bcond (m2,m3,mzg,mzs,npat,leaf,ibcon)

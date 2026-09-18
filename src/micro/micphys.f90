@@ -103,24 +103,24 @@ real, dimension(ndccr,nrrcr,ndrcr,4) :: r1tabci,c1tabci,r2tabci,c2tabci &
 
 !******Variables Needed for COMPUTING BUDGETS ******************************
 !For imbudget>=1
-real, dimension(nzpmax) :: xlatheatvap,xlatheatfrz,xnuccldrt,xcld2raint &
-,xice2raint,xnucicert,xvapliqt,xvapicet,xevapliqt,xevapicet &
-,xmelticet,xrimecldt,xaggregatet,xfreezingt,xmeltingt &
-,xrain2icet,xlatheatvapt,xlatheatfrzt
+real, dimension(nzpmax) :: xlatheatvap,xlatheatfrz,xnuccldr,xcld2rain &
+,xice2rain,xnucicer,xvapliq,xvapice,xevapliq,xevapice &
+,xmeltice,xrimecld,xaggregate,xfreezing,xmelting &
+,xrain2ice
 
 !For imbudget>=2
-real, dimension(nzpmax) :: xinuchomrt,xinuccontrt,xinucifnrt,xinuchazrt   &
-,xvapcldt,xvapraint,xvapprist,xvapsnowt,xvapaggrt,xvapgraut,xvaphailt     &
-,xvapdrizt,xevapcldt,xevapraint,xevapprist,xevapsnowt,xevapaggrt          &
-,xevapgraut,xevaphailt,xevapdrizt                                         &
-,xmeltprist,xmeltsnowt,xmeltaggrt,xmeltgraut,xmelthailt                   &
-,xrimecldsnowt,xrimecldaggrt,xrimecldgraut,xrimecldhailt,xrain2prt        &
-,xrain2snt,xrain2agt,xrain2grt,xrain2hat,xaggrselfprist                   &
-,xaggrselfsnowt,xaggrprissnowt
+real, dimension(nzpmax) :: xinuchomr,xinuccontr,xinucifnr,xinuchazr   &
+,xvapcld,xvaprain,xvappris,xvapsnow,xvapaggr,xvapgrau,xvaphail     &
+,xvapdriz,xevapcld,xevaprain,xevappris,xevapsnow,xevapaggr          &
+,xevapgrau,xevaphail,xevapdriz                                         &
+,xmeltpris,xmeltsnow,xmeltaggr,xmeltgrau,xmelthail                   &
+,xrimecldsnow,xrimecldaggr,xrimecldgrau,xrimecldhail,xrain2pr        &
+,xrain2sn,xrain2ag,xrain2gr,xrain2ha,xaggrselfpris                   &
+,xaggrselfsnow,xaggrprissnow
 
 !For imbudget>=3
-real, dimension(nzpmax) :: xdust1cldrt,xdust2cldrt,xdust1drzrt,xdust2drzrt
-real, dimension(nzpmax) :: xregen1cldrt,xregen2cldrt,xregen1drzrt,xregen2drzrt
+real, dimension(nzpmax) :: xdust1cldr,xdust2cldr,xdust1drzr,xdust2drzr
+real, dimension(nzpmax) :: xregen1cldr,xregen2cldr,xregen1drzr,xregen2drzr
 
 !******Variables Needed for BUBBLE SIMULATION ******************************
 integer :: ibubble,ibubgrd,ibdxia,ibdxiz,ibdyja,ibdyjz,ibdzk1,ibdzk2
