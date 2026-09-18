@@ -156,6 +156,8 @@ real, dimension(mzp,mxp,myp) :: thvlast
 !  Moisture variables positive definite (negative adjustment rtp, etc,)
 !  to be done following tendency updates and before call to microphysics.
 !------------------------------------------------------------------------------
+ ! Zero the per-step aerosol-regeneration budget; both negadj1 calls add to it
+ CALL regen_budget_step_start ()
  CALL negadj1 () 
  CALL acctimes ('NEGADJ-1')
 
@@ -201,6 +203,8 @@ real, dimension(mzp,mxp,myp) :: thvlast
 !------------------------------------------------------------------------------
  CALL negadj1 ()
  CALL acctimes ('NEGADJ-2')
+ ! Turn this step's aerosol regeneration into a rate (and add to run totals)
+ CALL regen_budget_step_finish ()
 
 !------------------------------------------------------------------------------
 !  Thermodynamic diagnosis (update theta,rv after negative adjustment

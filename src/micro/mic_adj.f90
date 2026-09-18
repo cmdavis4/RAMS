@@ -23,14 +23,80 @@ return
 END SUBROUTINE negadj1
 
 !##############################################################################
+Subroutine regen_budget_step_start ()
+
+! Start a new model step for the aerosol-regeneration budget.
+!
+! Regeneration happens inside adj1, and negadj1 calls adj1 TWICE per step:
+! before and after the microphysics (see timestep, rtimh.f90). Both calls add
+! to the regen_aero*_nr/_mr arrays. timestep() therefore calls this routine
+! before the first negadj1, to zero those arrays. It calls
+! regen_budget_step_finish after the second negadj1, to turn the amount
+! regenerated during the step into a rate. No output frequency is involved,
+! so changing FRQSTATE or FRQLITE cannot change the budget values.
+
+use mem_micro
+use mem_grid, only:ngrid
+
+implicit none
+
+! Zero the per-step regeneration amounts on the current grid
+if (allocated(micro_g(ngrid)%regen_aero1_nr)) micro_g(ngrid)%regen_aero1_nr = 0.
+if (allocated(micro_g(ngrid)%regen_aero1_mr)) micro_g(ngrid)%regen_aero1_mr = 0.
+if (allocated(micro_g(ngrid)%regen_aero2_nr)) micro_g(ngrid)%regen_aero2_nr = 0.
+if (allocated(micro_g(ngrid)%regen_aero2_mr)) micro_g(ngrid)%regen_aero2_mr = 0.
+
+return
+END SUBROUTINE regen_budget_step_start
+
+!##############################################################################
+Subroutine regen_budget_step_finish ()
+
+! Finish the model step for the aerosol-regeneration budget.
+!
+! At this point regen_aero*_nr/_mr hold the number (#/kg) and mass (kg/kg)
+! regenerated during this step, summed over both negadj1 calls. This routine
+! adds that amount to the never-reset run totals (accregen_aero*_n/_m, only
+! when IMBUDGETACC=1), then divides it by the step length dtlt so that the
+! output holds the instantaneous rate per second.
+
+use mem_micro
+use mem_grid, only:ngrid,dtlt
+use micphys, only:imbudgetacc
+
+implicit none
+
+! Add this step's regeneration to the run totals
+if (imbudgetacc == 1) then
+   if (allocated(micro_g(ngrid)%accregen_aero1_n)) micro_g(ngrid)%accregen_aero1_n = &
+      micro_g(ngrid)%accregen_aero1_n + micro_g(ngrid)%regen_aero1_nr
+   if (allocated(micro_g(ngrid)%accregen_aero1_m)) micro_g(ngrid)%accregen_aero1_m = &
+      micro_g(ngrid)%accregen_aero1_m + micro_g(ngrid)%regen_aero1_mr
+   if (allocated(micro_g(ngrid)%accregen_aero2_n)) micro_g(ngrid)%accregen_aero2_n = &
+      micro_g(ngrid)%accregen_aero2_n + micro_g(ngrid)%regen_aero2_nr
+   if (allocated(micro_g(ngrid)%accregen_aero2_m)) micro_g(ngrid)%accregen_aero2_m = &
+      micro_g(ngrid)%accregen_aero2_m + micro_g(ngrid)%regen_aero2_mr
+endif
+
+! Convert this step's regeneration into a rate per second
+if (allocated(micro_g(ngrid)%regen_aero1_nr)) micro_g(ngrid)%regen_aero1_nr = &
+   micro_g(ngrid)%regen_aero1_nr / dtlt
+if (allocated(micro_g(ngrid)%regen_aero1_mr)) micro_g(ngrid)%regen_aero1_mr = &
+   micro_g(ngrid)%regen_aero1_mr / dtlt
+if (allocated(micro_g(ngrid)%regen_aero2_nr)) micro_g(ngrid)%regen_aero2_nr = &
+   micro_g(ngrid)%regen_aero2_nr / dtlt
+if (allocated(micro_g(ngrid)%regen_aero2_mr)) micro_g(ngrid)%regen_aero2_mr = &
+   micro_g(ngrid)%regen_aero2_mr / dtlt
+
+return
+END SUBROUTINE regen_budget_step_finish
+
+!##############################################################################
 Subroutine adj1 (m1,m2,m3,rtp,micro,ngr)
 
 use mem_micro
 use micphys
 use node_mod, only:mi0,mj0
-use mem_grid, only:time,dtlt
-use io_params, only:frqstate
-use grid_dims, only:maxgrds
 
 implicit none
 
@@ -40,28 +106,7 @@ real, dimension(m1,m2,m3) :: rtp
 real, dimension(m1) :: rtemp
 type (micro_vars) :: micro
 
-! Model time at which the regeneration accumulators were last reset, per grid.
-! negadj1 is called TWICE per timestep (rtimh.f90:159 and :202) and both calls
-! can regenerate aerosol, so the reset below must fire once per timestep, not
-! once per call -- otherwise the first call's contribution is thrown away.
-real, save, dimension(maxgrds) :: regen_reset_time = -1.
-
 if (level .eq. 0) return
-
-! Zero the regeneration accumulators after an analysis write, then start
-! accumulating again. Same condition range_check() uses for the other micro
-! budget variables (mic_misc.f90:498), so REGEN_AERO*_D[NM] covers the same
-! window as ACCVAPLIQ, ACCEVAPLIQ, ACCNUCCLDR and the rest.
-if(iccnlev>=2 .and. imbudget>=1) then
-  if((mod(time+0.001,frqstate(ngr)).lt.dtlt .or. time.lt.0.001) .and. &
-     regen_reset_time(ngr) /= time) then
-    micro%regen_aero1_dn = 0.
-    micro%regen_aero1_dm = 0.
-    micro%regen_aero2_dn = 0.
-    micro%regen_aero2_dm = 0.
-    regen_reset_time(ngr) = time
-  endif
-endif
 
 do lcat = 1,ncat
    do k = 1,m1
@@ -220,27 +265,28 @@ do j = 1,m3
               ((rg * aero_rg2rm(aerocat)) ** 3.)
 
          !Restore aerosols to regenerated category.
-         !The D[NM] companions accumulate the same increment, giving the
-         !regeneration SOURCE alone: regen_aero*_np/mp are also drawn down by
-         !re-activation in mic_driv, so their time difference is a net change,
-         !not a source. Accumulated over one output interval and reset at the
-         !top of this routine, exactly like the other IMBUDGET process rates.
+         !The budget companions (regen_aero*_nr, _mr) add the same increment,
+         !giving the regeneration SOURCE alone: regen_aero*_np/mp are also
+         !drawn down by re-activation in mic_driv, so their time difference
+         !is a net change, not a source. During the step these arrays hold
+         !the amount regenerated so far in this step; regen_budget_step_finish
+         !turns that into a rate once both negadj1 calls have run.
          if(rg <= 0.96e-6) then
            micro%regen_aero1_mp(k,i,j) = micro%regen_aero1_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero1_np(k,i,j) = micro%regen_aero1_np(k,i,j) + cnmhx_num
            if(imbudget>=1) then
-             micro%regen_aero1_dm(k,i,j) = micro%regen_aero1_dm(k,i,j) &
+             micro%regen_aero1_mr(k,i,j) = micro%regen_aero1_mr(k,i,j) &
                                            + cnmhx(k,lcat)
-             micro%regen_aero1_dn(k,i,j) = micro%regen_aero1_dn(k,i,j) &
+             micro%regen_aero1_nr(k,i,j) = micro%regen_aero1_nr(k,i,j) &
                                            + cnmhx_num
            endif
          else
            micro%regen_aero2_mp(k,i,j) = micro%regen_aero2_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero2_np(k,i,j) = micro%regen_aero2_np(k,i,j) + cnmhx_num  
            if(imbudget>=1) then
-             micro%regen_aero2_dm(k,i,j) = micro%regen_aero2_dm(k,i,j) &
+             micro%regen_aero2_mr(k,i,j) = micro%regen_aero2_mr(k,i,j) &
                                            + cnmhx(k,lcat)
-             micro%regen_aero2_dn(k,i,j) = micro%regen_aero2_dn(k,i,j) &
+             micro%regen_aero2_nr(k,i,j) = micro%regen_aero2_nr(k,i,j) &
                                            + cnmhx_num
            endif
          endif
