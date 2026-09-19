@@ -869,16 +869,10 @@ END SUBROUTINE save_uvw_before_acoustic
 Subroutine compute_wp_pgforce ()
 
 use mem_basic
-use mem_grid, only:ngrid,nnzp,nnxp,nnyp,dtlt
+use mem_grid, only:ngrid,dtlt
 use io_params, only: iuvwtend
 
 implicit none
-
-integer :: m1,m2,m3
-
-m1 = nnzp(ngrid)
-m2 = nnxp(ngrid)
-m3 = nnyp(ngrid)
 
 ! Compute WP_PGFORCE as the residual of the acoustic-solver increment.
 !
@@ -903,15 +897,20 @@ m3 = nnyp(ngrid)
 ! w at level n-1 (before the acoustic solver) is read from wp_dwdt, where
 ! save_uvw_before_acoustic() parked it.
 !
+! Every array below is assigned whole, with no explicit bounds. That is
+! deliberate: under MPI each rank's basic_g arrays are allocated with its own
+! subdomain size (mmzp/mmxp/mmyp, see alloc_basic), NOT the full-domain
+! nnzp/nnxp/nnyp. Spelling out full-domain bounds here wrote far past the end
+! of every array and corrupted the heap.
+!
 if(iuvwtend>=2) then
-  basic_g(ngrid)%wp_pgforce(1:m1,1:m2,1:m3) =  &
-      (basic_g(ngrid)%wp(1:m1,1:m2,1:m3)  &
-       - basic_g(ngrid)%wp_dwdt(1:m1,1:m2,1:m3)) / (2.0*dtlt)  &
-    - basic_g(ngrid)%wp_advection(1:m1,1:m2,1:m3)  &
-    - basic_g(ngrid)%wp_diffusion(1:m1,1:m2,1:m3)  &
-    - basic_g(ngrid)%wp_buoy_theta(1:m1,1:m2,1:m3)  &
-    - basic_g(ngrid)%wp_buoy_cond(1:m1,1:m2,1:m3)  &
-    - basic_g(ngrid)%wp_rayleigh(1:m1,1:m2,1:m3)
+  basic_g(ngrid)%wp_pgforce =  &
+      (basic_g(ngrid)%wp - basic_g(ngrid)%wp_dwdt) / (2.0*dtlt)  &
+    - basic_g(ngrid)%wp_advection  &
+    - basic_g(ngrid)%wp_diffusion  &
+    - basic_g(ngrid)%wp_buoy_theta  &
+    - basic_g(ngrid)%wp_buoy_cond  &
+    - basic_g(ngrid)%wp_rayleigh
 endif
 
 return
