@@ -88,6 +88,19 @@ if (allocated(micro_g(ngrid)%regen_aero2_nr)) micro_g(ngrid)%regen_aero2_nr = &
 if (allocated(micro_g(ngrid)%regen_aero2_mr)) micro_g(ngrid)%regen_aero2_mr = &
    micro_g(ngrid)%regen_aero2_mr / dtlt
 
+! Level 1 lies below the ground surface. It takes the value of level 2, the
+! first level above ground, as the hydrometeor fields and every other budget
+! rate do (see store_budget_rate, mic_driv.f90). It is done here, once both
+! producers have run, rather than in either producer.
+if (allocated(micro_g(ngrid)%regen_aero1_nr)) &
+   micro_g(ngrid)%regen_aero1_nr(1,:,:) = micro_g(ngrid)%regen_aero1_nr(2,:,:)
+if (allocated(micro_g(ngrid)%regen_aero1_mr)) &
+   micro_g(ngrid)%regen_aero1_mr(1,:,:) = micro_g(ngrid)%regen_aero1_mr(2,:,:)
+if (allocated(micro_g(ngrid)%regen_aero2_nr)) &
+   micro_g(ngrid)%regen_aero2_nr(1,:,:) = micro_g(ngrid)%regen_aero2_nr(2,:,:)
+if (allocated(micro_g(ngrid)%regen_aero2_mr)) &
+   micro_g(ngrid)%regen_aero2_mr(1,:,:) = micro_g(ngrid)%regen_aero2_mr(2,:,:)
+
 return
 END SUBROUTINE regen_budget_step_finish
 
@@ -271,6 +284,11 @@ do j = 1,m3
          !is a net change, not a source. During the step these arrays hold
          !the amount regenerated so far in this step; regen_budget_step_finish
          !turns that into a rate once both negadj1 calls have run.
+         !This is only ONE of the two producers. The other is vapflux()
+         !(mic_vap.f90), which returns aerosol as hydrometeors evaporate and
+         !is the larger source; it reaches the same arrays through copyback().
+         !This site covers what is left in a category driven below rxmin by
+         !some route other than evaporation, such as collection or melting.
          if(rg <= 0.96e-6) then
            micro%regen_aero1_mp(k,i,j) = micro%regen_aero1_mp(k,i,j) + cnmhx(k,lcat)
            micro%regen_aero1_np(k,i,j) = micro%regen_aero1_np(k,i,j) + cnmhx_num

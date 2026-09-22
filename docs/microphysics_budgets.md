@@ -51,11 +51,25 @@ increments to a per-column work vector, such as `xvapliq` (see `micphys.f90`).
 
 Two other groups of budgets use the same pattern at the grid level:
 
-- **Aerosol regeneration** (`REGEN_AERO*_NR/_MR`) is added inside `adj1`, and
-  `negadj1` calls `adj1` twice per step. `timestep()` (`rtimh.f90`) calls
-  `regen_budget_step_start()` before the first call. It calls
-  `regen_budget_step_finish()` after the second call. Both routines are in
-  `mic_adj.f90`.
+- **Aerosol regeneration** (`REGEN_AERO*_NR/_MR`) has two producers within one
+  step, and the arrays accumulate across both:
+  1. `vapflux()` (`mic_vap.f90`) returns aerosol as hydrometeors evaporate,
+     whether the evaporation is partial or complete. It fills the per-column
+     vectors `xregenaero1n/1m/2n/2m`, which `copyback()` adds to the arrays
+     through `add_to_regen_budget()`. This is the larger of the two sources.
+  2. `adj1()` (`mic_adj.f90`) restores what is left in a hydrometeor category
+     driven below `rxmin` by some route other than evaporation, such as
+     collection or melting. It writes the arrays directly. `negadj1` calls
+     `adj1` twice per step, before and after the microphysics.
+
+  `timestep()` (`rtimh.f90`) calls `regen_budget_step_start()` before the first
+  `negadj1` to zero the arrays. It calls `regen_budget_step_finish()` after the
+  second, which adds the step's total to the run totals, divides by `dtlt`, and
+  sets the below-ground level from level 2. Both are in `mic_adj.f90`.
+
+  Before September 2026 only the `adj1` producer was counted, so these
+  variables reported a small residue rather than the regeneration source.
+  Output written before that date understates regeneration.
 - **Bin microphysics** (`LEVEL = 4`) adds increments directly to
   `micro%<name>r`. `zero_budgets()` zeroes those arrays each step, and
   `finish_bin_budgets()` converts them after `micro_proc()`. Both routines are

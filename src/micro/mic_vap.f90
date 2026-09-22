@@ -315,6 +315,23 @@ do k = k1,k2
      aeromas(k,acat) = aeromas(k,acat) + ccnmass
      aerocon(k,acat) = aerocon(k,acat) + cxloss
 
+     !Record the same increment for the regeneration budget. Evaporation is
+     !the main route by which aerosol returns to the regenerated categories,
+     !so leaving it out here left REGEN_AERO*_NR/_MR reporting only the
+     !residue that adj1() restores from categories driven below rxmin.
+     !copyback() adds these per-column amounts to regen_aero*_nr/_mr, which
+     !adj1() writes directly, and regen_budget_step_finish() turns the
+     !step's total into a rate per second.
+     if(imbudget>=1) then
+       if(acat == aerocat-1) then
+         xregenaero1m(k) = xregenaero1m(k) + ccnmass
+         xregenaero1n(k) = xregenaero1n(k) + cxloss
+       else
+         xregenaero2m(k) = xregenaero2m(k) + ccnmass
+         xregenaero2n(k) = xregenaero2n(k) + cxloss
+       endif
+     endif
+
      if(itrkepsilon==1)then
       scnmass = snmhx(k,lcat) * rxferratio
       snmhx(k,lcat) = snmhx(k,lcat) - scnmass

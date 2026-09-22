@@ -122,6 +122,15 @@ real, dimension(nzpmax) :: xinuchomr,xinuccontr,xinucifnr,xinuchazr   &
 real, dimension(nzpmax) :: xdust1cldr,xdust2cldr,xdust1drzr,xdust2drzr
 real, dimension(nzpmax) :: xregen1cldr,xregen2cldr,xregen1drzr,xregen2drzr
 
+!Aerosol returned to the two regenerated-aerosol categories by evaporation,
+!per column: number (#/kg) and mass (kg/kg) for the small (1) and large (2)
+!regenerated modes. vapflux() fills these; copyback() adds them to
+!regen_aero*_nr/_mr, which adj1() also writes. Both sites feed one rate.
+!These are the only budget work vectors NOT gated by the imbudget level in
+!their own right: they also require ICCNLEV>=2, because the regenerated
+!categories do not exist below that.
+real, dimension(nzpmax) :: xregenaero1n,xregenaero1m,xregenaero2n,xregenaero2m
+
 !******Variables Needed for BUBBLE SIMULATION ******************************
 integer :: ibubble,ibubgrd,ibdxia,ibdxiz,ibdyja,ibdyjz,ibdzk1,ibdzk2
 real :: bthp,brtp
