@@ -445,14 +445,16 @@ do k = k1,k2
           scnmass=0.0
           dcnmass=0.0
           dinmass=0.0
+          rcnmass=0.0
+          rinmass=0.0
           if(rx(k,3)>0.0 .and. dvap>0.0) then
            rxferratio = min(1.0 , dvap / rx(k,3))
            ccnmass = cnmhx(k,3) * rxferratio
            if(itrkepsilon==1) scnmass = snmhx(k,3) * rxferratio
            if(itrkdust==1)    dcnmass = dnmhx(k,3) * rxferratio
            if(itrkdustifn==1) dinmass = dinhx(k,3) * rxferratio
-           if(itrkregen==1)    rcnmass = rnmhx(k,3) * rxferratio
-           if(itrkregen==1) rinmass = rinhx(k,3) * rxferratio
+           if(itrkregen==1)   rcnmass = rnmhx(k,3) * rxferratio
+           if(itrkregen==1)   rinmass = rinhx(k,3) * rxferratio
           endif
          endif
 
@@ -476,12 +478,16 @@ do k = k1,k2
           scnmass=0.0
           dcnmass=0.0
           dinmass=0.0
+          rcnmass=0.0
+          rinmass=0.0
           if(rx(k,4)>0.0 .and. dvap<0.0) then
            rxferratio = max(-1.0 , dvap / rx(k,4))
            ccnmass = cnmhx(k,4) * rxferratio
            if(itrkepsilon==1) scnmass = snmhx(k,4) * rxferratio
            if(itrkdust==1)    dcnmass = dnmhx(k,4) * rxferratio
            if(itrkdustifn==1) dinmass = dinhx(k,4) * rxferratio
+           if(itrkregen==1)   rcnmass = rnmhx(k,4) * rxferratio
+           if(itrkregen==1)   rinmass = rinhx(k,4) * rxferratio
           endif
          endif
 
@@ -504,7 +510,7 @@ do k = k1,k2
          dinhx(k,3) = dinhx(k,3) - dinmass
          dinhx(k,4) = dinhx(k,4) + dinmass
         endif
-      if(itrkregen==1) then
+        if(itrkregen==1) then
          rnmhx(k,3) = rnmhx(k,3) - rcnmass
          rnmhx(k,4) = rnmhx(k,4) + rcnmass
          rinhx(k,3) = rinhx(k,3) - rinmass
@@ -546,6 +552,8 @@ do k = k1,k2
            scnmass=0.0
            dcnmass=0.0
            dinmass=0.0
+           rcnmass=0.0
+           rinmass=0.0
           endif
 
           if(delta_r>0.0) then !xfer more Pristine ice to Snow
@@ -559,8 +567,8 @@ do k = k1,k2
               if(itrkepsilon==1) scnmass = snmhx(k,3) * rxferratio
               if(itrkdust==1)    dcnmass = dnmhx(k,3) * rxferratio
               if(itrkdustifn==1) dinmass = dinhx(k,3) * rxferratio
-              if(itrkregen==1)    rcnmass = rnmhx(k,3) * rxferratio
-              if(itrkregen==1) rinmass = rinhx(k,3) * rxferratio
+              if(itrkregen==1)   rcnmass = rnmhx(k,3) * rxferratio
+              if(itrkregen==1)   rinmass = rinhx(k,3) * rxferratio
              endif
             endif
           elseif(delta_r<0.0) then !xfer more Snow to Pristine ice
@@ -574,8 +582,8 @@ do k = k1,k2
               if(itrkepsilon==1) scnmass = snmhx(k,4) * rxferratio
               if(itrkdust==1)    dcnmass = dnmhx(k,4) * rxferratio
               if(itrkdustifn==1) dinmass = dinhx(k,4) * rxferratio
-              if(itrkregen==1)    rcnmass = rnmhx(k,4) * rxferratio
-              if(itrkregen==1) rinmass = rinhx(k,4) * rxferratio
+              if(itrkregen==1)   rcnmass = rnmhx(k,4) * rxferratio
+              if(itrkregen==1)   rinmass = rinhx(k,4) * rxferratio
              endif
             endif
           endif
