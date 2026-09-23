@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "utils_sub_names.h"
 
@@ -20,6 +21,42 @@ hid_t  fh5_set_hdf5_dtype (int type_code);
 
 //************************** File routines ***********************************
 
+#if defined (RAMS_MPI)
+//****************************************************************************
+// MPI-IO hints for the parallel analysis writes.
+//
+// The file access property list previously passed MPI_INFO_NULL, so the MPI-IO
+// layer ran entirely on its own defaults. RAMS writes many compressed chunks
+// at scattered offsets, which is the access pattern collective buffering
+// exists for.
+//
+// The caller frees the returned info object; H5Pset_fapl_mpio copies it.
+//****************************************************************************
+ MPI_Info fh5_make_mpi_info (void)
+  {
+  MPI_Info info;
+  char *cb_nodes;
+
+  MPI_Info_create (&info);
+
+  // Aggregate the many small, scattered chunk writes into fewer large
+  // filesystem writes, rather than leaving the choice to ROMIO's heuristic.
+  MPI_Info_set (info,"romio_cb_write","enable");
+
+  // Data sieving turns a write into read-modify-write. That is wasted work
+  // once collective buffering above is already aggregating.
+  MPI_Info_set (info,"romio_ds_write","disable");
+
+  // Number of aggregator ranks. The best value is site specific, so it is
+  // tunable from the environment and needs no rebuild to experiment with.
+  cb_nodes = getenv ("RAMS_CB_NODES");
+  if (cb_nodes != NULL) MPI_Info_set (info,"cb_nodes",cb_nodes);
+
+  return info;
+  }
+#endif
+
+
 //****************************************************************************
  void fh5f_open (char *locfn,int *iaccess,int *iphdf5,int64_t *fileid,int *hdferr)
   {
@@ -30,8 +67,10 @@ hid_t  fh5_set_hdf5_dtype (int type_code);
     {
 #if defined (RAMS_MPI)
     // open a parallel file collectively
+    MPI_Info mpi_info = fh5_make_mpi_info ();
     access_id = H5Pcreate (H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio (access_id,MPI_COMM_WORLD,MPI_INFO_NULL);
+    H5Pset_fapl_mpio (access_id,MPI_COMM_WORLD,mpi_info);
+    MPI_Info_free (&mpi_info);
     // Do metadata collectively rather than letting every rank fetch and write
     // the same metadata blocks itself. Without this, all ranks contend on the
     // same small reads, which gets steadily worse as rank count rises. These
@@ -84,8 +123,10 @@ hid_t  fh5_set_hdf5_dtype (int type_code);
     {
 #if defined (RAMS_MPI)
     // open a parallel file collectively
+    MPI_Info mpi_info = fh5_make_mpi_info ();
     access_id = H5Pcreate (H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio (access_id,MPI_COMM_WORLD,MPI_INFO_NULL);
+    H5Pset_fapl_mpio (access_id,MPI_COMM_WORLD,mpi_info);
+    MPI_Info_free (&mpi_info);
     // Do metadata collectively rather than letting every rank fetch and write
     // the same metadata blocks itself. Without this, all ranks contend on the
     // same small reads, which gets steadily worse as rank count rises. These
