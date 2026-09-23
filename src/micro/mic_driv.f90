@@ -543,10 +543,10 @@ do lhcat = 1,nhcat
 enddo
 
 ! Hydrometeor Sedimentation
+CALL check_regen_invariant ('before-sedim',m1,i,j)
 do lcat = 1,8
    if (jnmb(lcat) .ge. 1) then
      if(isedim==0) &
-      CALL check_regen_invariant ('before-sedim',m1,i,j)
       CALL sedim (m1,lcat,ngr  &
          ,k1(lcat),k2(lcat)  &
          ,rtp(1),thp(1),theta(1),dn0(1),dpcp0(lcat)  &
@@ -566,10 +566,11 @@ do k = 2,m1
    thp(k) = thp(k) + tairc(k)
 enddo
 
+CALL check_regen_invariant ('after-sedim',m1,i,j)
+
 ! Dust and sea-salt dry and wet deposition driver
 ! applied after sedimentation for computation of precip rate
 if(iaerodep==1) &
- CALL check_regen_invariant ('before-deposition',m1,i,j)
  CALL deposition_driver (i,j,m1,zm,rtgt               &
     ,rv(1),theta(1),uup(1),vvp(1)                     &
     ,dn0(1)                                           &
