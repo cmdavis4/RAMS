@@ -146,6 +146,11 @@ do ngr=1,ngrids
    CALL shdf5_open (anamel,'W',iphdf5,h5_fid,iclobber)
    npointer=0
 
+   ! Queue this file's variables and write them all in one collective call at
+   ! the end, instead of one collective write per variable (see
+   ! shdf5_begin_deferred_writes). No effect for single-process runs.
+   CALL shdf5_begin_deferred_writes (iphdf5)
+
 !  Loop through the main variable table and write those variables
 !     with the correct flag set
 
@@ -404,6 +409,8 @@ do ngr=1,ngrids
     enddo
    endif
 
+   ! Write every queued variable, then close the file.
+   CALL shdf5_flush_deferred_writes ()
    CALL shdf5_close (h5_fid)
 
 enddo

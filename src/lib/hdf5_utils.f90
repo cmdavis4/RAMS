@@ -445,6 +445,48 @@ return
 END SUBROUTINE shdf5_irec
 
 !##############################################################################
+Subroutine shdf5_begin_deferred_writes (iphdf5)
+
+! Start a deferred-write section on the currently open file. Until
+! shdf5_flush_deferred_writes is called, shdf5_orec creates each dataset but
+! queues its data instead of writing it, so that the flush can write every
+! queued dataset in one collective H5Dwrite_multi call. This removes most of
+! the per-variable coordination cost of parallel compressed writes. See the
+! "Deferred (multi-dataset) writes" notes in hdf5_f2c.c for the mechanism.
+! Does nothing for serial files (iphdf5 /= 1) or with HDF5 older than 1.14.
+
+implicit none
+
+integer :: iphdf5
+integer :: hdferr  ! Error flag
+
+CALL fh5d_begin_deferred_writes (iphdf5, hdferr)
+
+return
+END SUBROUTINE shdf5_begin_deferred_writes
+
+!##############################################################################
+Subroutine shdf5_flush_deferred_writes ()
+
+! Write every dataset queued since shdf5_begin_deferred_writes and end the
+! deferred section. Collective: every rank must call it, and it must come
+! before shdf5_close on the same file.
+
+implicit none
+
+integer :: hdferr  ! Error flag
+
+CALL fh5d_flush_deferred_writes (hdferr)
+
+if (hdferr /= 0) then
+   print*,'In shdf5_flush_deferred_writes: hdf5 write error =',hdferr
+   stop 'shdf5_flush_deferred_writes: hdf5 write error'
+endif
+
+return
+END SUBROUTINE shdf5_flush_deferred_writes
+
+!##############################################################################
 Subroutine shdf5_close (fileid)
         
 implicit none

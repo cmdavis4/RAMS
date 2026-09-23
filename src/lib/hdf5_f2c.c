@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "utils_sub_names.h"
 
@@ -17,6 +18,194 @@
 // Prototypes for internal routines
 hid_t  fh5_set_hdf5_dtype (int type_code);
  void fh5_convert_array (int n,int *i_array,hsize_t *h_array,char *dir);
+
+//********************** Deferred (multi-dataset) writes **********************
+//
+// Why this exists: in a parallel run every H5Dwrite of a compressed (filtered)
+// dataset is a separate collective operation. The ranks exchange chunk lists,
+// ship pieces of shared chunks to one owner rank, compress, agree on the new
+// chunk sizes, allocate file space together, and then write. That coordination
+// has a roughly fixed cost per dataset, which dominated RAMS analysis writes
+// (about 0.4 s per variable at 256 ranks, while compressing the data itself
+// took about 1 s for the whole file).
+//
+// How it works: between fh5d_begin_deferred_writes and
+// fh5d_flush_deferred_writes, fh5d_write still creates each dataset and its
+// selections immediately, but instead of writing it copies the caller's buffer
+// and queues (dataset, memory type, memory space, file space, buffer copy). The
+// flush then writes the whole queue with ONE collective H5Dwrite_multi call,
+// so HDF5 does the chunk redistribution, compression bookkeeping, and file
+// space allocation for all datasets together. H5Dwrite_multi needs HDF5 1.14.
+//
+// Why the buffer is copied: the Fortran caller (anal_write) frees its
+// temporary array right after each shdf5_orec call, so the data must be kept
+// alive here until the flush. This raises peak memory by one copy of every
+// queued variable's subdomain. RAMS_HDF5_MULTI_BATCH (environment variable,
+// default unlimited) caps the number of queued datasets; when the queue reaches
+// the cap it is flushed early, trading some speed for lower peak memory.
+//
+// Invariants: every rank must queue the same datasets in the same order,
+// because both the dataset creation and the flush are collective. anal_write
+// satisfies this since all ranks walk the same variable table. Only parallel
+// files (iphdf5 == 1) and numeric types are queued; anything else is written
+// immediately exactly as before. With an older HDF5, begin/flush are no-ops
+// and every write stays immediate.
+
+#define DEFERRED_WRITE_MAX_DATASETS 2048
+
+static int    deferred_writes_active = 0;       // 1 between begin and flush
+static size_t deferred_batch_limit = DEFERRED_WRITE_MAX_DATASETS;
+static size_t deferred_queue_length = 0;
+static hid_t  deferred_dataset_ids[DEFERRED_WRITE_MAX_DATASETS];
+static hid_t  deferred_memory_types[DEFERRED_WRITE_MAX_DATASETS];
+static hid_t  deferred_memory_spaces[DEFERRED_WRITE_MAX_DATASETS];
+static hid_t  deferred_file_spaces[DEFERRED_WRITE_MAX_DATASETS];
+static void  *deferred_buffer_copies[DEFERRED_WRITE_MAX_DATASETS];
+
+#if defined (RAMS_MPI) && H5_VERSION_GE(1,14,0)
+#define RAMS_HAVE_MULTI_DATASET_WRITE 1
+#else
+#define RAMS_HAVE_MULTI_DATASET_WRITE 0
+#endif
+
+#if RAMS_HAVE_MULTI_DATASET_WRITE
+//*****************************************************************************
+// Write everything queued so far with one collective H5Dwrite_multi, then
+// release the queued datasets, dataspaces, and buffer copies. Returns the
+// H5Dwrite_multi status (negative on failure).
+static herr_t fh5_write_deferred_queue (void)
+  {
+  herr_t herr = 0;
+  hid_t transfer_plist;
+  size_t i;
+
+  if (deferred_queue_length == 0) return 0;
+
+  // Collective transfer, same as the immediate path in fh5d_write.
+  transfer_plist = H5Pcreate (H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio (transfer_plist,H5FD_MPIO_COLLECTIVE);
+
+  herr = H5Dwrite_multi (deferred_queue_length, deferred_dataset_ids
+                        ,deferred_memory_types, deferred_memory_spaces
+                        ,deferred_file_spaces, transfer_plist
+                        ,(const void **)deferred_buffer_copies);
+  if (herr < 0)
+    printf("Error in H5Dwrite_multi over %zu datasets, herr: %d\n"
+          ,deferred_queue_length, herr);
+
+  // Release everything the queue held, whether or not the write succeeded.
+  H5Pclose (transfer_plist);
+  for (i = 0; i < deferred_queue_length; i++)
+    {
+    H5Sclose (deferred_memory_spaces[i]);
+    H5Sclose (deferred_file_spaces[i]);
+    H5Dclose (deferred_dataset_ids[i]);
+    free (deferred_buffer_copies[i]);
+    }
+  deferred_queue_length = 0;
+
+  return herr;
+  }
+
+//*****************************************************************************
+// Add one already-created dataset and its selections to the queue, keeping a
+// private copy of the caller's memory buffer. Flushes first if the queue is
+// at its batch limit. Returns 0 on success, negative on failure.
+static int fh5_queue_deferred_write (hid_t dsetid,hid_t memtype,hid_t mspcid
+                                    ,hid_t fspcid,void *buf)
+  {
+  // The memory dataspace describes the whole caller buffer (the selection
+  // is only a part of it), so copy all of it to keep the offsets valid.
+  hssize_t n_memory_points = H5Sget_simple_extent_npoints (mspcid);
+  size_t bytes_per_point = H5Tget_size (memtype);
+  size_t buffer_bytes;
+  void *buffer_copy;
+
+  if (n_memory_points < 0 || bytes_per_point == 0) return -1;
+  buffer_bytes = (size_t)n_memory_points * bytes_per_point;
+
+  if (deferred_queue_length >= deferred_batch_limit)
+    {
+    if (fh5_write_deferred_queue () < 0) return -1;
+    }
+
+  buffer_copy = malloc (buffer_bytes > 0 ? buffer_bytes : 1);
+  if (buffer_copy == NULL)
+    {
+    printf("Error: could not allocate %zu bytes for a deferred HDF5 write\n"
+          ,buffer_bytes);
+    return -1;
+    }
+  memcpy (buffer_copy, buf, buffer_bytes);
+
+  deferred_dataset_ids[deferred_queue_length]   = dsetid;
+  deferred_memory_types[deferred_queue_length]  = memtype;
+  deferred_memory_spaces[deferred_queue_length] = mspcid;
+  deferred_file_spaces[deferred_queue_length]   = fspcid;
+  deferred_buffer_copies[deferred_queue_length] = buffer_copy;
+  deferred_queue_length++;
+
+  return 0;
+  }
+#endif
+
+//*****************************************************************************
+// Start queuing writes for the currently open parallel file. Called from
+// Fortran (shdf5_begin_deferred_writes) right after the file is created.
+// Does nothing for serial files or when HDF5 is older than 1.14.
+ void fh5d_begin_deferred_writes (int *iphdf5,int *hdferr)
+  {
+  static int reported = 0;
+  *hdferr = 0;
+#if RAMS_HAVE_MULTI_DATASET_WRITE
+  if (*iphdf5 == 1)
+    {
+    // Optional cap on datasets per H5Dwrite_multi, to bound peak memory.
+    const char *batch_setting = getenv ("RAMS_HDF5_MULTI_BATCH");
+    long requested_limit = batch_setting ? atol (batch_setting) : 0;
+    deferred_batch_limit = DEFERRED_WRITE_MAX_DATASETS;
+    if (requested_limit > 0 && requested_limit < DEFERRED_WRITE_MAX_DATASETS)
+      deferred_batch_limit = (size_t)requested_limit;
+    deferred_queue_length = 0;
+    deferred_writes_active = 1;
+    }
+#endif
+  // Say once, from rank 0, which write path this build is using.
+  if (!reported)
+    {
+    int my_rank = 0;
+#if defined (RAMS_MPI)
+    MPI_Comm_rank (MPI_COMM_WORLD, &my_rank);
+#endif
+    if (my_rank == 0)
+      {
+      if (deferred_writes_active)
+        printf(" HDF5 analysis writes: multi-dataset (H5Dwrite_multi), batch limit %zu\n"
+              ,deferred_batch_limit);
+      else
+        printf(" HDF5 analysis writes: one H5Dwrite per dataset\n");
+      }
+    reported = 1;
+    }
+  return;
+  }
+
+//*****************************************************************************
+// Write everything queued since fh5d_begin_deferred_writes and stop queuing.
+// Called from Fortran (shdf5_flush_deferred_writes) before the file is closed.
+// Collective: all ranks must call it.
+ void fh5d_flush_deferred_writes (int *hdferr)
+  {
+  *hdferr = 0;
+#if RAMS_HAVE_MULTI_DATASET_WRITE
+  if (deferred_writes_active)
+    {
+    if (fh5_write_deferred_queue () < 0) *hdferr = -1;
+    deferred_writes_active = 0;
+    }
+#endif
+  return;
+  }
 
 //************************** File routines ***********************************
 
@@ -490,6 +679,20 @@ hid_t  fh5_set_hdf5_dtype (int type_code);
   if (herr < 0) { *hdferr = herr; return;}
   
   //******************* DO THE WRITE ******************************
+
+#if RAMS_HAVE_MULTI_DATASET_WRITE
+  // Inside a deferred-write section, queue this dataset instead of writing
+  // it now; the flush writes all queued datasets in one collective call. The
+  // dataset and both dataspaces stay open until then. Strings (type 3) are
+  // never queued, since H5T_STRING is not a concrete memory type.
+  if (deferred_writes_active && *iphdf5 == 1 && *h5type != 3)
+    {
+    if (fh5_queue_deferred_write (dsetid,memtype,mspcid,fspcid,buf) < 0)
+      { *hdferr = -1; return; }
+    *hdferr = 0;
+    return;
+    }
+#endif
 
   if (*iphdf5 == 1)
     {

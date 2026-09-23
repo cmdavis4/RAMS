@@ -36,6 +36,8 @@
 #define fh5d_info           fh5d_info_
 #define fh5d_read           fh5d_read_
 #define fh5d_write          fh5d_write_
+#define fh5d_begin_deferred_writes fh5d_begin_deferred_writes_
+#define fh5d_flush_deferred_writes fh5d_flush_deferred_writes_
 #define fh5_prepare_write   fh5_prepare_write_
 #define fh5_write           fh5_write_
 #define fh5_close_write     fh5_close_write_
