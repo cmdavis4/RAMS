@@ -32,6 +32,12 @@ hid_t  fh5_set_hdf5_dtype (int type_code);
     // open a parallel file collectively
     access_id = H5Pcreate (H5P_FILE_ACCESS);
     H5Pset_fapl_mpio (access_id,MPI_COMM_WORLD,MPI_INFO_NULL);
+    // Do metadata collectively rather than letting every rank fetch and write
+    // the same metadata blocks itself. Without this, all ranks contend on the
+    // same small reads, which gets steadily worse as rank count rises. These
+    // affect only how metadata moves; the data written is unchanged.
+    H5Pset_all_coll_metadata_ops (access_id,1);
+    H5Pset_coll_metadata_write (access_id,1);
 #else
     access_id = H5P_DEFAULT;
 #endif
@@ -80,6 +86,12 @@ hid_t  fh5_set_hdf5_dtype (int type_code);
     // open a parallel file collectively
     access_id = H5Pcreate (H5P_FILE_ACCESS);
     H5Pset_fapl_mpio (access_id,MPI_COMM_WORLD,MPI_INFO_NULL);
+    // Do metadata collectively rather than letting every rank fetch and write
+    // the same metadata blocks itself. Without this, all ranks contend on the
+    // same small reads, which gets steadily worse as rank count rises. These
+    // affect only how metadata moves; the data written is unchanged.
+    H5Pset_all_coll_metadata_ops (access_id,1);
+    H5Pset_coll_metadata_write (access_id,1);
 #else
     access_id = H5P_DEFAULT;
 #endif
