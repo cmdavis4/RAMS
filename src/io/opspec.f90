@@ -337,6 +337,10 @@ elseif (level .eq. 3) then
   print*,'FATAL - AEROSOL TRACKING FLAGS MUST BE 0-1'
   IFATERR = IFATERR + 1
  endif
+ if (iaeroregen .lt. 0 .or. iaeroregen .gt. 1) THEN
+  print*,'FATAL - IAEROREGEN OUT OF RANGE: MUST BE 0-1'
+  IFATERR = IFATERR + 1
+ endif
 
  if (icloud .lt. 5) then
   if (idriz .ge. 5) then
@@ -386,6 +390,17 @@ elseif (level .eq. 3) then
    print*,'ITRKEPSILON=ITRKDUST=ITRKDUSTIFN=ITRKREGEN=0'
    IFATERR = IFATERR + 1
  endif
+ if (iaeroregen.eq.0 .and. iccnlev.lt.2) THEN
+   print*,'WARNING - IAEROREGEN=0 has no effect since ICCNLEV < 2.'
+   print*,'Aerosol regeneration is already off below ICCNLEV=2.'
+   IWARERR = IWARERR + 1
+ endif
+ if (iaeroregen.eq.0 .and. itrkregen.gt.0) THEN
+   print*,'FATAL - ITRKREGEN>0 with IAEROREGEN=0 would track an aerosol'
+   print*,'category that is never filled. Either set IAEROREGEN=1 or'
+   print*,'set ITRKREGEN=0.'
+   IFATERR = IFATERR + 1
+ endif
  if ((itrkdust.gt.0 .or. itrkdustifn.gt.0) .and. idust.eq.0) THEN
    print*,'FATAL - Dust tracking = 0 since IDUST=0.'
    print*,'Either set IDUST>0 or set ITRKDUST=ITRKDUSTIFN=0'
@@ -428,6 +443,7 @@ elseif (level .eq. 4) then
        itrkdust    > 0 .or. &
        itrkdustifn > 0 .or. &
        itrkregen   > 0 .or. &
+       iaeroregen  < 1 .or. &
        icheckmic   > 0) THEN
     print*,'FATAL - The following microphysics ON/OFF switches are not used'
     print*,'in HUCM Bin Microphysics, so set them to zero for OFF.'
@@ -435,6 +451,7 @@ elseif (level .eq. 4) then
     print*,'ICLOUD, IDRIZ, IRAIN, ISNOW, IAGGR, IAEROSOL' 
     print*,'IABCARB, ISALT, IDUST, ICCNLEV, IAERORAD, IAERODEP, IAEROPRNT' 
     print*,'ITRKEPSILON, ITRKDUST, ITRKDUSTIFN, ITRKREGEN, ICHECKMIC.'
+    print*,'IAEROREGEN must be left at 1.'
     print*,''
     print*,'HUCM only uses the following microphysics flags:'
     print*,''

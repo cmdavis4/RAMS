@@ -289,9 +289,16 @@ do j = 1,m3
          !is the larger source; it reaches the same arrays through copyback().
          !This site covers what is left in a category driven below rxmin by
          !some route other than evaporation, such as collection or melting.
+         !IAEROREGEN=0 discards the aerosol instead of restoring it to the
+         !regenerated categories. The budget arrays stay outside that gate on
+         !purpose, so REGEN_AERO*_NR/_MR still measure the source that was
+         !suppressed, which is what makes a regeneration-off run comparable
+         !with a regeneration-on one.
          if(rg <= 0.96e-6) then
-           micro%regen_aero1_mp(k,i,j) = micro%regen_aero1_mp(k,i,j) + cnmhx(k,lcat)
-           micro%regen_aero1_np(k,i,j) = micro%regen_aero1_np(k,i,j) + cnmhx_num
+           if(iaeroregen==1) then
+             micro%regen_aero1_mp(k,i,j) = micro%regen_aero1_mp(k,i,j) + cnmhx(k,lcat)
+             micro%regen_aero1_np(k,i,j) = micro%regen_aero1_np(k,i,j) + cnmhx_num
+           endif
            if(imbudget>=1) then
              micro%regen_aero1_mr(k,i,j) = micro%regen_aero1_mr(k,i,j) &
                                            + cnmhx(k,lcat)
@@ -299,8 +306,10 @@ do j = 1,m3
                                            + cnmhx_num
            endif
          else
-           micro%regen_aero2_mp(k,i,j) = micro%regen_aero2_mp(k,i,j) + cnmhx(k,lcat)
-           micro%regen_aero2_np(k,i,j) = micro%regen_aero2_np(k,i,j) + cnmhx_num  
+           if(iaeroregen==1) then
+             micro%regen_aero2_mp(k,i,j) = micro%regen_aero2_mp(k,i,j) + cnmhx(k,lcat)
+             micro%regen_aero2_np(k,i,j) = micro%regen_aero2_np(k,i,j) + cnmhx_num
+           endif
            if(imbudget>=1) then
              micro%regen_aero2_mr(k,i,j) = micro%regen_aero2_mr(k,i,j) &
                                            + cnmhx(k,lcat)

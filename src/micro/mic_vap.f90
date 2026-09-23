@@ -312,8 +312,13 @@ do k = k1,k2
      else
        acat=aerocat-1
      endif
-     aeromas(k,acat) = aeromas(k,acat) + ccnmass
-     aerocon(k,acat) = aerocon(k,acat) + cxloss
+     !IAEROREGEN=0 discards the released aerosol instead of returning it to
+     !the regenerated categories. The removal from cnmhx above is unconditional
+     !either way, so CNM*P keeps meaning the aerosol mass inside hydrometeors.
+     if(iaeroregen==1) then
+       aeromas(k,acat) = aeromas(k,acat) + ccnmass
+       aerocon(k,acat) = aerocon(k,acat) + cxloss
+     endif
 
      !Record the same increment for the regeneration budget. Evaporation is
      !the main route by which aerosol returns to the regenerated categories,
@@ -335,7 +340,9 @@ do k = k1,k2
      if(itrkepsilon==1)then
       scnmass = snmhx(k,lcat) * rxferratio
       snmhx(k,lcat) = snmhx(k,lcat) - scnmass
-      regenmas(k,acat-(aerocat-2)) = regenmas(k,acat-(aerocat-2)) + scnmass
+      !Only credit the regenerated category when the mass actually went there
+      if(iaeroregen==1) &
+       regenmas(k,acat-(aerocat-2)) = regenmas(k,acat-(aerocat-2)) + scnmass
      endif
      if(itrkdust==1)then
       dcnmass = dnmhx(k,lcat) * rxferratio
