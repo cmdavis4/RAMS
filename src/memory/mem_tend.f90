@@ -27,6 +27,10 @@ implicit none
         ,dnmat, dnmgt, dnmht                         &
         ,dinct, dindt, dinrt, dinpt, dinst           &
         ,dinat, dingt, dinht                         &
+        ,rnmct, rnmdt, rnmrt, rnmpt, rnmst           &
+        ,rnmat, rnmgt, rnmht                         &
+        ,rinct, rindt, rinrt, rinpt, rinst           &
+        ,rinat, ringt, rinht                         &
         ,snmct, snmdt, snmrt, snmpt, snmst           &
         ,snmat, snmgt, snmht                         &
         ,resol_aero1_mt,resol_aero2_mt               &
@@ -163,6 +167,22 @@ implicit none
    if (allocated(micro_g(1)%dinap))   allocate (tend%dinat(ntpts))
    if (allocated(micro_g(1)%dingp))   allocate (tend%dingt(ntpts))
    if (allocated(micro_g(1)%dinhp))   allocate (tend%dinht(ntpts))
+   if (allocated(micro_g(1)%rnmcp))   allocate (tend%rnmct(ntpts))
+   if (allocated(micro_g(1)%rnmdp))   allocate (tend%rnmdt(ntpts))
+   if (allocated(micro_g(1)%rnmrp))   allocate (tend%rnmrt(ntpts))
+   if (allocated(micro_g(1)%rnmpp))   allocate (tend%rnmpt(ntpts))
+   if (allocated(micro_g(1)%rnmsp))   allocate (tend%rnmst(ntpts))
+   if (allocated(micro_g(1)%rnmap))   allocate (tend%rnmat(ntpts))
+   if (allocated(micro_g(1)%rnmgp))   allocate (tend%rnmgt(ntpts))
+   if (allocated(micro_g(1)%rnmhp))   allocate (tend%rnmht(ntpts))
+   if (allocated(micro_g(1)%rincp))   allocate (tend%rinct(ntpts))
+   if (allocated(micro_g(1)%rindp))   allocate (tend%rindt(ntpts))
+   if (allocated(micro_g(1)%rinrp))   allocate (tend%rinrt(ntpts))
+   if (allocated(micro_g(1)%rinpp))   allocate (tend%rinpt(ntpts))
+   if (allocated(micro_g(1)%rinsp))   allocate (tend%rinst(ntpts))
+   if (allocated(micro_g(1)%rinap))   allocate (tend%rinat(ntpts))
+   if (allocated(micro_g(1)%ringp))   allocate (tend%ringt(ntpts))
+   if (allocated(micro_g(1)%rinhp))   allocate (tend%rinht(ntpts))
 
    if (allocated(micro_g(1)%snmcp))   allocate (tend%snmct(ntpts))
    if (allocated(micro_g(1)%snmdp))   allocate (tend%snmdt(ntpts))
@@ -292,6 +312,22 @@ integer :: nsc,ng,ngrs
    if (allocated(tend%dinat)) deallocate (tend%dinat)
    if (allocated(tend%dingt)) deallocate (tend%dingt)
    if (allocated(tend%dinht)) deallocate (tend%dinht)
+   if (allocated(tend%rnmct)) deallocate (tend%rnmct)
+   if (allocated(tend%rnmdt)) deallocate (tend%rnmdt)
+   if (allocated(tend%rnmrt)) deallocate (tend%rnmrt)
+   if (allocated(tend%rnmpt)) deallocate (tend%rnmpt)
+   if (allocated(tend%rnmst)) deallocate (tend%rnmst)
+   if (allocated(tend%rnmat)) deallocate (tend%rnmat)
+   if (allocated(tend%rnmgt)) deallocate (tend%rnmgt)
+   if (allocated(tend%rnmht)) deallocate (tend%rnmht)
+   if (allocated(tend%rinct)) deallocate (tend%rinct)
+   if (allocated(tend%rindt)) deallocate (tend%rindt)
+   if (allocated(tend%rinrt)) deallocate (tend%rinrt)
+   if (allocated(tend%rinpt)) deallocate (tend%rinpt)
+   if (allocated(tend%rinst)) deallocate (tend%rinst)
+   if (allocated(tend%rinat)) deallocate (tend%rinat)
+   if (allocated(tend%ringt)) deallocate (tend%ringt)
+   if (allocated(tend%rinht)) deallocate (tend%rinht)
 
    if (allocated(tend%snmct)) deallocate (tend%snmct)
    if (allocated(tend%snmdt)) deallocate (tend%snmdt)
@@ -504,6 +540,40 @@ implicit none
       CALL vtables_scalar (micro%dingp(1,1,1),tend%dingt(1),ng,'DINGP')
    if (allocated(tend%dinht))  &
       CALL vtables_scalar (micro%dinhp(1,1,1),tend%dinht(1),ng,'DINHP')
+
+   if (allocated(tend%rnmct))  &
+      CALL vtables_scalar (micro%rnmcp(1,1,1),tend%rnmct(1),ng,'RNMCP')
+   if (allocated(tend%rnmdt))  &
+      CALL vtables_scalar (micro%rnmdp(1,1,1),tend%rnmdt(1),ng,'RNMDP')
+   if (allocated(tend%rnmrt))  &
+      CALL vtables_scalar (micro%rnmrp(1,1,1),tend%rnmrt(1),ng,'RNMRP')
+   if (allocated(tend%rnmpt))  &
+      CALL vtables_scalar (micro%rnmpp(1,1,1),tend%rnmpt(1),ng,'RNMPP')
+   if (allocated(tend%rnmst))  &
+      CALL vtables_scalar (micro%rnmsp(1,1,1),tend%rnmst(1),ng,'RNMSP')
+   if (allocated(tend%rnmat))  &
+      CALL vtables_scalar (micro%rnmap(1,1,1),tend%rnmat(1),ng,'RNMAP')
+   if (allocated(tend%rnmgt))  &
+      CALL vtables_scalar (micro%rnmgp(1,1,1),tend%rnmgt(1),ng,'RNMGP')
+   if (allocated(tend%rnmht))  &
+      CALL vtables_scalar (micro%rnmhp(1,1,1),tend%rnmht(1),ng,'RNMHP')
+
+   if (allocated(tend%rinct))  &
+      CALL vtables_scalar (micro%rincp(1,1,1),tend%rinct(1),ng,'RINCP')
+   if (allocated(tend%rindt))  &
+      CALL vtables_scalar (micro%rindp(1,1,1),tend%rindt(1),ng,'RINDP')
+   if (allocated(tend%rinrt))  &
+      CALL vtables_scalar (micro%rinrp(1,1,1),tend%rinrt(1),ng,'RINRP')
+   if (allocated(tend%rinpt))  &
+      CALL vtables_scalar (micro%rinpp(1,1,1),tend%rinpt(1),ng,'RINPP')
+   if (allocated(tend%rinst))  &
+      CALL vtables_scalar (micro%rinsp(1,1,1),tend%rinst(1),ng,'RINSP')
+   if (allocated(tend%rinat))  &
+      CALL vtables_scalar (micro%rinap(1,1,1),tend%rinat(1),ng,'RINAP')
+   if (allocated(tend%ringt))  &
+      CALL vtables_scalar (micro%ringp(1,1,1),tend%ringt(1),ng,'RINGP')
+   if (allocated(tend%rinht))  &
+      CALL vtables_scalar (micro%rinhp(1,1,1),tend%rinht(1),ng,'RINHP')
 
    if (allocated(tend%snmct))  &
       CALL vtables_scalar (micro%snmcp(1,1,1),tend%snmct(1),ng,'SNMCP')
