@@ -109,6 +109,7 @@ do j = ja,jz
    do i = ia,iz
       !Do micro flag check and copy global variabes to local variables
       CALL range_check (mzp,k1,k2,k3,i,j,micro_g(ngr))
+      CALL check_regen_invariant ('after-copyin',mzp,i,j)
       !Run the microphysics and Harrington radiation code 
       CALL mcphys (mzp,k1,k2,k3,i,j,ngr,maxnzp   &
          ,dtlt,dtlti,time,zm                     &
@@ -142,6 +143,7 @@ do j = ja,jz
          ,imonth1                                &
          )
       !Copy local variables back to global variables
+      CALL check_regen_invariant ('before-copyback',mzp,i,j)
       CALL copyback (mzp,k2,k3,i,j,micro_g(ngr))
       !Quick way to view total accum precip
       !Good for testing in SEQUENTIAL mode - not for testing in PARALLEL
@@ -310,22 +312,26 @@ enddo
 
 ! Pre-compute variables for vapor diffusion
  CALL vapdiff (m1,k1(11),k2(11),rv(1))
+ CALL check_regen_invariant ('after-vapdiff',m1,i,j)
 
 ! Calculate vapor flux in order of species given by (mivap)
 do icv = 1,8
    lcat = mivap(icv)
    if (jnmb(lcat) .ge. 1) then
       CALL vapflux (m1,lcat,k1(lcat),k2(lcat),rv(1),i,j)
+      CALL check_regen_invariant ('after-vapflux',m1,i,j)
    endif
 enddo
 
 ! Pristine ice to snow transfer
 if (jnmb(4) .ge. 1) then
    CALL psxfer (k1(3),k2(3),k1(4),k2(4),i,j)
+   CALL check_regen_invariant ('after-psxfer',m1,i,j)
 endif
 
 ! Update temperature and moisture following vapor growth
  CALL newtemp (m1,k1(11),k2(11),rv(1),theta(1))
+ CALL check_regen_invariant ('after-newtemp',m1,i,j)
 
 ! Computed updated mean mass and weights for collision lookup tables
 do lcat = 1,8
@@ -356,6 +362,7 @@ endif
 
 ! Calculate collision/coalescence efficiencies before collection routines
  CALL effxy (m1,k1,k2)
+ CALL check_regen_invariant ('after-effxy',m1,i,j)
 
 ! Self collection of rain, aggregates, graupel, hail:  number change only
 do lcat = 2,7
@@ -426,6 +433,7 @@ qx_lhr = qx
 
 ! Make hydrometeor transfers due to collision-coalescence
  CALL colxfers (m1,k1,k2,scrmic1,scrmic2)
+ CALL check_regen_invariant ('after-colxfers',m1,i,j)
 
 ! Pristine ice to snow transfer done after collision-coalescence to
 ! avoid any mass/number adjustments that impact cloud-ice number
@@ -445,6 +453,7 @@ enddo
 
 ! Add call to update LHR theta after collisions and melting
  CALL calc_lhr_collmelt (m1)
+ CALL check_regen_invariant ('after-collmelt',m1,i,j)
 
 ! Save rx and qx before cloud nucleation...
 rx_lhr = rx
@@ -475,6 +484,7 @@ if (jnmb(8) .ge. 3) CALL enemb (m1,k1,k2,8,dn0(1))
 
 ! Add call to update LHR theta after cloud nucleation...
  CALL calc_lhr_cldnuc (k1,k2)
+ CALL check_regen_invariant ('after-cldnuc',m1,i,j)
 
 ! Save rx and qx before ice nucleation.
 rx_lhr = rx
@@ -515,6 +525,7 @@ if (jnmb(8) .ge. 3) CALL enemb (m1,k1,k2,8,dn0(1))
 
 ! Update latent heating budgets after ice nucleation
  CALL calc_lhr_icenuc (k1,k2)
+ CALL check_regen_invariant ('after-icenuc',m1,i,j)
 
 ! Zero out precip arrays that feed into land surface and soil
 pcpg  = 0.
@@ -535,6 +546,7 @@ enddo
 do lcat = 1,8
    if (jnmb(lcat) .ge. 1) then
      if(isedim==0) &
+      CALL check_regen_invariant ('before-sedim',m1,i,j)
       CALL sedim (m1,lcat,ngr  &
          ,k1(lcat),k2(lcat)  &
          ,rtp(1),thp(1),theta(1),dn0(1),dpcp0(lcat)  &
@@ -557,6 +569,7 @@ enddo
 ! Dust and sea-salt dry and wet deposition driver
 ! applied after sedimentation for computation of precip rate
 if(iaerodep==1) &
+ CALL check_regen_invariant ('before-deposition',m1,i,j)
  CALL deposition_driver (i,j,m1,zm,rtgt               &
     ,rv(1),theta(1),uup(1),vvp(1)                     &
     ,dn0(1)                                           &
@@ -956,6 +969,42 @@ endif
 
 return
 END SUBROUTINE copyback
+
+!##############################################################################
+Subroutine check_regen_invariant (tag,m1,i,j)
+
+! Debug instrumentation, not part of the model.
+!
+! Reports the first few places where the regenerated aerosol mass held in
+! cloud droplets exceeds the total aerosol mass held in them, which cannot
+! happen: the regenerated part is a subset of the total. Calls are placed
+! between the stages of the per-column microphysics so that the first tag to
+! trip names the stage that breaks the invariant.
+!
+! The trip count is capped per MPI rank so that 256 ranks cannot flood stdout.
+
+use micphys
+
+implicit none
+
+character(len=*) :: tag
+integer :: m1,i,j,k
+integer, save :: ntrip = 0
+
+if (itrkregen /= 1 .or. iccnlev < 2) return
+if (ntrip >= 30) return
+
+do k = 1,m1
+   if (rnmhx(k,1) > 0. .and. rnmhx(k,1) > cnmhx(k,1)*1.000001) then
+      ntrip = ntrip + 1
+      print*,'REGENCHK ',trim(tag),' k=',k,' i=',i,' j=',j,  &
+             ' rnm=',rnmhx(k,1),' cnm=',cnmhx(k,1)
+      if (ntrip >= 30) return
+   endif
+enddo
+
+return
+END SUBROUTINE check_regen_invariant
 
 !##############################################################################
 Subroutine store_budget_rate (m1,dtlt,step_amount,budget_rate)
