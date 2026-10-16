@@ -132,8 +132,29 @@ real, dimension(nzpmax) :: xregen1cldr,xregen2cldr,xregen1drzr,xregen2drzr
 real, dimension(nzpmax) :: xregenaero1n,xregenaero1m,xregenaero2n,xregenaero2m
 
 !******Variables Needed for BUBBLE SIMULATION ******************************
-integer :: ibubble,ibubgrd,ibdxia,ibdxiz,ibdyja,ibdyjz,ibdzk1,ibdzk2
-real :: bthp,brtp
+! Up to max_bubbles initial perturbations, in the style of the flux forcings
+! below. Entry n of IBUBBLE sets the type of perturbation n (1 = square bubble,
+! 2 = cosine-squared bubble, 3 = random perturbations, 4 = 2 and 3 together),
+! and entry n of every other array below belongs to the same perturbation.
+! The active perturbations are the leading nonzero IBUBBLE entries (see
+! n_active_bubbles in ruser.f90), so a RAMSIN with a single IBUBBLE value
+! behaves as before. Every entry defaults to zero, so an entry the RAMSIN
+! leaves out reads as "off" (IBUBBLE) or "not given" (the rest).
+integer, parameter :: max_bubbles = 10
+integer, dimension(max_bubbles) :: ibubble = 0  ! Perturbation type (0 = off)
+integer, dimension(max_bubbles) :: ibubgrd = 0  ! Grid number
+integer, dimension(max_bubbles) :: ibdxia = 0   ! X start grid point
+integer, dimension(max_bubbles) :: ibdxiz = 0   ! X end grid point
+integer, dimension(max_bubbles) :: ibdyja = 0   ! Y start grid point
+integer, dimension(max_bubbles) :: ibdyjz = 0   ! Y end grid point
+integer, dimension(max_bubbles) :: ibdzk1 = 0   ! Lower k level (or center k)
+integer, dimension(max_bubbles) :: ibdzk2 = 0   ! Upper k level (or -radius k)
+real, dimension(max_bubbles)    :: bthp = 0.    ! Theta-il perturbation (K)
+real, dimension(max_bubbles)    :: brtp = 0.    ! Fractional total-water perturbation
+! 1 = also apply the perturbations when starting from a history file
+! (INITIAL=3), as ITRACHIST does for tracers; 0 = horizontally homogeneous
+! starts only, the original behavior
+integer :: ibubhist
 
 !******Variables for NEW FLUX FORCING SYSTEM ************************************
 integer, parameter :: max_flux_forcings = 10

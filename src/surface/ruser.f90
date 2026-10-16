@@ -534,7 +534,163 @@ return
 END SUBROUTINE seed_random_number_generator
 
 !##############################################################################
-Subroutine bubble (m1,m2,m3,i0,j0,thp,rtp)
+Integer Function n_active_bubbles ()
+
+! Number of active bubble perturbations: the leading nonzero entries of
+! IBUBBLE. Counting stops at the first zero, so a RAMSIN that gives a single
+! IBUBBLE value (the original single-bubble form) has exactly one active
+! perturbation, or none when that value is 0. opspec3 makes a nonzero entry
+! after a zero fatal, so a requested perturbation is never skipped silently.
+
+use micphys, only: ibubble, max_bubbles
+
+implicit none
+
+integer :: ib
+
+n_active_bubbles = 0
+do ib = 1, max_bubbles
+  ! The first zero entry ends the list of active perturbations
+  if (ibubble(ib) == 0) exit
+  n_active_bubbles = ib
+enddo
+
+return
+END FUNCTION n_active_bubbles
+
+!##############################################################################
+Subroutine bubble_geometry (ib,center_x,center_y,center_z &
+                           ,radius_x,radius_y,radius_z)
+
+! Center (m) and semi-axes (m) of bubble perturbation IB, from its IBD* entries.
+!
+! This is the one place the bubble ellipsoid is defined. Subroutine bubble
+! builds the cosine-squared perturbation on it, and init_tracer (mic_init.f90)
+! nests the tracer shells on it, so the tracers and the bubble cannot drift
+! apart. x and y are measured from the center of grid 1 and z is height, as in
+! the original single-bubble code. The center comes from the grid-point ranges
+! with that code's arithmetic and rounding, so existing RAMSINs reproduce their
+! bubbles exactly.
+!
+! Two vertical conventions:
+!   IBDZK2 > 0: the bubble spans the w levels IBDZK1 to IBDZK2, and its center
+!               is the w level halfway between them (rounded down when
+!               IBDZK1+IBDZK2 is odd).
+!   IBDZK2 < 0: IBDZK1 is the center level and the radius reaches the level
+!               -IBDZK2, which allows a bubble that is partly underground.
+! A zero horizontal radius (IBDXIA = IBDXIZ) makes the bubble infinite along
+! that axis; bubble_normalized_radius then ignores the axis.
+
+use micphys
+use mem_grid
+
+implicit none
+
+integer :: ib
+real :: center_x,center_y,center_z,radius_x,radius_y,radius_z
+integer :: center_k
+
+! Horizontal center, relative to the center of grid 1
+center_x = deltax * ( (ibdxia(ib)+ibdxiz(ib))/2.0 - nnxp(1)/2.0 )
+center_y = deltax * ( (ibdyja(ib)+ibdyjz(ib))/2.0 - nnyp(1)/2.0 )
+
+! Horizontal semi-axes: half of each grid-point range
+radius_x = (ibdxiz(ib)-ibdxia(ib)) * deltax * 0.5
+radius_y = (ibdyjz(ib)-ibdyja(ib)) * deltax * 0.5
+
+if (ibdzk2(ib) < 0) then
+  ! Centered on level IBDZK1, with the radius reaching level -IBDZK2
+  radius_z = zmn(-ibdzk2(ib),1) - zmn(ibdzk1(ib),1)
+  center_z = zmn(ibdzk1(ib),1)
+else
+  ! Spanning levels IBDZK1 to IBDZK2; assigning to an integer rounds the
+  ! halfway level down
+  radius_z = (zmn(ibdzk2(ib),1) - zmn(ibdzk1(ib),1)) * 0.5
+  center_k = int(ibdzk1(ib)+ibdzk2(ib))/2.0
+  center_z = zmn(center_k,1)
+endif
+
+return
+END SUBROUTINE bubble_geometry
+
+!##############################################################################
+Subroutine bubble_normalized_radius (i_global,j_global,k               &
+                                    ,center_x,center_y,center_z        &
+                                    ,radius_x,radius_y,radius_z        &
+                                    ,normalized_radius)
+
+! Normalized ellipsoidal radius of the T cell (k, i_global, j_global) of grid 1
+! from a bubble with the given center and semi-axes (from bubble_geometry):
+!
+!   sqrt( ((x-xc)/rx)**2 + ((y-yc)/ry)**2 + ((z-zc)/rz)**2 )
+!
+! It is 0 at the bubble center and 1 on the bubble edge. Subroutine bubble
+! weights its perturbation by this radius, and init_tracer assigns tracer shells
+! by it, so both see the same ellipsoid. i_global and j_global are full-domain
+! indices (the node's local index plus its i0/j0 offset). The cell center is the
+! midpoint of its two bounding momentum points. A zero horizontal radius drops
+! that axis (an infinite bubble), and in a 2-D run the y term copies the x term.
+! The arithmetic matches the original single-bubble code term for term, so the
+! perturbation is bitwise identical for existing RAMSINs.
+
+use mem_grid
+
+implicit none
+
+integer :: i_global,j_global,k
+real :: center_x,center_y,center_z,radius_x,radius_y,radius_z
+real :: normalized_radius
+real :: cell_x,cell_y,cell_z
+real :: normalized_x_squared,normalized_y_squared,normalized_z_squared
+
+! Cell center, as the midpoint of its bounding momentum points
+cell_x = (xmn(i_global,1)+xmn(i_global+1,1))*0.5
+cell_y = (ymn(j_global,1)+ymn(j_global+1,1))*0.5
+cell_z = (zmn(k,1)+zmn(k+1,1))*0.5
+
+! A zero radius means the bubble is infinite along that axis, so it adds no
+! distance
+if (radius_x /= 0) then
+  normalized_x_squared = ((cell_x-center_x)/radius_x)**2
+else
+  normalized_x_squared = 0.0
+endif
+if (radius_y /= 0) then
+  normalized_y_squared = ((cell_y-center_y)/radius_y)**2
+else
+  normalized_y_squared = 0.0
+endif
+normalized_z_squared = ((cell_z-center_z)/radius_z)**2
+
+! In 2-D, let the y direction follow x
+if (jdim==0) normalized_y_squared = normalized_x_squared
+
+normalized_radius = sqrt(normalized_x_squared+normalized_y_squared &
+                        +normalized_z_squared)
+
+return
+END SUBROUTINE bubble_normalized_radius
+
+!##############################################################################
+Subroutine bubble (ib,m1,m2,m3,i0,j0,thp,rtp)
+
+! Add bubble perturbation IB (entry IB of the IBUBBLE arrays) to the theta-il
+! (thp) and total-water (rtp) fields of the subdomain this node holds. rdint
+! calls it once per active perturbation, in IBUBBLE order, so perturbations
+! that overlap add up. The perturbation types are:
+!
+!   1 = square bubble: BTHP added to thp, and rtp scaled by (1+BRTP), in every
+!       cell of the IBD* grid-point box
+!   2 = cosine-squared bubble on the ellipsoid from bubble_geometry: the same
+!       perturbations weighted by cos**2(pi/2 * normalized radius), which is 1
+!       at the center and falls to 0 on the edge
+!   3 = random theta perturbations over the whole of grid IBUBGRD, from the
+!       lowest model level up to FLEXPARAMS(5), with amplitude RCE_BUBL
+!       decreasing linearly to 0 at that height
+!   4 = types 2 and 3 together
+!
+! The rtp perturbation multiplies whatever total water is already there, so the
+! same BRTP adds more water to moister (or cloudy) air.
 
 use micphys
 use mem_grid
@@ -544,40 +700,39 @@ use mem_flexparams, only: flexparams
 
 implicit none
 
-integer :: m1,m2,m3,i0,j0
+integer :: ib,m1,m2,m3,i0,j0
 real, dimension(m1,m2,m3) :: thp,rtp
 real :: R
 
-integer bubtemp
 integer :: i,j,k,id,jd
-real acetmp1,acetmp2,acetmp3,acetmp4,acetmp5
-real acetmp6,acetmp7,acetmp8,acetmp9
-real bubctrx,bubctry,bubctrz
-real bubradx,bubrady,bubradz
+real :: half_pi,cosine_squared_weight,normalized_radius
+real :: bubctrx,bubctry,bubctrz
+real :: bubradx,bubrady,bubradz
 real, dimension(:,:), allocatable :: bub_rand_nums
-real random_perturbation_max_z
+real :: random_perturbation_max_z
 
-if(ibubble==1) then
+if(ibubble(ib)==1) then
  if(print_msg) then
   print*,''
-  print*,'INITIALIZING Square RAMSIN WARM BUBBLE HERE'
-  print*,'On grid number=',IBUBGRD
-  print*,'Bubble from I=',IBDXIA,'TO',IBDXIZ
-  print*,'Bubble from J=',IBDYJA,'TO',IBDYJZ
-  print*,'Bubble from K=',IBDZK1,'TO',IBDZK2
-  print*,'THP perturbation=',BTHP
-  print*,'RTP perturbation=',BRTP
+  print*,'INITIALIZING Square RAMSIN WARM BUBBLE HERE (bubble',ib,')'
+  print*,'On grid number=',IBUBGRD(ib)
+  print*,'Bubble from I=',IBDXIA(ib),'TO',IBDXIZ(ib)
+  print*,'Bubble from J=',IBDYJA(ib),'TO',IBDYJZ(ib)
+  print*,'Bubble from K=',IBDZK1(ib),'TO',IBDZK2(ib)
+  print*,'THP perturbation=',BTHP(ib)
+  print*,'RTP perturbation=',BRTP(ib)
   print*,''
  endif
- do jd = IBDYJA, IBDYJZ
+ ! Every cell of the grid-point box that this node holds
+ do jd = IBDYJA(ib), IBDYJZ(ib)
    j = jd - j0
    if ((j .ge. 1) .and. (j .le. m3)) then
-     do id = IBDXIA, IBDXIZ
+     do id = IBDXIA(ib), IBDXIZ(ib)
        i = id - i0
        if ((i .ge. 1) .and. (i .le. m2)) then
-         do k = IBDZK1,IBDZK2
-              thp(k,i,j) = thp(k,i,j) + BTHP
-              rtp(k,i,j) = rtp(k,i,j) * (1.0 + BRTP)
+         do k = IBDZK1(ib),IBDZK2(ib)
+              thp(k,i,j) = thp(k,i,j) + BTHP(ib)
+              rtp(k,i,j) = rtp(k,i,j) * (1.0 + BRTP(ib))
          enddo
        endif
      enddo
@@ -585,97 +740,57 @@ if(ibubble==1) then
  enddo
 endif
 
-if(ibubble==2 .or. ibubble==4) then
+if(ibubble(ib)==2 .or. ibubble(ib)==4) then
+ ! Center and semi-axes of this bubble's ellipsoid
+ CALL bubble_geometry (ib,bubctrx,bubctry,bubctrz,bubradx,bubrady,bubradz)
  if(print_msg) then
-  print*,'INITIALIZING Cosine-Squared RAMSIN WARM BUBBLE HERE'
-  print*,'On grid number=',IBUBGRD
+  print*,'INITIALIZING Cosine-Squared RAMSIN WARM BUBBLE HERE (bubble',ib,')'
+  print*,'On grid number=',IBUBGRD(ib)
   print*,'Use of I,J coordinates for Cosine-Squared bubble is'
   print*,'only accurate and valid if the domain POLE POINT'
   print*,'is the same at the CENTRAL LAT and LON'
- endif
- !Set up X location of bubble center relative to grid center
- bubctrx = deltax * ( (IBDXIA+IBDXIZ)/2.0 - NNXP(1)/2.0 )
- !Set up Y location of bubble center relative to grid center
- bubctry = deltax * ( (IBDYJA+IBDYJZ)/2.0 - NNYP(1)/2.0 )
- !Set up Z location of bubble center
- if(print_msg) then
-  print*,'IBDXIA,IBDXIZ',IBDXIA,IBDXIZ
-  print*,'IBDYJA,IBDYJZ',IBDYJA,IBDYJZ
+  print*,'IBDXIA,IBDXIZ',IBDXIA(ib),IBDXIZ(ib)
+  print*,'IBDYJA,IBDYJZ',IBDYJA(ib),IBDYJZ(ib)
   print*,'X-center,Y-center:',bubctrx,bubctry
+  if (IBDZK2(ib) < 0) then
+    print*,'Negative IBDZK2, interpreting as bubble centered on z=',bubctrz &
+          ,'m, radius ',bubradz, 'm'
+  endif
   print*,''
  endif
- !Set up length, width, and depth of bubble
- bubradx=(IBDXIZ-IBDXIA) * deltax * 0.5
- bubrady=(IBDYJZ-IBDYJA) * deltax * 0.5
- !  IF IBDZK2 is <0, interpret IBDZK1 as the center and the distance from IBDZK1
- !  to -IBDZK2 as the radius; this allows for bubbles that are partially underground
- !  This might give weird results if you use nonconstant z grid spacing!
- if (IBDZK2 < 0) then
-  ! The radius is the distance from between -IDBZK2 and IBDZK1
-  bubradz=(ZMN(-IBDZK2,1)-ZMN(IBDZK1,1)) 
-  bubctrz=ZMN(IBDZK1,1)
-    print*,'Negative IBDZK2, interpreting as bubble centered on z=',bubctrz,'m, radius ',bubradz, 'm'
- else
-   bubradz=(ZMN(IBDZK2,1)-ZMN(IBDZK1,1)) * 0.5
-  bubtemp=int(IBDZK1+IBDZK2)/2.0
-  bubctrz=ZMN(bubtemp,1)
- endif
- !Set up gaussian bubble
- acetmp8=atan(1.0)*4.0/2.0 ! pi/2
+ half_pi=atan(1.0)*4.0/2.0
  do j=1,m3
   do i=1,m2
    do k=1,m1
-    acetmp1=(XMN(i+i0,1)+XMN(i+i0+1,1))*0.5
-    acetmp2=(YMN(j+j0,1)+YMN(j+j0+1,1))*0.5
-    acetmp3=(ZMN(k,1)+ZMN(k+1,1))*0.5  ! Z value we're using for the calculation
-    !  Allow for an infinite bubble in x or y if the same value is passed for
-    !  IBDXIA and IBDXIZ or IBDYJA and IBDYJZ
-    if (bubradx /= 0) then
-      acetmp4=(acetmp1-bubctrx)/bubradx
-      acetmp4=acetmp4**2
+    ! Weight 1 at the center, falling as cos**2 to 0 on the edge
+    CALL bubble_normalized_radius (i+i0,j+j0,k,bubctrx,bubctry,bubctrz &
+                                  ,bubradx,bubrady,bubradz,normalized_radius)
+    if(normalized_radius.ge.1.0)then
+     cosine_squared_weight=0.0
     else
-      acetmp4=0
-    end if
-    if (bubrady /= 0) then
-      acetmp5=(acetmp2-bubctry)/bubrady
-      acetmp5=acetmp5**2
-    else 
-      acetmp5=0
-    end if
-    acetmp6=(acetmp3-bubctrz)/bubradz
-    acetmp6=acetmp6**2
-    if(jdim==0)acetmp5=acetmp4 !For 2D simulation let Y-dir = X-dir
-    acetmp7=acetmp4+acetmp5+acetmp6
-    acetmp7=SQRT(acetmp7)
-    if(acetmp7.ge.1.0)then
-     acetmp9=0.0
-    else
-     acetmp9=(COS(acetmp8*acetmp7))**2
+     cosine_squared_weight=(COS(half_pi*normalized_radius))**2
     endif
-    thp(k,i,j)=thp(k,i,j)+(BTHP*acetmp9) !pt pert
-    rtp(k,i,j)=rtp(k,i,j)*(1.0+(acetmp9*BRTP)) !mix ratio pert
+    thp(k,i,j)=thp(k,i,j)+(BTHP(ib)*cosine_squared_weight) !pt pert
+    rtp(k,i,j)=rtp(k,i,j)*(1.0+(cosine_squared_weight*BRTP(ib))) !mix ratio pert
    enddo
   enddo
  enddo
 endif
 
-if(ibubble==3 .or. ibubble==4) then
-
+if(ibubble(ib)==3 .or. ibubble(ib)==4) then
   ! Set perturbation depth
   random_perturbation_max_z = flexparams(5)  ! m
-
  if(print_msg) then
-  print*,'Activating random temperature perturbation'
+  print*,'Activating random temperature perturbation (bubble',ib,')'
   print*,'at z=2, linearly-decreasing to 0K over ',random_perturbation_max_z,'m'
-  print*,'On grid number=',IBUBGRD
-  if(irce==1)then 
+  print*,'On grid number=',IBUBGRD(ib)
+  if(irce==1)then
      print*,'With Max amplitude',rce_bubl
   else
      print*,'With Max amplitude in subroutine bubble.'
   endif
   print*,''
  endif
-
  ! SRH: parallel algorithm that will make the temperature perturbation
  ! initialization independent of the number of nodes. This is accomplished
  ! by having mainnum process do the assignment for the entire domain and
@@ -691,19 +806,19 @@ if(ibubble==3 .or. ibubble==4) then
    ! select levels for temp. pert. based on altitude
    if( zt(k) <= (random_perturbation_max_z+zt(2)) ) then ! only over layer specified
      ! allocate memory for entire horizontal domain
-     allocate(bub_rand_nums(nnxp(ibubgrd), nnyp(ibubgrd)))
+     allocate(bub_rand_nums(nnxp(ibubgrd(ib)), nnyp(ibubgrd(ib))))
 
      ! if a parallel run and this is mainnum process, or if a sequential run,
      ! then calculate the temp pert for this level
      if ((my_rams_num .eq. mainnum) .or. (nmachs .eq. 1)) then
-       CALL calc_bub_rand_nums (nnxp(ibubgrd),nnyp(ibubgrd),bub_rand_nums)
+       CALL calc_bub_rand_nums (nnxp(ibubgrd(ib)),nnyp(ibubgrd(ib)),bub_rand_nums)
      endif
 
      ! if parallel run then broadcast the random number array to everyone
      if (nmachs .gt. 1) then
        ! note the multiplication of nnxp*nnyp. this is done so that
        ! bub_rand_nums can be viewed as a 1D array in the broadcast routine
-       CALL broadcast_bub_rand_nums (nnxp(ibubgrd)*nnyp(ibubgrd), bub_rand_nums)
+       CALL broadcast_bub_rand_nums (nnxp(ibubgrd(ib))*nnyp(ibubgrd(ib)), bub_rand_nums)
      endif
 
      ! At this point bub_rand_nums covers the entire domain and is filled with

@@ -700,7 +700,8 @@ use kpp_parameters, only:IKPP,FRQKPP
 
 implicit none
 
-integer :: k,ifaterr,iwarerr,infoerr,ng,ngr
+integer :: k,ifaterr,iwarerr,infoerr,ng,ngr,ib,n_bubbles
+integer, external :: n_active_bubbles
 
 IFATERR=0
 IWARERR=0
@@ -740,16 +741,47 @@ IF( ((icloud .GE. 2 .AND. icloud .LE. 4 .AND. cparm .LE. 0.)  &
    IFATERR=IFATERR+1
 ENDIF
 
-IF(ibubble.lt.0 .or. ibubble.gt.5) then
-   PRINT*,' FATAL - IBUBBLE must be 0, 1, 2, 3, 4, or 5'
-   PRINT*,'         0 = off'
-   PRINT*,'         1 = RAMSIN-set square bubble'
-   PRINT*,'         2 = RAMSIN-set gaussian bubble'
-   PRINT*,'         3 = Random bubble in ruser'
-   PRINT*,'         4 = Combination of 2 and 3'
-   PRINT*,'         5 = Volumetric heating forcing'
-   IFATERR=IFATERR+1
-ENDIF
+! Check every bubble perturbation entry. The active perturbations are the
+! leading nonzero IBUBBLE entries (n_active_bubbles), so a nonzero entry after
+! a zero would be ignored; make that fatal rather than silent.
+!   (severity - F)
+n_bubbles = n_active_bubbles()
+do ib = 1, max_bubbles
+  IF(ibubble(ib).lt.0 .or. ibubble(ib).gt.5) then
+     PRINT*,' FATAL - IBUBBLE entry',ib,' must be 0, 1, 2, 3, 4, or 5'
+     PRINT*,'         0 = off'
+     PRINT*,'         1 = RAMSIN-set square bubble'
+     PRINT*,'         2 = RAMSIN-set gaussian bubble'
+     PRINT*,'         3 = Random bubble in ruser'
+     PRINT*,'         4 = Combination of 2 and 3'
+     PRINT*,'         5 = Volumetric heating forcing'
+     IFATERR=IFATERR+1
+  ENDIF
+  IF(ib > n_bubbles .and. ibubble(ib) /= 0) then
+     PRINT*,' FATAL - IBUBBLE entry',ib,' is nonzero but follows a zero entry.'
+     PRINT*,'         Only the leading nonzero IBUBBLE entries are applied.'
+     IFATERR=IFATERR+1
+  ENDIF
+enddo
+
+! Each active perturbation needs a grid that exists, and a bubble (types 1, 2,
+! and 4) needs its own grid-point box: every IBD* entry given, start <= end.
+!   (severity - F)
+do ib = 1, n_bubbles
+  IF(ibubgrd(ib).lt.1 .or. ibubgrd(ib).gt.ngrids) then
+     PRINT*,' FATAL - IBUBGRD entry',ib,' must name a grid from 1 to NGRIDS'
+     IFATERR=IFATERR+1
+  ENDIF
+  IF(ibubble(ib)==1 .or. ibubble(ib)==2 .or. ibubble(ib)==4) then
+    IF(ibdxia(ib).lt.1 .or. ibdxiz(ib).lt.ibdxia(ib) .or.  &
+       ibdyja(ib).lt.1 .or. ibdyjz(ib).lt.ibdyja(ib) .or.  &
+       ibdzk1(ib).lt.1 .or. ibdzk2(ib).eq.0) then
+       PRINT*,' FATAL - bubble',ib,' needs IBDXIA<=IBDXIZ, IBDYJA<=IBDYJZ,'
+       PRINT*,'         IBDZK1>=1, and a nonzero IBDZK2 entry of its own'
+       IFATERR=IFATERR+1
+    ENDIF
+  ENDIF
+enddo
 
 IF(iconv.lt.0 .or. iconv.gt.5) then
    PRINT*,' FATAL - ICONV must be 0 - 5'

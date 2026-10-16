@@ -22,7 +22,8 @@ implicit none
 !     *** This routine is the driver of all initialization packages
 !---------------------------------------------------------------------
 
-integer :: ifm,icm,ngr,nv,ierr,nsc
+integer :: ifm,icm,ngr,nv,ierr,nsc,ib
+integer, external :: n_active_bubbles
 
 ! Seed the Fortran intrinsic PRNG once at startup using RANDSEED. This is
 ! unconditional with respect to all other features so that every feature
@@ -233,12 +234,17 @@ if(trim(runtype) == 'INITIAL' .or. &
             ,basic_g(ifm)%pp    (1,1,1))
       endif
 
-      !Initialize bubble perturbation via RAMSIN flags for HH run only
-      if(initial==1) then
-         if((ibubble>0) .and. ifm==ibubgrd) then
-         CALL bubble (mzp,mxp,myp,i0,j0,basic_g(ifm)%thp(1,1,1) &
-                     ,basic_g(ifm)%rtp(1,1,1))
-       endif
+      !Initialize bubble perturbations via RAMSIN flags: always for a
+      !horizontally homogeneous start, and on a history start (restart or
+      !history initialization) only when IBUBHIST=1. Each active entry of
+      !IBUBBLE is applied in turn, on its own grid.
+      if(initial==1 .or. (initial==3 .and. ibubhist==1)) then
+         do ib = 1, n_active_bubbles()
+            if(ifm==ibubgrd(ib)) then
+               CALL bubble (ib,mzp,mxp,myp,i0,j0,basic_g(ifm)%thp(1,1,1) &
+                           ,basic_g(ifm)%rtp(1,1,1))
+            endif
+         enddo
       endif
 
       !Initialize KPP mixed layer ocean model

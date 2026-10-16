@@ -25,7 +25,7 @@ character(len=*) :: group,vr,cc
 real :: ff
 integer :: ii,nv
 integer :: inrflg
-integer, parameter ::nvgrid=37,nvstrt=78,nvindat=168,nvsound=10
+integer, parameter ::nvgrid=37,nvstrt=78,nvindat=169,nvsound=10
 integer ::  igrids(nvgrid),istart(nvstrt),iindat(nvindat),isound(nvsound)
 character(len=16) :: grids(nvgrid),start(nvstrt),indat(nvindat),sound(nvsound)
 data igrids/nvgrid*0/,istart/nvstrt*0/,iindat/nvindat*0/,isound/nvsound*0/
@@ -66,7 +66,7 @@ DATA INDAT/  &
      ,'IHORGRAD','CSX','CSZ','XKHKM','ZKHKM','AKMIN','IBUBBLE','IBUBGRD' &
      ,'RANDSEED','IBUBSEED'                                              &
      ,'IBDXIA','IBDXIZ','IBDYJA','IBDYJZ','IBDZK1','IBDZK2','BTHP'       &
-     ,'BRTP'                                                             &
+     ,'BRTP','IBUBHIST'                                                  &
      ,'NFLUX_FORCINGS','IFLUX_GRID','IFLUX_XIA','IFLUX_XIZ'             &
      ,'IFLUX_YJA','IFLUX_YJZ','IFLUX_K_ATTEN','FLUX_AMP_WM2'            &
      ,'IFLUX_TSTART','IFLUX_TMAX','IFLUX_TDECAY','IFLUX_TEND'           &
@@ -302,16 +302,17 @@ IF(GROUP.EQ.'$MODEL_OPTIONS') THEN
  IF(VR.EQ.'ZKHKM')        CALL varsetf (VR,ZKHKM(NV),NV,MAXGRDS,FF,0.,100.)
  IF(VR.EQ.'AKMIN')        CALL varsetf (VR,AKMIN(NV),NV,MAXGRDS,FF,0.,5.)
  IF(VR.EQ.'FRACSAT')      CALL varsetf (VR,FRACSAT,NV,1,FF,0.000,999.000)
- IF(VR.EQ.'IBUBBLE')      CALL varseti (VR,IBUBBLE,NV,1,II,0,5)
- IF(VR.EQ.'IBUBGRD')      CALL varseti (VR,IBUBGRD,NV,1,II,1,10)
- IF(VR.EQ.'IBDXIA')       CALL varseti (VR,IBDXIA,NV,1,II,1,3000)
- IF(VR.EQ.'IBDXIZ')       CALL varseti (VR,IBDXIZ,NV,1,II,1,3000)
- IF(VR.EQ.'IBDYJA')       CALL varseti (VR,IBDYJA,NV,1,II,1,3000)
- IF(VR.EQ.'IBDYJZ')       CALL varseti (VR,IBDYJZ,NV,1,II,1,3000)
- IF(VR.EQ.'IBDZK1')       CALL varseti (VR,IBDZK1,NV,1,II,1,300)
- IF(VR.EQ.'IBDZK2')       CALL varseti (VR,IBDZK2,NV,1,II,-300,300)
- IF(VR.EQ.'BTHP')         CALL varsetf (VR,BTHP,NV,1,FF,-9999.,9999.)
- IF(VR.EQ.'BRTP')         CALL varsetf (VR,BRTP,NV,1,FF,-9999.,9999.)
+ IF(VR.EQ.'IBUBBLE')      CALL varseti (VR,IBUBBLE(NV),NV,max_bubbles,II,0,5)
+ IF(VR.EQ.'IBUBGRD')      CALL varseti (VR,IBUBGRD(NV),NV,max_bubbles,II,1,10)
+ IF(VR.EQ.'IBDXIA')       CALL varseti (VR,IBDXIA(NV),NV,max_bubbles,II,1,3000)
+ IF(VR.EQ.'IBDXIZ')       CALL varseti (VR,IBDXIZ(NV),NV,max_bubbles,II,1,3000)
+ IF(VR.EQ.'IBDYJA')       CALL varseti (VR,IBDYJA(NV),NV,max_bubbles,II,1,3000)
+ IF(VR.EQ.'IBDYJZ')       CALL varseti (VR,IBDYJZ(NV),NV,max_bubbles,II,1,3000)
+ IF(VR.EQ.'IBDZK1')       CALL varseti (VR,IBDZK1(NV),NV,max_bubbles,II,1,300)
+ IF(VR.EQ.'IBDZK2')       CALL varseti (VR,IBDZK2(NV),NV,max_bubbles,II,-300,300)
+ IF(VR.EQ.'BTHP')         CALL varsetf (VR,BTHP(NV),NV,max_bubbles,FF,-9999.,9999.)
+ IF(VR.EQ.'BRTP')         CALL varsetf (VR,BRTP(NV),NV,max_bubbles,FF,-9999.,9999.)
+ IF(VR.EQ.'IBUBHIST')     CALL varseti (VR,IBUBHIST,NV,1,II,0,1)
  IF(VR.EQ.'NFLUX_FORCINGS') CALL varseti (VR,NFLUX_FORCINGS,NV,1,II,0,10)
  IF(VR.EQ.'IFLUX_GRID')     CALL varseti (VR,IFLUX_GRID(NV),NV,max_flux_forcings,II,1,10)
  IF(VR.EQ.'IFLUX_XIA')      CALL varseti (VR,IFLUX_XIA(NV),NV,max_flux_forcings,II,1,3000)
@@ -447,7 +448,8 @@ use leaf_coms, only:ifreeslip
 
 implicit none
 
-integer :: ng,k,m
+integer :: ng,k,m,n_bubbles
+integer, external :: n_active_bubbles
 
 ! This routine prints out a listing of the values of all variables
 ! in the NAMELISTS
@@ -527,15 +529,8 @@ WRITE(6,'(100(3(A19,I5)/))')         &
  ,'NSLCON=',NSLCON                   &
  ,'IDIFFPERTS=',IDIFFPERTS           &
  ,'IHORGRAD=',IHORGRAD               &
- ,'IBUBBLE=',IBUBBLE                 &
- ,'IBUBGRD=',IBUBGRD                 &
+ ,'IBUBHIST=',IBUBHIST               &
  ,'RANDSEED=',RANDSEED               &
- ,'IBDXIA=',IBDXIA                   &
- ,'IBDXIZ=',IBDXIZ                   &
- ,'IBDYJA=',IBDYJA                   &
- ,'IBDYJZ=',IBDYJZ                   &
- ,'IBDZK1=',IBDZK1                   &
- ,'IBDZK2=',IBDZK2                   &
  ,'ICONV=',ICONV                     &
  ,'ICONGR=',ICONGR                   &
  ,'ICICENT=',ICICENT                 &
@@ -624,8 +619,6 @@ WRITE(6,'(100(3(A15,E11.4)/))')      &
  ,'SEATMP=',SEATMP                   &
  ,'DTHCON=',DTHCON                   &
  ,'DRTCON=',DRTCON                   &
- ,'BTHP=',BTHP                       &
- ,'BRTP=',BRTP                       &
  ,'NFLUX_FORCINGS=',NFLUX_FORCINGS   &
  ,'CXRAD=',CXRAD                     &
  ,'CYRAD=',CYRAD                     &
@@ -672,6 +665,20 @@ WRITE(6,304)(' ',BCTAU(NG),SPONGE_TAU(NG),NG=1,NGRIDS)
 303  FORMAT(A1,'  XKHKM=',E12.5,'          ZKHKM=',E12.5  &
    ,'          AKMIN=',E12.5,999(A1,/,E21.5,2E28.5))
 304  FORMAT(A1,'  BCTAU=',E12.5'     SPONGE_TAU=',E12.5,999(A1,/,E21.5,E28.5))
+
+! One line per active bubble perturbation (the leading nonzero IBUBBLE entries)
+n_bubbles = n_active_bubbles()
+IF (n_bubbles > 0) THEN
+  PRINT*, ' '
+  WRITE(6,*)'Bubble Perturbation Parameters:'
+  WRITE(6,501)(' ',IBUBBLE(M),IBUBGRD(M),BTHP(M),BRTP(M),M=1,n_bubbles)
+  WRITE(6,502)(' ',IBDXIA(M),IBDXIZ(M),IBDYJA(M),IBDYJZ(M),M=1,n_bubbles)
+  WRITE(6,503)(' ',IBDZK1(M),IBDZK2(M),M=1,n_bubbles)
+501  FORMAT(A1,'IBUBBLE=',I2,' GRID=',I2,' BTHP=',F8.3,' BRTP=',F8.3  &
+     ,999(A1,/,I11,I8,F14.3,F14.3))
+502  FORMAT(A1,' XIA=',I5,' XIZ=',I5,' YJA=',I5,' YJZ=',I5,999(A1,/,4I11))
+503  FORMAT(A1,' ZK1=',I5,' ZK2=',I5,999(A1,/,2I11))
+ENDIF
 
 IF (NFLUX_FORCINGS > 0) THEN
   PRINT*, ' '

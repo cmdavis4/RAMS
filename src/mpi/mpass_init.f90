@@ -29,7 +29,8 @@ implicit none
   !Saleeby(2016)
   !Increment memory buffer size here if you add RAMSIN Namelist variables.
   !Add to the appropriate section below as (#-of-them * arraysize).
-  nwords = 228 * 1                 & !single values (added NFLUX_FORCINGS, IUVWTEND, ITRKREGEN, IMBUDGETACC, IAEROREGEN)
+  ! The ten bubble values (IBUBBLE ... BRTP) moved from the singles to the bubble arrays
+  nwords = 219 * 1                 & !single values (added NFLUX_FORCINGS, IUVWTEND, ITRKREGEN, IMBUDGETACC, IAEROREGEN, IBUBHIST)
          +   1 * nflexparams        & !flexparams array (mem_flexparams)
          +   1 * 8                 & !micro (8-hydromet types for gnu)
          +   3 * aerocat           & !micro (number aerosol species)
@@ -46,6 +47,7 @@ implicit none
          +   1 *      50 * strl1   & !array of input strings
          +   5 * maxgrds * strl1   & !grid-dependent array of input strings
          +  13 * max_flux_forcings & !flux forcing arrays
+         +  10 * max_bubbles       & !bubble perturbation arrays
          + 100                       !extras so we have enough buffer
 
   allocate (buff(nwords)) ! note that what got allocated was nwords*sizeof(real) bytes
@@ -246,16 +248,17 @@ implicit none
     CALL par_put_float (ZKHKM,MAXGRDS)
     CALL par_put_float (AKMIN,MAXGRDS)
     CALL par_put_float (FRACSAT,1)
-    CALL par_put_int   (IBUBBLE,1)
-    CALL par_put_int   (IBUBGRD,1)
-    CALL par_put_int   (IBDXIA,1)
-    CALL par_put_int   (IBDXIZ,1)
-    CALL par_put_int   (IBDYJA,1)
-    CALL par_put_int   (IBDYJZ,1)
-    CALL par_put_int   (IBDZK1,1)
-    CALL par_put_int   (IBDZK2,1)
-    CALL par_put_float (BTHP,1)
-    CALL par_put_float (BRTP,1)
+    CALL par_put_int   (IBUBBLE,max_bubbles)
+    CALL par_put_int   (IBUBGRD,max_bubbles)
+    CALL par_put_int   (IBDXIA,max_bubbles)
+    CALL par_put_int   (IBDXIZ,max_bubbles)
+    CALL par_put_int   (IBDYJA,max_bubbles)
+    CALL par_put_int   (IBDYJZ,max_bubbles)
+    CALL par_put_int   (IBDZK1,max_bubbles)
+    CALL par_put_int   (IBDZK2,max_bubbles)
+    CALL par_put_float (BTHP,max_bubbles)
+    CALL par_put_float (BRTP,max_bubbles)
+    CALL par_put_int   (IBUBHIST,1)
     CALL par_put_int   (NFLUX_FORCINGS,1)
     CALL par_put_int   (IFLUX_GRID,max_flux_forcings)
     CALL par_put_int   (IFLUX_XIA,max_flux_forcings)
@@ -601,16 +604,17 @@ implicit none
     CALL par_get_float (ZKHKM,MAXGRDS)
     CALL par_get_float (AKMIN,MAXGRDS)
     CALL par_get_float (FRACSAT,1)
-    CALL par_get_int   (IBUBBLE,1)
-    CALL par_get_int   (IBUBGRD,1)
-    CALL par_get_int   (IBDXIA,1)
-    CALL par_get_int   (IBDXIZ,1)
-    CALL par_get_int   (IBDYJA,1)
-    CALL par_get_int   (IBDYJZ,1)
-    CALL par_get_int   (IBDZK1,1)
-    CALL par_get_int   (IBDZK2,1)
-    CALL par_get_float (BTHP,1)
-    CALL par_get_float (BRTP,1)
+    CALL par_get_int   (IBUBBLE,max_bubbles)
+    CALL par_get_int   (IBUBGRD,max_bubbles)
+    CALL par_get_int   (IBDXIA,max_bubbles)
+    CALL par_get_int   (IBDXIZ,max_bubbles)
+    CALL par_get_int   (IBDYJA,max_bubbles)
+    CALL par_get_int   (IBDYJZ,max_bubbles)
+    CALL par_get_int   (IBDZK1,max_bubbles)
+    CALL par_get_int   (IBDZK2,max_bubbles)
+    CALL par_get_float (BTHP,max_bubbles)
+    CALL par_get_float (BRTP,max_bubbles)
+    CALL par_get_int   (IBUBHIST,1)
     CALL par_get_int   (NFLUX_FORCINGS,1)
     CALL par_get_int   (IFLUX_GRID,max_flux_forcings)
     CALL par_get_int   (IFLUX_XIA,max_flux_forcings)
