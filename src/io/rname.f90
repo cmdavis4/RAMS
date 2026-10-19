@@ -626,7 +626,7 @@ WRITE(6,'(100(3(A15,E11.4)/))')      &
  ,'DRTCON=',DRTCON                   &
  ,'BTHP=',BTHP                       &
  ,'BRTP=',BRTP                       &
- ,'NFLUX_FORCINGS=',NFLUX_FORCINGS   &
+ ,'NFLUX_FORCINGS=',real(NFLUX_FORCINGS) &
  ,'CXRAD=',CXRAD                     &
  ,'CYRAD=',CYRAD                     &
  ,'CZRAD=',CZRAD                     &
