@@ -619,7 +619,7 @@ WRITE(6,'(100(3(A15,E11.4)/))')      &
  ,'SEATMP=',SEATMP                   &
  ,'DTHCON=',DTHCON                   &
  ,'DRTCON=',DRTCON                   &
- ,'NFLUX_FORCINGS=',NFLUX_FORCINGS   &
+ ,'NFLUX_FORCINGS=',real(NFLUX_FORCINGS) &
  ,'CXRAD=',CXRAD                     &
  ,'CYRAD=',CYRAD                     &
  ,'CZRAD=',CZRAD                     &

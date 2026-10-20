@@ -267,7 +267,9 @@ do j = 1,m3
            !If there are number to restore, compute median radius (rg)
            rg=((0.23873/aero_rhosol(aerocat)*cnmhx(k,lcat) / &
                max(1.e-10,cxloss))**(0.3333))/aero_rg2rm(aerocat)
-           if(rg < 0.01e-6) rg = 0.01e-6
+           !Floor at 1 nm, the smallest median radius the v6.4.00 nucleation
+           !tables cover (upstream 3e4d998; the floor was 10 nm before).
+           if(rg < 0.001e-6) rg = 0.001e-6
            if(rg > 6.50e-6) rg = 6.50e-6
          else
            !Compute a number to restore based on assumed 1 micron rg

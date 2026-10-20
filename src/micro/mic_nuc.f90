@@ -7,11 +7,12 @@ use mem_grid
 implicit none
 
 integer :: m1,i,j,k,k1cnuc,k2cnuc,k1dnuc,k2dnuc &
-          ,jtemp,jw,jconcen,rgccn1,ctc,epsnum,epstab,drop
+          ,jtemp,jw,jconcen,rgccn1,ctc,rgb,numd,numdtab,epsnum,epstab,drop
 real :: rnuc,excessrv,rcnew,vaprccn,num_ccn_ifn,epstemp
 real, dimension(m1) :: rv,wp,dn0
-real :: tairc_nuc,w_nuc,rg_nuc,tab,sfcareatotal
-real :: rjw,wtw1,wtw2,rjconcen,wtcon1,wtcon2,jrg1,jrg2,eps1,eps2
+real :: tairc_nuc,w_nuc,rg_nuc,cxmg,tab,sfcareatotal
+real :: rjw,wtw1,wtw2,rjconcen,wtcon1,wtcon2,jrg1,jrg2,eps1,eps2 &
+        ,ndrop1,ndrop2
 real :: total_cld_nucc,total_drz_nucc,total_cld_nucr,total_drz_nucr
 real, dimension(aerocat) :: concen_tab
 
@@ -135,14 +136,19 @@ elseif (jnmb(1) >= 5) then
         wtw2 = rjw - float(jw)
         wtw1 = 1. - wtw2
         !********** AEROSOL NUMBER, MASS, & MEDIAN RADIUS CONSTRAINTS ********
-        rjconcen = max(1., min(7., 2. * log10(1.0e-7 * concen_nuc) + 1.))
+        !The v6.4.00 tables span 10 - 31,622 /mg in 8 half-decade steps
+        rjconcen = max(1., min(8., 2. * log10(1.0e-7 * concen_nuc) + 1.))
         jconcen = int(rjconcen)
         wtcon2 = rjconcen - float(jconcen)
         wtcon1 = 1. - wtcon2
         !********** MEDIAN RADIUS DEPENDENCY FOR CCN *************************
+        !Clamp to the table's radius range (1 - 960 nm) and find the two
+        !neighbouring table radii and their linear interpolation weights
         rg_nuc = rg
-        if (rg_nuc < 0.01e-6) then
-           rg_nuc = 0.011e-6
+        jrg1 = 0.0
+        jrg2 = 0.0
+        if (rg_nuc < 0.001e-6) then
+           rg_nuc = 0.001e-6
         elseif (rg_nuc > 0.96e-6) then
            rg_nuc = 0.959e-6
         endif
@@ -153,6 +159,46 @@ elseif (jnmb(1) >= 5) then
            jrg1 = 1. - jrg2
          endif
         enddo
+        if(jrg1 == 0.0 .and. jrg2 == 0.0)then
+         print*,'Not correctly predicting aerosol size for nucleation. Stop'
+         stop
+        endif
+        !******** NUMBER OF CURRENT DROPLETS FOR AEROSOL ACTIVATION **********
+        !Ported from RAMS v6.4.00 (upstream 5faa2d7). The tables now carry the
+        !cloud droplet number already present (0 - 4000 /mg), because existing
+        !droplets take up the vapor an updraft produces and so hold the peak
+        !supersaturation below what fresh, droplet-free air would reach.
+        !Without this, every step applied the fresh-air fraction to whatever
+        !aerosol was left, so activation repeated inside cloud.
+        !ICCNLEV=0 never removes aerosol and subtracts existing droplets later
+        !instead, so it always uses the droplet-free table entry.
+        ndrop1 = 0.0
+        ndrop2 = 0.0
+        if (iccnlev == 0) then
+          ndrop1 = 1.0
+          ndrop2 = 0.0
+          numdtab = 1
+        else
+          !Convert cloud droplets #/kg to #/mg and clamp to the table range
+          cxmg = cx(k,1)/1.e6
+          if (cxmg < 0.0) then
+             cxmg = 0.0
+          elseif (cxmg > 4000.) then
+             cxmg = 3999.
+          endif
+          !Find the two neighbouring droplet entries and interpolation weights
+          do numd=1,maxnumdrop-1
+           if((cxmg>=numdrop(numd)) .and. (cxmg<=numdrop(numd+1))) then
+             numdtab=numd
+             ndrop2 = (cxmg-numdrop(numd)) / (numdrop(numd+1)-numdrop(numd))
+             ndrop1 = 1. - ndrop2
+           endif
+          enddo
+        endif
+        if(ndrop1 == 0.0 .and. ndrop2 == 0.0)then
+         print*,'Not correctly including droplet number for new nucleation. Stop'
+         stop
+        endif
         !********** EPSILON SOLUBILITY FRACTION FOR CCN **********************
         !Determine weights for interpolating between epsilon table values
         epstemp = epsil
@@ -173,22 +219,20 @@ elseif (jnmb(1) >= 5) then
         !******************* DETERMINE LOOKUP TABLE VALUES *******************
         tab=0.0
         if(iaero_chem(acat)==1) then
-          CALL aero_nuc_tab_nh42so4 (rv(k),rvlsair(k),eps1,eps2,wtw1,wtw2,wtcon1 &
-            ,wtcon2,jrg1,jrg2,epstab,jw,jconcen,jtemp,rgccn1,tab)
+          CALL aero_nuc_tab_nh42so4 (eps1,eps2,wtw1,wtw2,wtcon1,wtcon2,jrg1,jrg2 &
+            ,ndrop1,ndrop2,numdtab,epstab,jw,jconcen,jtemp,rgccn1,tab)
         elseif(iaero_chem(acat)==2) then
-          CALL aero_nuc_tab_nacl (rv(k),rvlsair(k),eps1,eps2,wtw1,wtw2,wtcon1 &
-            ,wtcon2,jrg1,jrg2,epstab,jw,jconcen,jtemp,rgccn1,tab)
+          CALL aero_nuc_tab_nacl    (eps1,eps2,wtw1,wtw2,wtcon1,wtcon2,jrg1,jrg2 &
+            ,ndrop1,ndrop2,numdtab,epstab,jw,jconcen,jtemp,rgccn1,tab)
         endif
         concen_tab(acat) = concen_nuc * tab * epstemp
 
-        !Saleeby(2023-06-06)
         !Override nucleation if median radius (rg) less than minimum lookup
-        !table size. In the past we simply forced rg up to the minimum and
-        !continued activation of aerosols with rg < 10nm. Perhaps we need to
-        !limit this activation. So, no activation if rg < 10nm. In this respect,
-        !some aerosols may be carried around without nucleating. They can still
-        !be radiatively important and undergo depositin.
-        if (rg < 0.01e-6) concen_tab(acat) = 0.0
+        !table size. So, no activation if rg < 1nm (the v6.4.00 tables reach
+        !down to 1 nm; the older ones stopped at 10 nm). In this respect, some
+        !aerosols may be carried around without nucleating. They can still be
+        !radiatively important and undergo deposition.
+        if (rg < 0.001e-6) concen_tab(acat) = 0.0
 
        endif !if concen_nuc > mincon
       endif !if acat aerosol type is valid
@@ -263,26 +307,25 @@ elseif (jnmb(1) >= 5) then
 
       if(ctc==1) then
 
-        !Vapor allocated to a given aerosol species
-        vaprccn = 0.5*excessrv*cldrat !Sum of all nucleation <= 1/2 excessrv
-        !Saleeby(2023-06-01): Replacing line above to try and limit new nucleation.
-        !Anecdotal evidence suggests that we nucleate too many aerosols, so we are
-        !seeing if this will switch more to growth of existing droplets over making
-        !more new ones.
-        !vaprccn = 0.25*excessrv*cldrat !Sum of all nucleation <= 1/4 excessrv
+        !Vapor allocated to a given aerosol species.
+        !Sum of all nucleation <= 1/2 excessrv by default (for ICCNLEV==0).
+        vaprccn = 0.5*excessrv*cldrat
 
         !Determine if nucleated droplets go to cloud or drizzle
         drop=1
         if(rg <= 0.96e-6) drop=1 !Nucleate to small droplet mode
         if(rg >  0.96e-6 .and. jnmb(8)>=5) drop=8 !Nucleate to drizzle mode
 
-        !Keep nucleated droplets in size bounds 
-        if(concen_tab(acat) > vaprccn / emb0(drop)) concen_tab(acat) = vaprccn / emb0(drop)
-        if(concen_tab(acat) < vaprccn / emb1(drop)) vaprccn = concen_tab(acat) * emb1(drop)
-
-        !Saleeby(2023-05-30)
-        !Nucleate to minimum drop diameter (cloud or drizzle) droplets whose mass is emb0
-        if(concen_tab(acat) * emb0(drop) <= vaprccn) vaprccn=concen_tab(acat) * emb0(drop)
+        !Keep nucleated droplets in size bounds. As in RAMS v6.4.00, do this per
+        !aerosol species only when aerosol is removed (ICCNLEV>=1). ICCNLEV=0
+        !applies the same bounds once to the totals, after subtracting the
+        !droplets that already exist.
+        if(iccnlev>=1) then
+         if(concen_tab(acat) > vaprccn / emb0(drop)) concen_tab(acat) = vaprccn / emb0(drop)
+         if(concen_tab(acat) < vaprccn / emb1(drop)) vaprccn = concen_tab(acat) * emb1(drop)
+         !Nucleate to minimum drop diameter (cloud or drizzle) droplets whose mass is emb0
+         if(concen_tab(acat) * emb0(drop) <= vaprccn) vaprccn = concen_tab(acat) * emb0(drop)
+        endif
 
         !Accumulated nucleated particles if not removing them
         if(iccnlev==0) then
@@ -467,12 +510,18 @@ elseif (jnmb(1) >= 5) then
         total_cld_nucc = total_cld_nucr / emb0(1)
      if(total_cld_nucc < total_cld_nucr / emb1(1)) &
         total_cld_nucr = total_cld_nucc * emb1(1)
+     !Nucleate to minimum drop diameter droplets whose mass is emb0
+     if(total_cld_nucc * emb0(1) <= total_cld_nucr) &
+        total_cld_nucr = total_cld_nucc * emb0(1)
      cx(k,1) = cx(k,1) + total_cld_nucc
      rx(k,1) = rx(k,1) + total_cld_nucr
      if(total_drz_nucc > total_drz_nucr / emb0(8)) &
         total_drz_nucc = total_drz_nucr / emb0(8)
      if(total_drz_nucc < total_drz_nucr / emb1(8)) &
         total_drz_nucr = total_drz_nucc * emb1(8)
+     !Nucleate to minimum drop diameter droplets whose mass is emb0
+     if(total_drz_nucc * emb0(8) <= total_drz_nucr) &
+        total_drz_nucr = total_drz_nucc * emb0(8)
      cx(k,8) = cx(k,8) + total_drz_nucc
      rx(k,8) = rx(k,8) + total_drz_nucr
      !Nucleation budget diagnostics
